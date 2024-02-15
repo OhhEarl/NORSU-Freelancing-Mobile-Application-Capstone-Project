@@ -7,28 +7,20 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
-import {useEffect, React, useState} from 'react';
+import Button from '../components/Button';
+import COLORS from '../constants/colors';
+import {useEffect, React, useState, useContext} from 'react';
+import {SafeAreaView} from 'react-native-safe-area-context';
 import auth from '@react-native-firebase/auth';
 import {GoogleSignin} from '@react-native-google-signin/google-signin';
+import { AuthContext } from '../hooks/AuthContext';
+
 
 const VerificationScreen = ({navigation}) => {
-  const [initializing, setInitializing] = useState(true);
+  const { user, isLoading, error } = useContext(AuthContext);
   const [email, setEmail] = useState();
-  const [user, setUser] = useState(null);
 
-  useEffect(() => {
-    const subscriber = auth().onAuthStateChanged(onAuthStateChanged);
-    return subscriber; // unsubscribe on unmount
-  }, []);
 
-  function onAuthStateChanged(user) {
-    setUser(user);
-    if (user) {
-      setEmail(user.email);
-      
-    }
-    if (initializing) setInitializing(false);
-  }
 
   const signOut = async () => {
     try {
@@ -36,20 +28,148 @@ const VerificationScreen = ({navigation}) => {
       await auth().signOut();
       setUser(null);
       navigation.navigate('Login');
-    } catch (error) {
-     
-    }
+    } catch (error) {}
   };
-  if (initializing) return null;
+
 
   return (
-    <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
-      <Text style={styles.text}>Already logged In</Text>
-      <Text style={styles.text}>Welcome {email}</Text>
-      <Pressable onPress={signOut} style={styles.button}>
-        <Text style={styles.text}>Log Out</Text>
-      </Pressable>
-    </View>
+    <SafeAreaView style={{flex: 1, backgroundColor: COLORS.white}}>
+      <View style={{flex: 1, marginHorizontal: 22, justifyContent: 'center'}}>
+        <View style={{marginVertical: 22, alignItems: 'center'}}>
+          <Text
+            style={{
+              fontSize:20,
+              fontWeight: 'bold',
+              marginVertical: 12,
+              color: COLORS.black,
+            }}>
+            Pleas fill up the form to continue.
+          </Text>
+        </View>
+
+    
+        <View style={{marginBottom: 12}}>
+          <Text
+            style={{
+              fontSize: 16,
+              fontWeight: 400,
+              marginVertical: 8,
+            }}>
+            First Name
+          </Text>
+
+          <View
+            style={{
+              width: '100%',
+              height: 48,
+              borderColor: COLORS.black,
+              borderWidth: 1,
+              borderRadius: 8,
+              alignItems: 'center',
+              justifyContent: 'center',
+              paddingLeft: 22,
+            }}>
+            <TextInput
+              placeholder="Enter your email address"
+              placeholderTextColor={COLORS.black}
+              // onChangeText={text => setEmail(text)}
+              // value={email}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              style={{
+                width: '100%',
+              }}
+            />
+          </View>
+        </View>
+
+        
+        <View style={{marginBottom: 12}}>
+          <Text
+            style={{
+              fontSize: 16,
+              fontWeight: 400,
+              marginVertical: 8,
+            }}>
+            Last Name
+          </Text>
+
+          <View
+            style={{
+              width: '100%',
+              height: 48,
+              borderColor: COLORS.black,
+              borderWidth: 1,
+              borderRadius: 8,
+              alignItems: 'center',
+              justifyContent: 'center',
+              paddingLeft: 22,
+            }}>
+            <TextInput
+              placeholder="Enter your email address"
+              placeholderTextColor={COLORS.black}
+              // onChangeText={text => setEmail(text)}
+              // value={email}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              style={{
+                width: '100%',
+              }}
+            />
+          </View>
+        </View>
+
+
+
+        <View style={{marginBottom: 12}}>
+          <Text
+            style={{
+              fontSize: 16,
+              fontWeight: 400,
+              marginVertical: 8,
+            }}>
+            Course
+          </Text>
+
+          <View
+            style={{
+              width: '100%',
+              height: 48,
+              borderColor: COLORS.black,
+              borderWidth: 1,
+              borderRadius: 8,
+              alignItems: 'center',
+              justifyContent: 'center',
+              paddingLeft: 22,
+            }}>
+            <TextInput
+              placeholder="Enter your email address"
+              placeholderTextColor={COLORS.black}
+              // onChangeText={text => setEmail(text)}
+              // value={email}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              style={{
+                width: '100%',
+              }}
+            />
+          </View>
+        </View>
+
+  
+        <Button
+        onPress={signOut}
+          title="Sign Up"
+          filled
+          style={{
+            marginTop: 18,
+            marginBottom: 4,
+          }}
+        />
+
+     
+      </View>
+    </SafeAreaView>
   );
 };
 

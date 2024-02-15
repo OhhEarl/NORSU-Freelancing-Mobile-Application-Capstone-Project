@@ -13,12 +13,9 @@ import COLORS from '../constants/colors';
 import {useIsFocused} from '@react-navigation/native';
 import auth from '@react-native-firebase/auth';
 
-
 const Signup = ({navigation}) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isPasswordShown, setIsPasswordShown] = useState(false);
-  const [isChecked, setIsChecked] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
   const isFocused = useIsFocused();
@@ -33,41 +30,32 @@ const Signup = ({navigation}) => {
 
   const handleSignup = async () => {
     auth()
-    .createUserWithEmailAndPassword(email, password)
-    .then((userCredential) => {
+      .createUserWithEmailAndPassword(email, password)
+      .then(userCredential => {
         const user = userCredential.user;
         if (!user.emailVerified) {
-            navigation.navigate('EmailVerification');
-            // You can handle this case as needed, such as displaying an alert or navigating to a different screen
-          } else {
-            console.log('User ID:', user.uid);
-            console.log('User Email:', user.email);
-            console.log('User account created & signed in!');
-            // You can navigate to the next screen or perform other actions after successful sign-in
-          }
-
-    })
-    .catch(error => {
-      if (error.code === 'auth/email-already-in-use') {
-        setErrorMessage('That email address is already in use!')
-      }else if(error.code === 'auth/invalid-email')
-         {
-        setErrorMessage('Invalid email address!')
-      } else{
-        setErrorMessage(error.message || error.toString()); // Update this line to display the error message
-      }
-    });
+          user.sendEmailVerification();
+          navigation.navigate('Login');
+        } 
+      })
+      .catch(error => {
+        if (error.code === 'auth/email-already-in-use') {
+          setErrorMessage('That email address is already in use!');
+        } else if (error.code === 'auth/invalid-email') {
+          setErrorMessage('Invalid email address!');
+        } else {
+          setErrorMessage(error.message || error.toString()); // Update this line to display the error message
+        }
+      });
   };
-
-
 
   return (
     <SafeAreaView style={{flex: 1, backgroundColor: COLORS.white}}>
       <View style={{flex: 1, marginHorizontal: 22, justifyContent: 'center'}}>
-        <View style={{marginVertical: 22, alignItems:'center'}}>
+        <View style={{marginVertical: 22, alignItems: 'center'}}>
           <Text
             style={{
-              fontSize:35,
+              fontSize: 35,
               fontWeight: 'bold',
               marginVertical: 12,
               color: COLORS.black,
@@ -80,7 +68,7 @@ const Signup = ({navigation}) => {
               fontSize: 16,
               color: COLORS.black,
             }}>
-           Get paid for passion!
+            Get paid for passion!
           </Text>
         </View>
 
@@ -211,7 +199,7 @@ const Signup = ({navigation}) => {
                 color: COLORS.primary,
                 fontWeight: 'bold',
                 marginLeft: 6,
-                textDecorationLine: 'underline'
+                textDecorationLine: 'underline',
               }}>
               Login
             </Text>

@@ -10,10 +10,11 @@ import {useState, useEffect, React} from 'react';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import COLORS from '../constants/colors';
 import Button from '../components/Button';
-
+import axios from 'axios';
 import {useIsFocused} from '@react-navigation/native';
+import DeviceInfo from 'react-native-device-info';
 
-import auth from '@react-native-firebase/auth';
+import auth from 'firebase/auth';
 import {
   GoogleSignin,
   GoogleSigninButton,
@@ -47,7 +48,26 @@ const Login = ({navigation}) => {
       await GoogleSignin.hasPlayServices({showPlayServicesUpdateDialog: true});
       const {idToken} = await GoogleSignin.signIn();
       const googleCredential = auth.GoogleAuthProvider.credential(idToken);
-      return auth().signInWithCredential(googleCredential);
+      const userCredential = await auth().signInWithCredential(googleCredential);
+
+     const response = await axios.post('http://127.0.0.1:8000/api/google-callback',
+     {
+      idToken: userCredential.idToken,
+      uniqueId: DeviceInfo.getUniqueId(),
+
+     },
+     {
+      headers:{
+        'Content-Type':'application/json'
+      }
+     })
+
+     const data = response.data;
+     console.log(data);
+
+
+       navigation.navigate('VerificationScreen');
+      return auth().signInWithCredential(googleCredential)
     } catch (error) {
       if (error.code === statusCodes.SIGN_IN_CANCELLED) {
         await GoogleSignin.revokeAccess();
@@ -70,6 +90,8 @@ const Login = ({navigation}) => {
         const user = userCredential.user;
         if (!user.emailVerified) {
           navigation.navigate('EmailVerification');
+        }else{
+          navigation.navigate('VerificationScreen')
         }
       })
       .catch((error) => {
@@ -260,15 +282,7 @@ const Login = ({navigation}) => {
             justifyContent: 'center',
           }}>
           <TouchableOpacity
-            onPress={() =>
-              onGoogleButtonPress()
-                .then(() => {
-                  navigation.navigate('VerificationScreen');
-                })
-                .catch(error => {
-                  console.log(error);
-                })
-            }
+            onPress={onGoogleButtonPress}
             style={{
               flex: 1,
               alignItems: 'center',
