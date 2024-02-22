@@ -7,14 +7,22 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1070570385371:android:6153a1f288d9f660aec1fe",
+        "mobilesdk_app_id": "1:1070570385371:android:c03573f99db507c7aec1fe",
         "android_client_info": {
           "package_name": "com.norsu"
         }
       },
       "oauth_client": [
         {
-          "client_id": "1070570385371-oki1o1e7h9mph2qnk0evo7l22k80683c.apps.googleusercontent.com",
+          "client_id": "1070570385371-ppanugb7f1s7pia9fjo6vqcs7r3dl97k.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.norsu",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "1070570385371-6p351s3v9d1tr5mvrqfqhbe4vnn59mhb.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
@@ -27,7 +35,7 @@
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "1070570385371-oki1o1e7h9mph2qnk0evo7l22k80683c.apps.googleusercontent.com",
+              "client_id": "1070570385371-6p351s3v9d1tr5mvrqfqhbe4vnn59mhb.apps.googleusercontent.com",
               "client_type": 3
             }
           ]

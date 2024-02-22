@@ -5,35 +5,27 @@ import {
   Pressable,
   TextInput,
   TouchableOpacity,
+
 } from 'react-native';
 import {useState, useEffect, React} from 'react';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import COLORS from '../constants/colors';
 import Button from '../components/Button';
-import axios from 'axios';
 import {useIsFocused} from '@react-navigation/native';
-import DeviceInfo from 'react-native-device-info';
-
-import auth from 'firebase/auth';
-import {
-  GoogleSignin,
-  GoogleSigninButton,
-  statusCodes,
-} from '@react-native-google-signin/google-signin';
-
-GoogleSignin.configure({
-  webClientId:
-    '1070570385371-oki1o1e7h9mph2qnk0evo7l22k80683c.apps.googleusercontent.com',
-});
+import auth from '@react-native-firebase/auth';
+import useAuth from '../hooks/useAuth';
 
 const Login = ({navigation}) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [loading, isLoading] = useState(false);
   const [isPasswordShown, setIsPasswordShown] = useState(false);
-  const [isChecked, setIsChecked] = useState(false);
-
   const isFocused = useIsFocused();
+  const { onGoogleButtonPress } = useAuth(); // Access onGoogleButtonPress function
+
+
+
   useEffect(() => {
     if (!isFocused) {
       // Clear text fields when screen is blurred
@@ -43,58 +35,19 @@ const Login = ({navigation}) => {
     }
   }, [isFocused]);
 
-  async function onGoogleButtonPress() {
-    try {
-      await GoogleSignin.hasPlayServices({showPlayServicesUpdateDialog: true});
-      const {idToken} = await GoogleSignin.signIn();
-      const googleCredential = auth.GoogleAuthProvider.credential(idToken);
-      const userCredential = await auth().signInWithCredential(googleCredential);
 
-     const response = await axios.post('http://127.0.0.1:8000/api/google-callback',
-     {
-      idToken: userCredential.idToken,
-      uniqueId: DeviceInfo.getUniqueId(),
-
-     },
-     {
-      headers:{
-        'Content-Type':'application/json'
-      }
-     })
-
-     const data = response.data;
-     console.log(data);
-
-
-       navigation.navigate('VerificationScreen');
-      return auth().signInWithCredential(googleCredential)
-    } catch (error) {
-      if (error.code === statusCodes.SIGN_IN_CANCELLED) {
-        await GoogleSignin.revokeAccess();
-      } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-        // play services not available or outdated
-        console.log(statusCodes.PLAY_SERVICES_NOT_AVAILABLE);
-      } else if (emailVerified === 'false') {
-        // play services not available or outdated
-        console.log(statusCodes.PLAY_SERVICES_NOT_AVAILABLE);
-      } else {
-        navigation.navigate('Login');
-      }
-    }
-  }
-
-    const handleSignIn = async () => {
-      auth()
+  const handleSignIn = async () => {
+    auth()
       .signInWithEmailAndPassword(email, password)
-      .then((userCredential) => {
+      .then(userCredential => {
         const user = userCredential.user;
         if (!user.emailVerified) {
           navigation.navigate('EmailVerification');
-        }else{
-          navigation.navigate('VerificationScreen')
+        } else {
+          navigation.navigate('VerificationScreen');
         }
       })
-      .catch((error) => {
+      .catch(error => {
         if (error.code === 'auth/invalid-email') {
           setErrorMessage('Invalid email address.');
         } else if (error.code === 'auth/user-disabled') {
@@ -105,8 +58,8 @@ const Login = ({navigation}) => {
           setErrorMessage(error.message || error.toString()); // Update this line to display the error message
         }
       });
-    };
-  
+  };
+
 
   return (
     <SafeAreaView style={{flex: 1, backgroundColor: COLORS.white}}>
@@ -220,12 +173,11 @@ const Login = ({navigation}) => {
               fontSize: 14,
               fontWeight: 400,
               marginVertical: 8,
-              color:'red',
-              marginLeft: 3
+              color: 'red',
+              marginLeft: 3,
             }}>
-          {errorMessage}
+            {errorMessage}
           </Text>
-
         </View>
 
         {/* <View style={{
@@ -282,7 +234,7 @@ const Login = ({navigation}) => {
             justifyContent: 'center',
           }}>
           <TouchableOpacity
-            onPress={onGoogleButtonPress}
+            onPress={() => onGoogleButtonPress(navigation)}
             style={{
               flex: 1,
               alignItems: 'center',

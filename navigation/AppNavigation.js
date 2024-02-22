@@ -1,64 +1,69 @@
 import React from 'react';
-import {ActivityIndicator} from 'react-native';
+import {ActivityIndicator, StyleSheet} from 'react-native';
 import {NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import Login from '../screens/Login';
 import Signup from '../screens/Signup';
 import Welcome from '../screens/Welcome';
-import EmailVerification from '../screens/EmailVerification';
-import VerificationScreen from '../screens/VerificationScreen';
 import useAuth from '../hooks/useAuth';
-import HomeScreen from '../screens/HomeScreen';
-import { AuthProvider } from '../hooks/AuthContext';
+import {AuthProvider} from '../hooks/AuthContext';
+import VerificationScreen from '../screens/VerificationScreen';
+
 const Stack = createNativeStackNavigator();
 
-const AppNavigation = () => {
-  const {user, isLoading, error} = useAuth();
-  // Handle loading state while user data is being fetched
+const AppNavigation = ({navigation}) => {
+  const {user, isLoading, userInfo} = useAuth();
+
   if (isLoading) {
-    return <ActivityIndicator size="large" />;
+    return <ActivityIndicator size="large" style={styles.indicator} />;
   }
+
   return (
     <AuthProvider>
       <NavigationContainer>
-      {user ? (
-          <Stack.Navigator initialRouteName="VerificationScreen">
+        <Stack.Navigator>
+          {user && !isLoading ?  (
             <Stack.Screen
               name="VerificationScreen"
               component={VerificationScreen}
-              options={{
-                headerShown: false,
-            }}
+              options={{headerShown: false}}
             />
-          </Stack.Navigator>
-      ) : (
-        <Stack.Navigator initialRouteName="Welcome">
-          <Stack.Screen
-            name="Welcome"
-            component={Welcome}
-            options={{
-              headerShown: false,
-            }}
-          />
-          <Stack.Screen
-            name="Login"
-            component={Login}
-            options={{
-              headerShown: false,
-            }}
-          />
-          <Stack.Screen
-            name="Signup"
-            component={Signup}
-            options={{
-              headerShown: false,
-            }}
-          />
+          ) : (
+            <>
+              <Stack.Screen
+                name="Welcome"
+                component={Welcome}
+                options={{headerShown: false}}
+              />
+              <Stack.Screen
+                name="Login"
+                component={Login}
+                options={{headerShown: false}}
+              />
+              <Stack.Screen
+                name="Signup"
+                component={Signup}
+                options={{headerShown: false}}
+              />
+            </>
+          )}
         </Stack.Navigator>
-      )}
-    </NavigationContainer>
-</AuthProvider>
+      </NavigationContainer>
+    </AuthProvider>
   );
 };
 
 export default AppNavigation;
+
+const styles = StyleSheet.create({
+  indicator: {
+    flex: 1,
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});

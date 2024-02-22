@@ -1,44 +1,54 @@
-import {
-  View,
-  Text,
-  Image,
-  Pressable,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-} from 'react-native';
+import {View, Text, TextInput, StyleSheet, ActivityIndicator} from 'react-native';
+
 import Button from '../components/Button';
 import COLORS from '../constants/colors';
-import {useEffect, React, useState, useContext} from 'react';
+import {React, useEffect, useState, useContext} from 'react';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import auth from '@react-native-firebase/auth';
 import {GoogleSignin} from '@react-native-google-signin/google-signin';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AuthContext } from '../hooks/AuthContext';
 
+const VerificationScreen = ({navigation, route}) => {
+  const { userInfo } = useContext(AuthContext);
+  const [token, setToken] = useState('');
+  useEffect(() => {
+    const getToken = async () => {
+      try {
+        const token = await AsyncStorage.getItem('token');
+        setToken(token);
+      } catch (error) {
+        console.error('Error retrieving token:', error);
+      }
+    };
 
-const VerificationScreen = ({navigation}) => {
-  const { user, isLoading, error } = useContext(AuthContext);
-  const [email, setEmail] = useState();
-
-
+    getToken(); // Call getToken when component mounts
+  }, []); // Empty dependency array ensures this effect runs only once when component
 
   const signOut = async () => {
     try {
       await GoogleSignin.signOut();
       await auth().signOut();
-      setUser(null);
-      navigation.navigate('Login');
-    } catch (error) {}
+      let url = 'http://10.0.2.2:8000/api/google-callback/auth/google-signout';
+      let response = await axios.post(url, token, {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+    } catch (error) {
+      console.error('Error revoking token:', error);
+    }
   };
-
-
+  
   return (
     <SafeAreaView style={{flex: 1, backgroundColor: COLORS.white}}>
       <View style={{flex: 1, marginHorizontal: 22, justifyContent: 'center'}}>
         <View style={{marginVertical: 22, alignItems: 'center'}}>
           <Text
             style={{
-              fontSize:20,
+              fontSize: 20,
               fontWeight: 'bold',
               marginVertical: 12,
               color: COLORS.black,
@@ -47,7 +57,8 @@ const VerificationScreen = ({navigation}) => {
           </Text>
         </View>
 
-    
+        
+        
         <View style={{marginBottom: 12}}>
           <Text
             style={{
@@ -83,7 +94,6 @@ const VerificationScreen = ({navigation}) => {
           </View>
         </View>
 
-        
         <View style={{marginBottom: 12}}>
           <Text
             style={{
@@ -118,8 +128,6 @@ const VerificationScreen = ({navigation}) => {
             />
           </View>
         </View>
-
-
 
         <View style={{marginBottom: 12}}>
           <Text
@@ -156,9 +164,8 @@ const VerificationScreen = ({navigation}) => {
           </View>
         </View>
 
-  
         <Button
-        onPress={signOut}
+          onPress={signOut}
           title="Sign Up"
           filled
           style={{
@@ -166,8 +173,6 @@ const VerificationScreen = ({navigation}) => {
             marginBottom: 4,
           }}
         />
-
-     
       </View>
     </SafeAreaView>
   );
