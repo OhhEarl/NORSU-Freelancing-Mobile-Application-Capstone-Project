@@ -12,8 +12,7 @@ import VerificationScreen from '../screens/VerificationScreen';
 const Stack = createNativeStackNavigator();
 
 const AppNavigation = ({navigation}) => {
-  const {user, isLoading, userInfo} = useAuth();
-
+  const {user, isLoading} = useAuth();
   if (isLoading) {
     return <ActivityIndicator size="large" style={styles.indicator} />;
   }

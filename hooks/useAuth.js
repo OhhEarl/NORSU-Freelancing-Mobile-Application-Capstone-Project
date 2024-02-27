@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import {useState, useEffect} from 'react';
 import auth from '@react-native-firebase/auth';
 import {
   GoogleSignin,
@@ -14,39 +14,34 @@ GoogleSignin.configure({
 
 const useAuth = () => {
   const [user, setUser] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [userToken, setUserToken] = useState(null); // from Firebase login
-  const [userInfo, setUserInfo] = useState(null);
-  const [userInfoSet, setUserInfoSet] = useState(false);
+  const [userData, setUserData] = useState(null);
 
-  const onGoogleButtonPress = async navigation => {
+  const onGoogleButtonPress = async () => {
     try {
+      setIsLoading(true);
       await GoogleSignin.hasPlayServices({showPlayServicesUpdateDialog: true});
       const {idToken} = await GoogleSignin.signIn();
       const googleCredential = auth.GoogleAuthProvider.credential(idToken);
+
       let url = 'http://10.0.2.2:8000/api/google-callback/auth/google-login';
       let payload = {idToken: idToken};
       let response = await axios.post(url, payload, {
         headers: {
+          Accept: 'application/json',
           'Content-Type': 'application/json',
         },
       });
       const data = response.data;
-      if (data) {
-        try {
-          await AsyncStorage.setItem('token', data.token);
-          setIsLoading(true)
-          setUserInfo(data.user.id);
-          setUserInfoSet(true); // Set the flag to indicate userInfo is set
-          auth().signInWithCredential(googleCredential); // Sign in after setting userInfo
-        } catch (error) {
-          console.error('Error storing token or setting user info:', error);
-        }
+      console.log(JSON.stringify(data, null, 2));
+      if (data && data.user) {
+        await AsyncStorage.setItem('token', data.token);
+        setUserData(data.user); // Update user data using the callback
+        await auth().signInWithCredential(googleCredential);
       } else {
-        console.error('Error: No data received from backend');
+        console.error('Error: No data or token received from backend');
       }
-      setIsLoading(false)
     } catch (error) {
       if (error.code === statusCodes.SIGN_IN_CANCELLED) {
         await GoogleSignin.revokeAccess().then(() =>
@@ -62,27 +57,18 @@ const useAuth = () => {
         console.error('Error during Google sign-in:', error);
         navigation.navigate('Login');
       }
+    } finally {
+      setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    if (userInfoSet) {
- console.log('the user is this',userInfo)
-    }
-  }, [userInfo, userInfoSet]);
-
+    console.log('the user data is:', userData);
+  }, [userData]);
+  
   useEffect(() => {
     const unsubscribe = auth().onAuthStateChanged(user => {
-      setIsLoading(false);
       if (user) {
-        user
-          .getIdToken()
-          .then(token => {
-            setUserToken(token);
-          })
-          .catch(error => {
-            console.error('Error fetching token:', error);
-          });
         setUser(user);
       } else {
         setUser(null);
@@ -92,7 +78,7 @@ const useAuth = () => {
     return () => unsubscribe();
   }, []);
 
-  return {user, isLoading, error, onGoogleButtonPress, userInfo};
+  return {user, isLoading, error, userData, onGoogleButtonPress}; 
 };
 
 export default useAuth;

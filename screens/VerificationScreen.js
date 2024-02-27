@@ -1,4 +1,10 @@
-import {View, Text, TextInput, StyleSheet, ActivityIndicator} from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
+  ActivityIndicator,
+} from 'react-native';
 
 import Button from '../components/Button';
 import COLORS from '../constants/colors';
@@ -8,10 +14,10 @@ import auth from '@react-native-firebase/auth';
 import {GoogleSignin} from '@react-native-google-signin/google-signin';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { AuthContext } from '../hooks/AuthContext';
+import useAuth from '../hooks/useAuth';
+import { useAuthContext } from '../hooks/AuthContext';
 
 const VerificationScreen = ({navigation, route}) => {
-  const { userInfo } = useContext(AuthContext);
   const [token, setToken] = useState('');
   useEffect(() => {
     const getToken = async () => {
@@ -41,7 +47,7 @@ const VerificationScreen = ({navigation, route}) => {
       console.error('Error revoking token:', error);
     }
   };
-  
+
   return (
     <SafeAreaView style={{flex: 1, backgroundColor: COLORS.white}}>
       <View style={{flex: 1, marginHorizontal: 22, justifyContent: 'center'}}>
@@ -57,8 +63,6 @@ const VerificationScreen = ({navigation, route}) => {
           </Text>
         </View>
 
-        
-        
         <View style={{marginBottom: 12}}>
           <Text
             style={{

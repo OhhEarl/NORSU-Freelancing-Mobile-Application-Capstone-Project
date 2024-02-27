@@ -234,7 +234,7 @@ const Login = ({navigation}) => {
             justifyContent: 'center',
           }}>
           <TouchableOpacity
-            onPress={() => onGoogleButtonPress(navigation)}
+            onPress={ onGoogleButtonPress}
             style={{
               flex: 1,
               alignItems: 'center',
