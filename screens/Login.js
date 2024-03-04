@@ -10,10 +10,10 @@ import {
 import {useState, useEffect, React} from 'react';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import COLORS from '../constants/colors';
-import Button from '../components/Button';
+import Button from '../components/Buttons/Button';
 import {useIsFocused} from '@react-navigation/native';
 import auth from '@react-native-firebase/auth';
-import useAuth from '../hooks/useAuth';
+import { useAuthContext } from '../hooks/AuthContext';
 
 const Login = ({navigation}) => {
   const [email, setEmail] = useState('');
@@ -22,7 +22,7 @@ const Login = ({navigation}) => {
   const [loading, isLoading] = useState(false);
   const [isPasswordShown, setIsPasswordShown] = useState(false);
   const isFocused = useIsFocused();
-  const { onGoogleButtonPress } = useAuth(); // Access onGoogleButtonPress function
+  const { onGoogleButtonPress } = useAuthContext(); // Access onGoogleButtonPress function
 
 
 
