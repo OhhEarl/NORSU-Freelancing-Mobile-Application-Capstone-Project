@@ -10,7 +10,7 @@ import {
 import {useState, useEffect, React} from 'react';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import COLORS from '../constants/colors';
-import Button from '../components/Buttons/Button';
+import Button from '../components/Button';
 import {useIsFocused} from '@react-navigation/native';
 import auth from '@react-native-firebase/auth';
 import { useAuthContext } from '../hooks/AuthContext';

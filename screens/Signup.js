@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import React, {useState, useEffect} from 'react';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import Button from '../components/Buttons/Button';
+import Button from '../components/Button';
 import COLORS from '../constants/colors';
 import {useIsFocused} from '@react-navigation/native';
 import auth from '@react-native-firebase/auth';

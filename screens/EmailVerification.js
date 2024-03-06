@@ -2,7 +2,7 @@ import React from 'react';
 import {View, Text, Image, ActivityIndicator} from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import COLORS from '../constants/colors';
-import Button from '../components/Buttons/Button';
+import Button from '../components/Button';
 import {useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../hooks/AuthContext';
 import auth from '@react-native-firebase/auth';

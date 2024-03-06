@@ -44,7 +44,7 @@ export const AuthProvider = ({ children }) => {
       console.log(JSON.stringify(data, null, 2));
       if (data && data.user) {
         await AsyncStorage.setItem('token', data.token);
-        setUserData(data.user); // Update user data using the callback
+        await AsyncStorage.setItem('userData', JSON.stringify(data.user)); // Save user data to AsyncStorage
         await auth().signInWithCredential(googleCredential);
       } else {
         console.error('Error: No data or token received from backend');
@@ -70,8 +70,19 @@ export const AuthProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    console.log('the user data is:', userData);
-  }, [userData]);
+    const loadUserData = async () => {
+      try {
+        const storedUserData = await AsyncStorage.getItem('userData');
+        if (storedUserData) {
+          setUserData(JSON.parse(storedUserData));
+        }
+      } catch (error) {
+        console.error('Error loading user data from AsyncStorage:', error);
+      }
+    };
+  
+    loadUserData();
+  }, []);
   
   useEffect(() => {
     const unsubscribe = auth().onAuthStateChanged(user => {
@@ -86,7 +97,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, error, onGoogleButtonPress, userData }}>
+    <AuthContext.Provider value={{ user, isLoading, error, onGoogleButtonPress, userData , setUserData}}>
       {children}
     </AuthContext.Provider>
   );

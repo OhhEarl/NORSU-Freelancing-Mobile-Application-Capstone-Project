@@ -8,12 +8,11 @@ import {GoogleSignin} from '@react-native-google-signin/google-signin';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useAuthContext} from '../hooks/AuthContext';
-import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
-import RNFS from 'react-native-fs';
+import {launchImageLibrary} from 'react-native-image-picker';
 
-const VerificationScreen = ({navigation, route}) => {
-  const {userData} = useAuthContext(); // Access onGoogleButtonPress function
-  const [token, setToken] = useState('');
+const VerificationScreen = ({}) => {
+  const {userData, setUserData} = useAuthContext(); // Access onGoogleButtonPress function
+  const [token, setToken] = useState(null);
   const [selectedImageUriFront, setSelectedImageUriFront] = useState(null);
   const [selectedImageUriBack, setSelectedImageUriBack] = useState(null);
   const [firstName, setFirstName] = useState('');
@@ -32,6 +31,16 @@ const VerificationScreen = ({navigation, route}) => {
     getToken(); // Call getToken when component mounts
   }, []);
 
+  const removeToken = async () => {
+    try {
+      await AsyncStorage.removeItem('token');
+      await AsyncStorage.removeItem('userData');
+      setToken(null);
+      setUserData(null);
+    } catch (error) {
+      console.log('Renove authentication token failed :', error?.message);
+    }
+  };
   const signOut = async () => {
     try {
       await GoogleSignin.signOut();
@@ -43,6 +52,10 @@ const VerificationScreen = ({navigation, route}) => {
           Authorization: `Bearer ${token}`,
         },
       });
+
+      if ((response.status = 200)) {
+        await removeToken();
+      }
     } catch (error) {
       console.error('Error revoking token:', error);
     }
@@ -50,11 +63,10 @@ const VerificationScreen = ({navigation, route}) => {
 
   useEffect(() => {
     return () => {
-      // Clean up or reset uri on component unmount or other events
       setSelectedImageUriFront(null);
       setSelectedImageUriBack(null);
     };
-  }, []); // Empty dependency array means it runs only on mount and unmount
+  }, []);
 
   const frontID = async () => {
     try {
@@ -72,9 +84,9 @@ const VerificationScreen = ({navigation, route}) => {
       const fileFormat = ['image/jpeg', 'image/jpg', 'image/png'];
       if (fileSizeInMB > fileSizeLimitMB) {
         alert('Cannot upload files larger than 2MB');
-      }else if (!fileFormat.includes(fileFormatType)) {
+      } else if (!fileFormat.includes(fileFormatType)) {
         alert('Please upload an image in JPEG, JPG, or PNG format.');
-      }else {
+      } else {
         const selectedImageUriFront = result.assets[0].uri;
         setSelectedImageUriFront(selectedImageUriFront);
       }
@@ -84,7 +96,6 @@ const VerificationScreen = ({navigation, route}) => {
   };
 
   const backID = async () => {
-
     try {
       const result = await launchImageLibrary();
       if (result.didCancel) {
@@ -100,16 +111,15 @@ const VerificationScreen = ({navigation, route}) => {
       const fileFormat = ['image/jpeg', 'image/jpg', 'image/png'];
       if (fileSizeInMB > fileSizeLimitMB) {
         alert('Cannot upload files larger than 2MB');
-      }else if (!fileFormat.includes(fileFormatType)) {
+      } else if (!fileFormat.includes(fileFormatType)) {
         alert('Please upload an image in JPEG, JPG, or PNG format.');
-      }else {
+      } else {
         const selectedImageUriBack = result?.assets[0]?.uri;
         setSelectedImageUriBack(selectedImageUriBack);
       }
     } catch (error) {
       console.error('Error:', error);
     }
-   
   };
 
   const studentValidation = async () => {
@@ -123,7 +133,7 @@ const VerificationScreen = ({navigation, route}) => {
       alert('Please fill all fields and select both front and back images');
       return;
     }
-  
+
     const frontFileName = selectedImageUriFront.split('/').pop();
     const backFileName = selectedImageUriBack.split('/').pop();
     const frontExtension = frontFileName.split('.').pop();
@@ -148,20 +158,19 @@ const VerificationScreen = ({navigation, route}) => {
       let url = 'http://10.0.2.2:8000/api/student-validation';
       const response = await axios.post(url, formData, {
         headers: {
-          'Accept': 'application/json',
+          Accept: 'application/json',
           'Content-Type': 'multipart/form-data',
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
       const data = response.data;
-    if(data){
-      console.log(data);
-    }
+      if (data) {
+        console.log(data);
+      }
     } catch (err) {
       console.log(err);
       alert('Something went wrong');
     } finally {
-      // Reset state variables
       setSelectedImageUriFront(null);
       setSelectedImageUriBack(null);
       setFirstName('');
@@ -318,7 +327,7 @@ const VerificationScreen = ({navigation, route}) => {
           />
         </View>
 
-        {/* <View style={{marginBottom: 12}}>
+        <View style={{marginBottom: 12}}>
           <Button
             onPress={signOut}
             title="Sign Up"
@@ -328,9 +337,9 @@ const VerificationScreen = ({navigation, route}) => {
               marginBottom: 4,
             }}
           />
-        </View> */}
+        </View>
 
-        <View style={{marginBottom: 12}}>
+        {/* <View style={{marginBottom: 12}}>
           <Button
             onPress={studentValidation}
             title="Submit"
@@ -340,7 +349,7 @@ const VerificationScreen = ({navigation, route}) => {
               marginBottom: 4,
             }}
           />
-        </View>
+        </View> */}
       </View>
     </SafeAreaView>
   );
