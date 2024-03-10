@@ -1,65 +1,28 @@
-import {View, TextInput, StyleSheet, Image, Text} from 'react-native';
+import {
+  View,
+  TextInput,
+  StyleSheet,
+  Image,
+  Text,
+  ActivityIndicator,
+} from 'react-native';
 import Button from '../components/Buttons/Button';
 import COLORS from '../constants/colors';
 import {React, useEffect, useState, useContext} from 'react';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import auth from '@react-native-firebase/auth';
-import {GoogleSignin} from '@react-native-google-signin/google-signin';
 import axios from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import {useAuthContext} from '../hooks/AuthContext';
+
+
 import {launchImageLibrary} from 'react-native-image-picker';
 
-const VerificationScreen = ({}) => {
-  const {userData, setUserData} = useAuthContext(); // Access onGoogleButtonPress function
-  const [token, setToken] = useState(null);
+const VerificationScreen = ({navigation}) => {
   const [selectedImageUriFront, setSelectedImageUriFront] = useState(null);
   const [selectedImageUriBack, setSelectedImageUriBack] = useState(null);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [course, setCourse] = useState('');
 
-  useEffect(() => {
-    const getToken = async () => {
-      try {
-        const token = await AsyncStorage.getItem('token');
-        setToken(token);
-      } catch (error) {
-        console.error('Error retrieving token:', error);
-      }
-    };
-    getToken(); // Call getToken when component mounts
-  }, []);
 
-  const removeToken = async () => {
-    try {
-      await AsyncStorage.removeItem('token');
-      await AsyncStorage.removeItem('userData');
-      setToken(null);
-      setUserData(null);
-    } catch (error) {
-      console.log('Renove authentication token failed :', error?.message);
-    }
-  };
-  const signOut = async () => {
-    try {
-      await GoogleSignin.signOut();
-      await auth().signOut();
-      let url = 'http://10.0.2.2:8000/api/google-callback/auth/google-signout';
-      let response = await axios.post(url, token, {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if ((response.status = 200)) {
-        await removeToken();
-      }
-    } catch (error) {
-      console.error('Error revoking token:', error);
-    }
-  };
 
   useEffect(() => {
     return () => {
@@ -133,12 +96,12 @@ const VerificationScreen = ({}) => {
       alert('Please fill all fields and select both front and back images');
       return;
     }
-
     const frontFileName = selectedImageUriFront.split('/').pop();
     const backFileName = selectedImageUriBack.split('/').pop();
     const frontExtension = frontFileName.split('.').pop();
     const backExtension = backFileName.split('.').pop();
     const formData = new FormData();
+
     formData.append('imageFront', {
       uri: selectedImageUriFront,
       name: `${frontFileName}`,
@@ -152,7 +115,7 @@ const VerificationScreen = ({}) => {
     formData.append('firstName', firstName);
     formData.append('lastName', lastName);
     formData.append('course', course);
-    formData.append('user_id', 2);
+    formData.append('user_id', userData.id);
 
     try {
       let url = 'http://10.0.2.2:8000/api/student-validation';
@@ -165,11 +128,12 @@ const VerificationScreen = ({}) => {
       });
       const data = response.data;
       if (data) {
-        console.log(data);
+        navigation.navigate('VerificationConfirmation');
+      } else {
+        console.log('Something went wrong.');
       }
     } catch (err) {
       console.log(err);
-      alert('Something went wrong');
     } finally {
       setSelectedImageUriFront(null);
       setSelectedImageUriBack(null);
@@ -327,19 +291,8 @@ const VerificationScreen = ({}) => {
           />
         </View>
 
-        <View style={{marginBottom: 12}}>
-          <Button
-            onPress={signOut}
-            title="Sign Up"
-            filled
-            style={{
-              marginTop: 18,
-              marginBottom: 4,
-            }}
-          />
-        </View>
 
-        {/* <View style={{marginBottom: 12}}>
+        <View style={{marginBottom: 12}}>
           <Button
             onPress={studentValidation}
             title="Submit"
@@ -349,7 +302,7 @@ const VerificationScreen = ({}) => {
               marginBottom: 4,
             }}
           />
-        </View> */}
+        </View>
       </View>
     </SafeAreaView>
   );

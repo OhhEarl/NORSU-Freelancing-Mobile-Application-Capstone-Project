@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import {ActivityIndicator, StyleSheet} from 'react-native';
 import {NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
@@ -7,14 +7,24 @@ import Signup from '../screens/Signup';
 import Welcome from '../screens/Welcome';
 import VerificationScreen from '../screens/VerificationScreen';
 import VerificationNotification from '../screens/VerificationNotification';
+import VerificationConfirmation from '../screens/VerificationConfirmation';
+import HomeScreen from '../screens/HomeScreen';
 import {AuthProvider, useAuthContext} from '../hooks/AuthContext';
+import {useGetIsStudent} from '../hooks/dataHooks/useGetIsStudent';
+
 const Stack = createNativeStackNavigator();
 
 const AuthenticatedApp = () => {
   const {user, isLoading} = useAuthContext();
+  const [error, loading, isStudent] = useGetIsStudent();
 
-  if (isLoading) {
+
+
+  if (isLoading || loading) {
+    console.log(loading)
     return <ActivityIndicator size="large" style={styles.indicator} />;
+  } else {
+
   }
 
   return (
@@ -22,26 +32,73 @@ const AuthenticatedApp = () => {
       <Stack.Navigator>
         {user && !isLoading ? (
           <>
-            <Stack.Screen
-              name="VerificationNotification" // Set the name of the screen
-              component={VerificationNotification} // Specify the component to render
-              options={{
-                title: 'Verify ID', // Set the title of the screen
-                headerStyle: {
-                  backgroundColor: '#41b5bd',
-                },
-                headerTintColor: '#fff',
-                headerTitleStyle: {
-                  fontWeight: '400',
-                },
-                headerTitleAlign: 'center',
-              }}
-            />
-            <Stack.Screen
-              name="VerificationScreen"
-              component={VerificationScreen}
-              options={{headerShown: false}}
-            />
+            {isStudent !== null && !loading ? (
+              isStudent.is_student === 0 ? (
+                <Stack.Screen
+                  name="VerificationConfirmation"
+                  component={VerificationConfirmation}
+                  options={{headerShown: false}}
+                />
+              ) : isStudent.is_student === 1  && !loading ? (
+                <Stack.Screen
+                  name="HomeScreen"
+                  component={HomeScreen}
+                  options={{headerShown: false}}
+                />
+              ) : (
+                <>
+                  <Stack.Screen
+                    name="VerificationNotification"
+                    component={VerificationNotification}
+                    options={{
+                      title: 'Verify ID',
+                      headerStyle: {
+                        backgroundColor: '#41b5bd',
+                      },
+                      headerTintColor: '#fff',
+                      headerTitleStyle: {
+                        fontWeight: '400',
+                      },
+                      headerTitleAlign: 'center',
+                    }}
+                  />
+                  <Stack.Screen
+                    name="VerificationScreen"
+                    component={VerificationScreen}
+                    options={{headerShown: false}}
+                  />
+                  
+                </>
+              )
+            ) : (
+              <>
+                <Stack.Screen
+                  name="VerificationNotification"
+                  component={VerificationNotification}
+                  options={{
+                    title: 'Verify ID',
+                    headerStyle: {
+                      backgroundColor: '#41b5bd',
+                    },
+                    headerTintColor: '#fff',
+                    headerTitleStyle: {
+                      fontWeight: '400',
+                    },
+                    headerTitleAlign: 'center',
+                  }}
+                />
+                <Stack.Screen
+                  name="VerificationScreen"
+                  component={VerificationScreen}
+                  options={{headerShown: false}}
+                />
+                 <Stack.Screen
+                  name="VerificationConfirmation"
+                  component={VerificationConfirmation}
+                  options={{headerShown: false}}
+                />
+              </>
+            )}
           </>
         ) : (
           <>

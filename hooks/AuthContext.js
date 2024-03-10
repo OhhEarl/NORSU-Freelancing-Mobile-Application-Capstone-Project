@@ -1,5 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { ActivityIndicator, View, Text, Button } from 'react-native';
+import React, {createContext, useContext, useEffect, useState} from 'react';
 import auth from '@react-native-firebase/auth';
 import {
   GoogleSignin,
@@ -7,7 +6,7 @@ import {
 } from '@react-native-google-signin/google-signin';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
-
+import { Alert } from 'react-native';
 GoogleSignin.configure({
   webClientId:
     '1070570385371-6p351s3v9d1tr5mvrqfqhbe4vnn59mhb.apps.googleusercontent.com',
@@ -19,7 +18,7 @@ export const useAuthContext = () => {
   return useContext(AuthContext);
 };
 
-export const AuthProvider = ({ children }) => {
+export const AuthProvider = ({children, navigation}) => {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -36,15 +35,15 @@ export const AuthProvider = ({ children }) => {
       let payload = {idToken: idToken};
       let response = await axios.post(url, payload, {
         headers: {
-          'Accept': 'application/json',
+          Accept: 'application/json',
           'Content-Type': 'application/json',
         },
       });
       const data = response.data;
-      console.log(JSON.stringify(data, null, 2));
+
       if (data && data.user) {
         await AsyncStorage.setItem('token', data.token);
-        await AsyncStorage.setItem('userData', JSON.stringify(data.user)); // Save user data to AsyncStorage
+        AsyncStorage.setItem('userData', JSON.stringify(data.user));
         await auth().signInWithCredential(googleCredential);
       } else {
         console.error('Error: No data or token received from backend');
@@ -61,29 +60,14 @@ export const AuthProvider = ({ children }) => {
       } else if (error.code === statusCodes.SIGN_IN_REQUIRED) {
         showMessage('Sign-in is required.');
       } else {
-        console.error('Error during Google sign-in:', error);
-        navigation.navigate('Login');
+        alert('Something Went Wrong! Please Try Again.')
       }
     } finally {
       setIsLoading(false);
     }
   };
 
-  useEffect(() => {
-    const loadUserData = async () => {
-      try {
-        const storedUserData = await AsyncStorage.getItem('userData');
-        if (storedUserData) {
-          setUserData(JSON.parse(storedUserData));
-        }
-      } catch (error) {
-        console.error('Error loading user data from AsyncStorage:', error);
-      }
-    };
-  
-    loadUserData();
-  }, []);
-  
+
   useEffect(() => {
     const unsubscribe = auth().onAuthStateChanged(user => {
       if (user) {
@@ -97,10 +81,17 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, error, onGoogleButtonPress, userData , setUserData}}>
+    <AuthContext.Provider
+      value={{
+        user,
+        isLoading,
+        error,
+        onGoogleButtonPress,
+        userData,
+        setUserData,
+        isLoading,
+      }}>
       {children}
     </AuthContext.Provider>
   );
 };
-
-// Your screen component remains unchanged

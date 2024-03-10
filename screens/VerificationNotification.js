@@ -1,15 +1,16 @@
 import React from 'react';
-import {View, Text, StyleSheet, Image} from 'react-native';
+import {View, Text, StyleSheet, Image, ActivityIndicator} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import Button from '../components/Buttons/Button';
 
 
 const VerificationNotification = ({navigation}) => {
+
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
-      
-
+    
         <View>
           <Text style={styles.header}>
             We need to verify your identification
@@ -71,3 +72,4 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 });
+

@@ -17,18 +17,30 @@ const Signup = ({navigation}) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
-
   const isFocused = useIsFocused();
+
   useEffect(() => {
     if (!isFocused) {
-      // Clear text fields when screen is blurred
       setEmail('');
       setPassword('');
       setErrorMessage('');
     }
   }, [isFocused]);
 
+  if (errorMessage) {
+    setTimeout(() => {
+      setErrorMessage('');
+    }, 5000); // Clear error message after 5 seconds
+  }
   const handleSignup = async () => {
+    if (!email || !password) {
+      setErrorMessage('Both email and password are required.');
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      setErrorMessage('Please enter a valid email address.');
+    } else if (password.length < 8) {
+      setErrorMessage('Password must be at least 8 characters long.');
+    }
+
     auth()
       .createUserWithEmailAndPassword(email, password)
       .then(userCredential => {
@@ -36,7 +48,7 @@ const Signup = ({navigation}) => {
         if (!user.emailVerified) {
           user.sendEmailVerification();
           navigation.navigate('Login');
-        } 
+        }
       })
       .catch(error => {
         if (error.code === 'auth/email-already-in-use') {
