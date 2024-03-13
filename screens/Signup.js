@@ -1,24 +1,19 @@
-import {
-  View,
-  Text,
-  Image,
-  Pressable,
-  TextInput,
-  TouchableOpacity,
-} from 'react-native';
+import {View, Text, Pressable, TextInput} from 'react-native';
 import React, {useState, useEffect} from 'react';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import Button from '../components/Button';
 import COLORS from '../constants/colors';
 import {useIsFocused} from '@react-navigation/native';
 import auth from '@react-native-firebase/auth';
-
+import DeviceInfo from 'react-native-device-info';
+import axios from 'axios';
 const Signup = ({navigation}) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [loading, setLoading] = useState(false);
   const isFocused = useIsFocused();
-
+  const uniqueId = DeviceInfo.getUniqueId();
   useEffect(() => {
     if (!isFocused) {
       setEmail('');
@@ -27,38 +22,37 @@ const Signup = ({navigation}) => {
     }
   }, [isFocused]);
 
-  if (errorMessage) {
-    setTimeout(() => {
-      setErrorMessage('');
-    }, 5000); // Clear error message after 5 seconds
-  }
   const handleSignup = async () => {
+    setLoading(true);
     if (!email || !password) {
-      setErrorMessage('Both email and password are required.');
-    } else if (!/\S+@\S+\.\S+/.test(email)) {
-      setErrorMessage('Please enter a valid email address.');
+      return;
     } else if (password.length < 8) {
       setErrorMessage('Password must be at least 8 characters long.');
+      setLoading(false);
+      return;
     }
+
+    setErrorMessage('');
 
     auth()
       .createUserWithEmailAndPassword(email, password)
-      .then(userCredential => {
+      .then(async userCredential => {
         const user = userCredential.user;
         if (!user.emailVerified) {
-          user.sendEmailVerification();
+          await user.sendEmailVerification();
           navigation.navigate('Login');
-        }
-      })
-      .catch(error => {
-        if (error.code === 'auth/email-already-in-use') {
-          setErrorMessage('That email address is already in use!');
-        } else if (error.code === 'auth/invalid-email') {
-          setErrorMessage('Invalid email address!');
-        } else {
-          setErrorMessage(error.message || error.toString()); // Update this line to display the error message
+          alert('Please verify your email before logging in.');
+          return;
         }
       });
+  };
+
+  const handleSignupButtonClick = () => {
+    if (!email || !password) {
+      setErrorMessage('Email and password are required.');
+    } else {
+      handleSignup();
+    }
   };
 
   return (
@@ -186,7 +180,7 @@ const Signup = ({navigation}) => {
                 </View> */}
 
         <Button
-          onPress={handleSignup}
+          onPress={handleSignupButtonClick}
           title="Sign Up"
           filled
           style={{

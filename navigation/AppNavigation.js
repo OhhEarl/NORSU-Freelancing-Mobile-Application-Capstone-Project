@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React from 'react';
 import {ActivityIndicator, StyleSheet} from 'react-native';
 import {NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
@@ -11,26 +11,23 @@ import VerificationConfirmation from '../screens/VerificationConfirmation';
 import HomeScreen from '../screens/HomeScreen';
 import {AuthProvider, useAuthContext} from '../hooks/AuthContext';
 import {useGetIsStudent} from '../hooks/dataHooks/useGetIsStudent';
-
+import {BottomTabNavigator} from './BottomTabNavigator';
 const Stack = createNativeStackNavigator();
 
 const AuthenticatedApp = () => {
-  const {user, isLoading} = useAuthContext();
+  const {user, isLoading, isEmailVerified} = useAuthContext();
   const [error, loading, isStudent] = useGetIsStudent();
 
-
-
   if (isLoading || loading) {
-    console.log(loading)
     return <ActivityIndicator size="large" style={styles.indicator} />;
   } else {
-
+    console.log(isStudent);
   }
 
   return (
     <NavigationContainer>
       <Stack.Navigator>
-        {user && !isLoading ? (
+        {user && isEmailVerified && !isLoading ? (
           <>
             {isStudent !== null && !loading ? (
               isStudent.is_student === 0 ? (
@@ -39,10 +36,10 @@ const AuthenticatedApp = () => {
                   component={VerificationConfirmation}
                   options={{headerShown: false}}
                 />
-              ) : isStudent.is_student === 1  && !loading ? (
+              ) : isStudent.is_student === 1 && !loading ? (
                 <Stack.Screen
-                  name="HomeScreen"
-                  component={HomeScreen}
+                  name="BottomTabNavigator"
+                  component={BottomTabNavigator} // Render BottomTabNavigator within a Screen component
                   options={{headerShown: false}}
                 />
               ) : (
@@ -67,7 +64,6 @@ const AuthenticatedApp = () => {
                     component={VerificationScreen}
                     options={{headerShown: false}}
                   />
-                  
                 </>
               )
             ) : (
@@ -92,7 +88,7 @@ const AuthenticatedApp = () => {
                   component={VerificationScreen}
                   options={{headerShown: false}}
                 />
-                 <Stack.Screen
+                <Stack.Screen
                   name="VerificationConfirmation"
                   component={VerificationConfirmation}
                   options={{headerShown: false}}

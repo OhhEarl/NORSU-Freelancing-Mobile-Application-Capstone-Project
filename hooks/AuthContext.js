@@ -6,11 +6,12 @@ import {
 } from '@react-native-google-signin/google-signin';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
-import { Alert } from 'react-native';
+import {AxiosError} from 'axios';
 GoogleSignin.configure({
   webClientId:
     '1070570385371-6p351s3v9d1tr5mvrqfqhbe4vnn59mhb.apps.googleusercontent.com',
 });
+import DeviceInfo from 'react-native-device-info';
 
 const AuthContext = createContext();
 
@@ -23,7 +24,12 @@ export const AuthProvider = ({children, navigation}) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [userData, setUserData] = useState(null);
-
+  const uniqueId = DeviceInfo.getUniqueId();
+  const [email, setEmailLogin] = useState('');
+  const [password, setPasswordLogin] = useState('');
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
+  const [token, setToken] = useState(null);
+  const [userDataLoading, setUserDataLoading] = useState(false);
   const onGoogleButtonPress = async () => {
     try {
       setIsLoading(true);
@@ -40,13 +46,10 @@ export const AuthProvider = ({children, navigation}) => {
         },
       });
       const data = response.data;
-
-      if (data && data.user) {
-        await AsyncStorage.setItem('token', data.token);
-        AsyncStorage.setItem('userData', JSON.stringify(data.user));
+      if (data) {
+        await AsyncStorage.setItem('userInformation', JSON.stringify(data));
+        await setUserData(data);
         await auth().signInWithCredential(googleCredential);
-      } else {
-        console.error('Error: No data or token received from backend');
       }
     } catch (error) {
       if (error.code === statusCodes.SIGN_IN_CANCELLED) {
@@ -54,27 +57,80 @@ export const AuthProvider = ({children, navigation}) => {
           navigation.navigate('Login'),
         );
       } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-        console.log(statusCodes.PLAY_SERVICES_NOT_AVAILABLE);
+        alert(statusCodes.PLAY_SERVICES_NOT_AVAILABLE);
       } else if (error.code === statusCodes.IN_PROGRESS) {
-        showMessage('Sign-in process is in progress.');
+        alert('Sign-in process is in progress.');
       } else if (error.code === statusCodes.SIGN_IN_REQUIRED) {
-        showMessage('Sign-in is required.');
+        alert('Signin Required');
       } else {
-        alert('Something Went Wrong! Please Try Again.')
+        setError('Something Went Wrong! Please Try Again.');
       }
     } finally {
       setIsLoading(false);
     }
   };
 
+  const handleSignIn = async () => {
+    setIsLoading(true);
+    try {
+      const userCredential = await auth().signInWithEmailAndPassword(
+        email,
+        password,
+      );
+      const userAuth = userCredential.user;
+
+      if (!userAuth.emailVerified) {
+        alert(
+          'Email is not verified. Please verify your email before logging in.',
+        );
+      } else {
+        const response = await axios.post(
+          'http://10.0.2.2:8000/api/email-password/auth/register',
+          {
+            email: userAuth.email,
+            password: password,
+          },
+          {
+            headers: {
+              Accept: 'application/json',
+              'Content-Type': 'application/json',
+            },
+          },
+        );
+        const data = response.data;
+        if (data) {
+          await AsyncStorage.setItem(
+            'userInformation',
+            JSON.stringify(data),
+          );
+          await setUserData(data);
+        }
+        setUser(userAuth);
+        setIsLoading(false);
+      }
+    } catch (error) {
+      if (error.code === 'auth/invalid-email') {
+        setError('Invalid email address.');
+      } else if (error.code === 'auth/user-disabled') {
+        setError('The user account has been disabled.');
+      } else if (error.code === 'auth/invalid-credential') {
+        setError('Invalid email address or password.');
+      } else {
+        alert(error);
+      }
+    }
+  };
 
   useEffect(() => {
     const unsubscribe = auth().onAuthStateChanged(user => {
+      setIsLoading(true);
       if (user) {
         setUser(user);
+        setIsEmailVerified(user.emailVerified);
       } else {
         setUser(null);
       }
+      setIsLoading(false);
     });
 
     return () => unsubscribe();
@@ -84,12 +140,17 @@ export const AuthProvider = ({children, navigation}) => {
     <AuthContext.Provider
       value={{
         user,
+        setUser,
         isLoading,
         error,
         onGoogleButtonPress,
         userData,
+        handleSignIn,
+        setEmailLogin,
+        setPasswordLogin,
+        isEmailVerified,
         setUserData,
-        isLoading,
+        setIsLoading
       }}>
       {children}
     </AuthContext.Provider>

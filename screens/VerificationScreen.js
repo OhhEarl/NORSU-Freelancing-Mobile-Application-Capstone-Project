@@ -1,28 +1,23 @@
-import {
-  View,
-  TextInput,
-  StyleSheet,
-  Image,
-  Text,
-  ActivityIndicator,
-} from 'react-native';
+import {View, TextInput, StyleSheet, Image, Text} from 'react-native';
 import Button from '../components/Buttons/Button';
 import COLORS from '../constants/colors';
 import {React, useEffect, useState, useContext} from 'react';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import axios from 'axios';
-
-
 import {launchImageLibrary} from 'react-native-image-picker';
+import {GoogleSignin} from '@react-native-google-signin/google-signin';
+import auth from '@react-native-firebase/auth';
+import {useAuthContext} from '../hooks/AuthContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const VerificationScreen = ({navigation}) => {
+const VerificationScreen = ({navigation, route}) => {
   const [selectedImageUriFront, setSelectedImageUriFront] = useState(null);
   const [selectedImageUriBack, setSelectedImageUriBack] = useState(null);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [course, setCourse] = useState('');
 
-
+  const {userID} = route.params;
 
   useEffect(() => {
     return () => {
@@ -30,6 +25,8 @@ const VerificationScreen = ({navigation}) => {
       setSelectedImageUriBack(null);
     };
   }, []);
+
+
 
   const frontID = async () => {
     try {
@@ -115,7 +112,7 @@ const VerificationScreen = ({navigation}) => {
     formData.append('firstName', firstName);
     formData.append('lastName', lastName);
     formData.append('course', course);
-    formData.append('user_id', userData.id);
+    formData.append('user_id', userID.user.id);
 
     try {
       let url = 'http://10.0.2.2:8000/api/student-validation';
@@ -123,17 +120,17 @@ const VerificationScreen = ({navigation}) => {
         headers: {
           Accept: 'application/json',
           'Content-Type': 'multipart/form-data',
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${userID.token}`,
         },
       });
       const data = response.data;
       if (data) {
         navigation.navigate('VerificationConfirmation');
       } else {
-        console.log('Something went wrong.');
+        alert('Something went wrong. Please Try Again!');
       }
     } catch (err) {
-      console.log(err);
+      alert(err);
     } finally {
       setSelectedImageUriFront(null);
       setSelectedImageUriBack(null);
@@ -290,7 +287,6 @@ const VerificationScreen = ({navigation}) => {
             filled
           />
         </View>
-
 
         <View style={{marginBottom: 12}}>
           <Button

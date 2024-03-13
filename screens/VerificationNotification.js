@@ -1,16 +1,33 @@
-import React from 'react';
 import {View, Text, StyleSheet, Image, ActivityIndicator} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import Button from '../components/Buttons/Button';
-
-
+import {React, useEffect, useState, useContext} from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {useAuthContext} from '../hooks/AuthContext';
 const VerificationNotification = ({navigation}) => {
+  const {userData, setUserData, isLoading, setIsLoading} = useAuthContext();
 
+  useEffect(() => {
+    const loadUserData = async () => {
+      try {
+        const fetchUserData = await AsyncStorage.getItem('userInformation');
+        if (fetchUserData !== null) {
+          await setUserData(JSON.parse(fetchUserData));
+        }
+      } catch (error) {
+     Alert(error)
+      }
+    };
 
+    loadUserData();
+  }, []); // Empty dependency array for one-time data fetch
+
+  if (isLoading) {
+    return <ActivityIndicator size="large" style={styles.indicator} />;
+  } 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
-    
         <View>
           <Text style={styles.header}>
             We need to verify your identification
@@ -31,7 +48,9 @@ const VerificationNotification = ({navigation}) => {
         <View>
           <Button
             title="Verify"
-            onPress={() => navigation.navigate('VerificationScreen')}
+            onPress={() =>
+              navigation.navigate('VerificationScreen', {userID: userData})
+            }
             filled
           />
         </View>
@@ -72,4 +91,3 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 });
-

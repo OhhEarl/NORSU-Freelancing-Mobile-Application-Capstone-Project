@@ -5,61 +5,38 @@ import {
   Pressable,
   TextInput,
   TouchableOpacity,
-
+  ActivityIndicator,
+  StyleSheet,
 } from 'react-native';
 import {useState, useEffect, React} from 'react';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import COLORS from '../constants/colors';
 import Button from '../components/Button';
 import {useIsFocused} from '@react-navigation/native';
-import auth from '@react-native-firebase/auth';
-import { useAuthContext } from '../hooks/AuthContext';
+
+import {useAuthContext} from '../hooks/AuthContext';
 
 const Login = ({navigation}) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
-  const [loading, isLoading] = useState(false);
   const [isPasswordShown, setIsPasswordShown] = useState(false);
   const isFocused = useIsFocused();
-  const { onGoogleButtonPress } = useAuthContext(); // Access onGoogleButtonPress function
-
-
+  const {
+    error,
+    onGoogleButtonPress,
+    handleSignIn,
+    setEmailLogin,
+    setPasswordLogin,
+  } = useAuthContext(); // Access
 
   useEffect(() => {
     if (!isFocused) {
-      // Clear text fields when screen is blurred
       setEmail('');
       setPassword('');
       setErrorMessage('');
     }
   }, [isFocused]);
-
-
-  const handleSignIn = async () => {
-    auth()
-      .signInWithEmailAndPassword(email, password)
-      .then(userCredential => {
-        const user = userCredential.user;
-        if (!user.emailVerified) {
-          navigation.navigate('EmailVerification');
-        } else {
-          navigation.navigate('VerificationScreen');
-        }
-      })
-      .catch(error => {
-        if (error.code === 'auth/invalid-email') {
-          setErrorMessage('Invalid email address.');
-        } else if (error.code === 'auth/user-disabled') {
-          setErrorMessage('The user account has been disabled.');
-        } else if (error.code === 'auth/invalid-credential') {
-          setErrorMessage('Invalid email address or password.');
-        } else {
-          setErrorMessage(error.message || error.toString()); // Update this line to display the error message
-        }
-      });
-  };
-
 
   return (
     <SafeAreaView style={{flex: 1, backgroundColor: COLORS.white}}>
@@ -109,7 +86,10 @@ const Login = ({navigation}) => {
               placeholder="Enter your email address"
               placeholderTextColor={COLORS.black}
               keyboardType="email-address"
-              onChangeText={text => setEmail(text)}
+              onChangeText={text => {
+                setEmail(text); // Update local state
+                setEmailLogin(text);
+              }}
               value={email}
               autoCapitalize="none"
               style={{
@@ -143,7 +123,10 @@ const Login = ({navigation}) => {
             <TextInput
               placeholder="Enter your password"
               placeholderTextColor={COLORS.black}
-              onChangeText={text => setPassword(text)}
+              onChangeText={text => {
+                setPassword(text); // Update local state
+                setPasswordLogin(text);
+              }}
               value={password}
               style={{
                 width: '100%',
@@ -168,16 +151,18 @@ const Login = ({navigation}) => {
                 </TouchableOpacity> */}
           </View>
 
-          <Text
-            style={{
-              fontSize: 14,
-              fontWeight: 400,
-              marginVertical: 8,
-              color: 'red',
-              marginLeft: 3,
-            }}>
-            {errorMessage}
-          </Text>
+          {error && (
+            <Text
+              style={{
+                fontSize: 14,
+                fontWeight: 400,
+                marginVertical: 8,
+                color: 'red',
+                marginLeft: 3,
+              }}>
+              {error}
+            </Text>
+          )}
         </View>
 
         {/* <View style={{
@@ -234,7 +219,7 @@ const Login = ({navigation}) => {
             justifyContent: 'center',
           }}>
           <TouchableOpacity
-            onPress={ onGoogleButtonPress}
+            onPress={onGoogleButtonPress}
             style={{
               flex: 1,
               alignItems: 'center',
@@ -290,3 +275,15 @@ const Login = ({navigation}) => {
 };
 
 export default Login;
+const styles = StyleSheet.create({
+  indicator: {
+    flex: 1,
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});
