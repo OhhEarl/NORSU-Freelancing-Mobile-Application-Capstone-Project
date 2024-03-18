@@ -12,6 +12,7 @@ import HomeScreen from '../screens/HomeScreen';
 import {AuthProvider, useAuthContext} from '../hooks/AuthContext';
 import {useGetIsStudent} from '../hooks/dataHooks/useGetIsStudent';
 import {BottomTabNavigator} from './BottomTabNavigator';
+import EditProfileScreen from '../screens/EditProfileScreen';
 const Stack = createNativeStackNavigator();
 
 const AuthenticatedApp = () => {
@@ -20,8 +21,6 @@ const AuthenticatedApp = () => {
 
   if (isLoading || loading) {
     return <ActivityIndicator size="large" style={styles.indicator} />;
-  } else {
-    console.log(isStudent);
   }
 
   return (
@@ -115,6 +114,11 @@ const AuthenticatedApp = () => {
             />
           </>
         )}
+        <Stack.Screen
+          name="EditProfileScreen"
+          component={EditProfileScreen}
+          options={{headerShown: false}}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );

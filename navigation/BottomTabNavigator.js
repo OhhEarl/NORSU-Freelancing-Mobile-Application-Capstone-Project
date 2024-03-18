@@ -3,73 +3,77 @@ import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import Logout from '../hooks/Logout';
 import HomeScreen from '../screens/HomeScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import  CreateProjectScreen  from '../screens/CreateProjectScreen';
 import {StyleSheet, TouchableOpacity, View} from 'react-native';
 import {Text} from 'react-native-paper';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import Ionicons from 'react-native-vector-icons/Ionicons';
-import COLORS from '../constants/colors';
+
+import Entypo from 'react-native-vector-icons/Entypo';
+import { COLORS } from '../assets/constants';
+import IMAGES from '../assets/images';
+import {Image} from 'react-native';
+import COLOR from '../constants/colors';
 
 const Tab = createBottomTabNavigator();
 export const BottomTabNavigator = () => {
   return (
-    <Tab.Navigator>
-      <Tab.Screen
-        name="Home"
-        component={HomeScreen}
-        options={{
-          title: '',
-          headerStyle: {
-            backgroundColor: COLORS.grey,
-            elevation: 0,
-          },
-          headerRight: () => (
-            <View style={styles.log}>
-              <MaterialIcons
-                name="logout"
-                size={25}
-                color="#4a4848"
-                style={{marginRight: 5}}
-              />
-              <TouchableOpacity onPress={Logout}>
-                <Text style={{fontSize: 16}}>Logout</Text>
-              </TouchableOpacity>
-            </View>
-          ),
-        }}
+    <Tab.Navigator initialRouteName={HomeScreen}>
+    <Tab.Screen
+      name={"Home Screen"}
+      component={HomeScreen}
+      options={{
+        title: 'Home',
+        tabBarIcon: ({focused}) => (
+          <Image
+            source={IMAGES.HOME}
+            style={{
+              height: 25,
+              width: 25,
+              tintColor: focused ? COLOR.primary : COLOR.BLACK,
+            }}
+          />
+        ),
+        tabBarActiveTintColor: COLORS.primary,
+        tabBarInactiveTintColor: COLORS.BLACK,
+      }}
+    />
+ 
+ <Tab.Screen
+  name={'CreateProjectScreen'}
+  component={CreateProjectScreen}
+  options={{
+    title: 'Create Project',
+    headerShown: false, 
+    tabBarIcon: ({ focused }) => (
+      <Entypo
+        name="suitcase" 
+        size={25}
+        color={focused ? COLOR.primary : COLOR.black}
       />
-      <Tab.Screen
-        name="Profile"
-        component={ProfileScreen}
-        options={{
-          title: '',
-          headerStyle: {
-            backgroundColor: COLORS.secondary,
-            elevation: 0,
-          },
-          tabBarIcon: ({color, size}) => (
-            <View style={{alignItems: 'center'}}>
-              <Ionicons name="people-outline" color={color} size={30} />
-            </View>
-          ),
-          headerRight: () => (
-            <View style={styles.log}>
-              <MaterialIcons
-                name="logout"
-                size={25}
-                color="white"
-                style={{marginRight: 5}}
-              />
-              <TouchableOpacity onPress={Logout}>
-                <Text
-                  style={{fontSize: 16, color: COLORS.white, fontWeight: 800}}>
-                  Logout
-                </Text>
-              </TouchableOpacity>
-            </View>
-          ),
-        }}
-      />
-    </Tab.Navigator>
+    ),
+  }}
+/>
+  
+    <Tab.Screen
+      name={'ProfileScreen'}
+      component={ProfileScreen}
+      options={{
+        title: 'Profile',
+         headerShown: false, 
+        tabBarIcon: ({focused}) => (
+          <Image
+            source={IMAGES.PROFILE}
+            style={{
+              height: 25,
+              width: 25,
+              tintColor: focused ? COLOR.primary : COLORS.BLACK,
+            }}
+          />
+        ),
+        tabBarActiveTintColor: COLORS.primary,
+        tabBarInactiveTintColor: COLORS.BLACK,
+      }}
+    />
+  </Tab.Navigator>
   );
 };
 
