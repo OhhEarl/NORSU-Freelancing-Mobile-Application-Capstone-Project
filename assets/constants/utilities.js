@@ -6,19 +6,27 @@ const UTILITIES = {
         borderRadius: 5,
         paddingHorizontal: 10,
         width: '100%',
-        justifyContent: 'space-around',
         alignItems: 'center',
         flexDirection: 'row',
-        backgroundColor: COLORS.inputField,
+        backgroundColor: "#fff",
         paddingLeft: 16,
         fontFamily: 'Raleway-Medium',
+        color: COLORS.PLACEHOLDER_COLOR,
+        shadowColor: "#000000",
+        shadowOffset: {
+            width: 0,
+            height: 3,
+        },
+        shadowOpacity: 0.18,
+        shadowRadius: 4.59,
+        elevation: 5
     },
     title: {
-        fontSize: 18,
         marginBottom: 5,
         marginStart: 4,
         fontFamily: 'Roboto-Bold',
-        color: COLORS.BLACKS
+        color: COLORS.primary,
+        fontSize: 16
     },
 
     header: {
@@ -30,7 +38,7 @@ const UTILITIES = {
     inputContainer: {
         marginTop: 16,
     },
-   
+
 }
 
 export default UTILITIES

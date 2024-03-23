@@ -6,7 +6,7 @@ const COLORS = {
   GRAY_LIGHT: 'lightgray',
   ORANGE: 'orange',
   white: "#FFFFFF",
-  black: "#222222",
+  black: "#212121",
   primary: "#41b5bd",
   secondary: "#39B68D",
   grey: "#CCCCCC",
