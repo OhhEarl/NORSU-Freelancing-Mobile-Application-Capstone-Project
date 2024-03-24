@@ -10,10 +10,10 @@ import {
 } from "react-native";
 import { useState, useEffect, React } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import COLORS from "../constants/colors";
+
 import Button from "../components/Button";
 import { useIsFocused } from "@react-navigation/native";
-
+import { COLORS, UTILITIES } from "../assets/constants/index";
 import { useAuthContext } from "../hooks/AuthContext";
 
 const Login = ({ navigation }) => {
@@ -42,10 +42,10 @@ const Login = ({ navigation }) => {
         <View style={{ marginVertical: 22 }}>
           <Text
             style={{
-              fontSize: 22,
-              fontWeight: "bold",
+              fontSize: 24,
               marginVertical: 12,
               color: COLORS.black,
+              fontFamily: "Roboto-Bold",
             }}
           >
             Hi Welcome Back ! 👋
@@ -55,6 +55,7 @@ const Login = ({ navigation }) => {
             style={{
               fontSize: 16,
               color: COLORS.black,
+              fontFamily: "Roboto-Regular",
             }}
           >
             Hello again you have been missed!
@@ -62,28 +63,9 @@ const Login = ({ navigation }) => {
         </View>
 
         <View style={{ marginBottom: 12 }}>
-          <Text
-            style={{
-              fontSize: 16,
-              fontWeight: 400,
-              marginVertical: 8,
-            }}
-          >
-            Email address
-          </Text>
+          <Text style={UTILITIES.title}>Email address</Text>
 
-          <View
-            style={{
-              width: "100%",
-              height: 48,
-              borderColor: COLORS.black,
-              borderWidth: 1,
-              borderRadius: 8,
-              alignItems: "center",
-              justifyContent: "center",
-              paddingLeft: 22,
-            }}
-          >
+          <View>
             <TextInput
               placeholder="Enter your email address"
               placeholderTextColor={COLORS.black}
@@ -94,36 +76,15 @@ const Login = ({ navigation }) => {
               }}
               value={email}
               autoCapitalize="none"
-              style={{
-                width: "100%",
-              }}
+              style={UTILITIES.inputField}
             />
           </View>
         </View>
 
-        <View style={{ marginBottom: 12 }}>
-          <Text
-            style={{
-              fontSize: 16,
-              fontWeight: 400,
-              marginVertical: 8,
-            }}
-          >
-            Password
-          </Text>
+        <View style={{ marginBottom: 18, marginTop: 18 }}>
+          <Text style={UTILITIES.title}>Password</Text>
 
-          <View
-            style={{
-              width: "100%",
-              height: 48,
-              borderColor: COLORS.black,
-              borderWidth: 1,
-              borderRadius: 8,
-              alignItems: "center",
-              justifyContent: "center",
-              paddingLeft: 22,
-            }}
-          >
+          <View>
             <TextInput
               placeholder="Enter your password"
               placeholderTextColor={COLORS.black}
@@ -132,9 +93,7 @@ const Login = ({ navigation }) => {
                 setPasswordLogin(text);
               }}
               value={password}
-              style={{
-                width: "100%",
-              }}
+              style={UTILITIES.inputField}
             />
 
             {/* <TouchableOpacity
@@ -262,7 +221,13 @@ const Login = ({ navigation }) => {
             marginVertical: 22,
           }}
         >
-          <Text style={{ fontSize: 16, color: COLORS.black }}>
+          <Text
+            style={{
+              fontSize: 16,
+              color: COLORS.black,
+              fontFamily: "Roboto-Regular",
+            }}
+          >
             Don't have an account?
           </Text>
           <Pressable onPress={() => navigation.navigate("Signup")}>
@@ -270,9 +235,10 @@ const Login = ({ navigation }) => {
               style={{
                 fontSize: 16,
                 color: COLORS.primary,
-                fontWeight: "bold",
+
                 marginLeft: 6,
                 textDecorationLine: "underline",
+                fontFamily: "Roboto-Bold",
               }}
             >
               Register

@@ -1,4 +1,4 @@
-import React, {createContext, useContext, useEffect, useState} from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import auth from '@react-native-firebase/auth';
 import {
   GoogleSignin,
@@ -6,7 +6,7 @@ import {
 } from '@react-native-google-signin/google-signin';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
-import {AxiosError} from 'axios';
+import { AxiosError } from 'axios';
 GoogleSignin.configure({
   webClientId:
     '1070570385371-6p351s3v9d1tr5mvrqfqhbe4vnn59mhb.apps.googleusercontent.com',
@@ -19,7 +19,7 @@ export const useAuthContext = () => {
   return useContext(AuthContext);
 };
 
-export const AuthProvider = ({children, navigation}) => {
+export const AuthProvider = ({ children, navigation }) => {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -33,12 +33,12 @@ export const AuthProvider = ({children, navigation}) => {
   const onGoogleButtonPress = async () => {
     try {
       setIsLoading(true);
-      await GoogleSignin.hasPlayServices({showPlayServicesUpdateDialog: true});
-      const {idToken} = await GoogleSignin.signIn();
+      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+      const { idToken } = await GoogleSignin.signIn();
       const googleCredential = auth.GoogleAuthProvider.credential(idToken);
 
       let url = 'http://10.0.2.2:8000/api/google-callback/auth/google-login';
-      let payload = {idToken: idToken};
+      let payload = { idToken: idToken };
       let response = await axios.post(url, payload, {
         headers: {
           Accept: 'application/json',
