@@ -1,11 +1,14 @@
-import { View, Text, StyleSheet, ActivityIndicator, Image } from "react-native";
+import { View, Text, StyleSheet, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Button from "../components/Buttons/Button";
-import { React, useEffect, alert } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { React } from "react";
 import { useAuthContext } from "../hooks/AuthContext";
-
+import AsyncStorage from "@react-native-async-storage/async-storage";
 const VerificationNotification = ({ navigation }) => {
+  const { userData } = useAuthContext();
+
+  retrieveData();
+  console.log(userData);
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
@@ -28,7 +31,7 @@ const VerificationNotification = ({ navigation }) => {
         <View style={styles.firstParagraphHeader}>
           <Text style={styles.firstParagraph}>
             In order to proceed, we need to be 100% sure that you are a student
-            of Negros Oriental State University (NORSU) Dumaguete City.
+            of Negros Oriental State University (NORSU), Dumaguete City.
           </Text>
           <Text style={styles.secondParagraphHeader}>
             You just need to fill up some information which will help us to
@@ -45,7 +48,8 @@ const VerificationNotification = ({ navigation }) => {
         >
           <Button
             title="Verify"
-            onPress={() => navigation.navigate("VerificationScreen")}
+            // onPress={() => navigation.navigate("VerificationScreen")}
+            onPress={() => navigation.navigate("MultiStepForm")}
             filled
           />
         </View>

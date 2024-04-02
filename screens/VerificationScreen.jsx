@@ -1,6 +1,13 @@
-import { View, TextInput, StyleSheet, Image, Text } from "react-native";
+import {
+  View,
+  StyleSheet,
+  Image,
+  Text,
+  ScrollView,
+  FlatList,
+} from "react-native";
 import Button from "../components/Buttons/Button";
-import { React, useEffect, useState, useContext } from "react";
+import { React, useEffect, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import axios from "axios";
 import { launchImageLibrary } from "react-native-image-picker";
@@ -8,16 +15,25 @@ import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import auth from "@react-native-firebase/auth";
 import { useAuthContext } from "../hooks/AuthContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { COLORS, UTILITIES } from "../assets/constants/index";
+import { COLORS } from "../assets/constants/index";
+import { TextInput } from "react-native-paper";
+import areasOfExpertise from "../hooks/AreaOfExpertise";
 
 const VerificationScreen = ({ navigation, route }) => {
-  const [selectedImageUriFront, setSelectedImageUriFront] = useState(null);
-  const [selectedImageUriBack, setSelectedImageUriBack] = useState(null);
+  const { userData, setUserData, isLoading } = useAuthContext();
+  const [token, setToken] = useState(null);
+
+  const [username, setUsername] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [course, setCourse] = useState("");
-  const { userData, setUserData, isLoading } = useAuthContext();
-  const [token, setToken] = useState(null);
+  const [IDnumber, setIDnumber] = useState("");
+  const [yearLevel, setYearLevel] = useState("");
+  const [selectedImageUriFront, setSelectedImageUriFront] = useState(null);
+  const [selectedImageUriBack, setSelectedImageUriBack] = useState(null);
+  const [inputText, setInputText] = useState("");
+  const [suggestions, setSuggestions] = useState([]);
+
   useEffect(() => {
     return () => {
       setSelectedImageUriFront(null);
@@ -48,63 +64,28 @@ const VerificationScreen = ({ navigation, route }) => {
         await setUserData(null);
       }
     } catch (error) {
-      console.error("Error revoking token:", error);
+      alert(error);
     }
   };
 
-  const frontID = async () => {
-    try {
-      const result = await launchImageLibrary();
-      if (result.didCancel) {
-        return;
-      }
-      if (result.error) {
-        console.error("ImagePicker Error: ", result.error);
-        return;
-      }
-      const fileSizeLimitMB = 2;
-      const fileSizeInMB = result.assets[0].fileSize / (1024 * 1024); // Convert to MB
-      const fileFormatType = result.assets[0].type; // Get file format type
-      const fileFormat = ["image/jpeg", "image/jpg", "image/png"];
-      if (fileSizeInMB > fileSizeLimitMB) {
-        alert("Cannot upload files larger than 2MB");
-      } else if (!fileFormat.includes(fileFormatType)) {
-        alert("Please upload an image in JPEG, JPG, or PNG format.");
-      } else {
-        const selectedImageUriFront = result.assets[0].uri;
-        setSelectedImageUriFront(selectedImageUriFront);
-      }
-    } catch (error) {
-      console.error("Error:", error);
-    }
+  const handleInputChange = (text) => {
+    setInputText(text); // Update the state
+    console.log(text); // Log the current value of the input
+    const filteredSuggestions = Object.values(
+      areasOfExpertise.areasOfExpertise
+    ).filter((category) => category.toLowerCase().includes(text.toLowerCase()));
+    setSuggestions(filteredSuggestions);
+  };
+  const handleSuggestionPress = (category) => {
+    const key = Object.keys(areasOfExpertise.areasOfExpertise).find(
+      (key) => areasOfExpertise.areasOfExpertise[key] === category
+    );
+    console.log("Selected suggestion - Key:", key, "Value:", category);
+    setInputText(category);
+    setSuggestions([]); // Clear suggestions when a suggestion is selected
   };
 
-  const backID = async () => {
-    try {
-      const result = await launchImageLibrary();
-      if (result.didCancel) {
-        return;
-      }
-      if (result.error) {
-        console.error("ImagePicker Error: ", result.error);
-        return;
-      }
-      const fileSizeLimitMB = 2;
-      const fileSizeInMB = result.assets[0].fileSize / (1024 * 1024); // Convert to MB
-      const fileFormatType = result.assets[0].type; // Get file format type
-      const fileFormat = ["image/jpeg", "image/jpg", "image/png"];
-      if (fileSizeInMB > fileSizeLimitMB) {
-        alert("Cannot upload files larger than 2MB");
-      } else if (!fileFormat.includes(fileFormatType)) {
-        alert("Please upload an image in JPEG, JPG, or PNG format.");
-      } else {
-        const selectedImageUriBack = result?.assets[0]?.uri;
-        setSelectedImageUriBack(selectedImageUriBack);
-      }
-    } catch (error) {
-      console.error("Error:", error);
-    }
-  };
+  const isSuggestion = suggestions.includes(inputText);
 
   const studentValidation = async () => {
     if (
@@ -165,104 +146,137 @@ const VerificationScreen = ({ navigation, route }) => {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.white }}>
-      <View style={{ flex: 1, marginHorizontal: 22, justifyContent: "center" }}>
-        <View style={{ marginVertical: 22 }}>
-          <Text style={UTILITIES.title}>
-            Please fill up the following to proceed!
-          </Text>
-        </View>
-        <View style={{ marginBottom: 12 }}>
-          <Text style={UTILITIES.title}>First Name</Text>
+    <ScrollView>
+      <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.white }}>
+        <View
+          style={{ flex: 1, marginHorizontal: 22, justifyContent: "center" }}
+        >
+          <View style={{ marginVertical: 22 }}>
+            <Text
+              style={{
+                fontSize: 18,
+                fontFamily: "Roboto-Bold",
+                color: "black",
+              }}
+            >
+              Please fill up the following to proceed!
+            </Text>
+          </View>
 
-          <View>
+          <View style={{ marginBottom: 12 }}>
             <TextInput
+              mode="outlined"
+              style={{ margin: 8 }}
+              label="Username"
+              placeholder="Enter your username"
+              onChangeText={(text) => setUsername(text)}
+              value={username}
+              outlineColor={COLORS.black} // Change the outline color based on the theme's primary color
+              activeOutlineColor={COLORS.primary}
+            />
+          </View>
+          <View style={{ marginBottom: 12 }}>
+            <TextInput
+              mode="outlined"
+              style={{ margin: 8 }}
+              label="First Name"
               placeholder="Enter your first name"
-              placeholderTextColor={COLORS.black}
               onChangeText={(text) => setFirstName(text)}
               value={firstName}
-              autoCapitalize="words"
-              style={UTILITIES.inputField}
+              outlineColor={COLORS.black} // Change the outline color based on the theme's primary color
+              activeOutlineColor={COLORS.primary}
             />
           </View>
-        </View>
 
-        <View style={{ marginBottom: 12 }}>
-          <Text style={UTILITIES.title}>Last Name</Text>
-
-          <View>
+          <View style={{ marginBottom: 12 }}>
             <TextInput
+              mode="outlined"
+              style={{ margin: 8 }}
+              label="Last Name"
               placeholder="Enter your last name"
-              placeholderTextColor={COLORS.black}
               onChangeText={(text) => setLastName(text)}
               value={lastName}
-              autoCapitalize="words"
-              style={UTILITIES.inputField}
+              outlineColor={COLORS.black} // Change the outline color based on the theme's primary color
+              activeOutlineColor={COLORS.primary}
             />
           </View>
-        </View>
 
-        <View style={{ marginBottom: 18 }}>
-          <Text style={UTILITIES.title}>Course</Text>
-
-          <View>
+          <View style={{ marginBottom: 12 }}>
             <TextInput
-              placeholder="Enter your full course"
-              placeholderTextColor={COLORS.black}
+              mode="outlined"
+              style={{ margin: 8 }}
+              label="Area of Expertise"
+              placeholder="Choose your area of expertise"
+              value={inputText}
+              onChangeText={handleInputChange}
+              outlineColor={COLORS.black}
+              activeOutlineColor={COLORS.primary}
+            />
+            {isSuggestion && <Text>Input is a suggestion</Text>}
+            <View style={{ backgroundColor: "red" }}>
+              {suggestions.map((item, index) => (
+                <Button
+                  key={index.toString()}
+                  title={item}
+                  onPress={() => handleSuggestionPress(item)}
+                />
+              ))}
+            </View>
+          </View>
+
+          <View style={{ marginBottom: 12 }}>
+            <TextInput
+              mode="outlined"
+              style={{ margin: 8 }}
+              label="Course"
+              placeholder="Enter your course"
               onChangeText={(text) => setCourse(text)}
               value={course}
-              autoCapitalize="words"
-              style={UTILITIES.inputField}
+              outlineColor={COLORS.black} // Change the outline color based on the theme's primary color
+              activeOutlineColor={COLORS.primary}
+            />
+          </View>
+
+          <View style={{ marginBottom: 12 }}>
+            <TextInput
+              mode="outlined"
+              style={{ margin: 8 }}
+              label="ID Number"
+              placeholder="Enter your ID number"
+              onChangeText={(text) => setIDnumber(text)}
+              value={IDnumber}
+              outlineColor={COLORS.black} // Change the outline color based on the theme's primary color
+              activeOutlineColor={COLORS.primary}
+            />
+          </View>
+
+          <View style={{ marginBottom: 12 }}>
+            <TextInput
+              mode="outlined"
+              style={{ margin: 8 }}
+              label="Year Level"
+              placeholder="Enter your year level"
+              onChangeText={(text) => setYearLevel(text)}
+              value={yearLevel}
+              outlineColor={COLORS.black} // Change the outline color based on the theme's primary color
+              activeOutlineColor={COLORS.primary}
+            />
+          </View>
+
+          <View style={{ marginBottom: 12 }}>
+            <Button
+              onPress={studentValidation}
+              title="Submit"
+              filled
+              style={{
+                marginTop: 18,
+                marginBottom: 4,
+              }}
             />
           </View>
         </View>
-
-        <View style={styles.idContainer}>
-          <View style={styles.eachIDContainer}>
-            {selectedImageUriFront && (
-              <Image
-                source={{ uri: selectedImageUriFront }}
-                style={styles.image}
-              />
-            )}
-          </View>
-          <View style={styles.eachIDContainer}>
-            {selectedImageUriBack && (
-              <Image
-                source={{ uri: selectedImageUriBack }}
-                style={styles.image}
-              />
-            )}
-          </View>
-        </View>
-        <View style={styles.idContainerButton}>
-          <Button
-            title="Front ID"
-            onPress={frontID}
-            style={styles.button}
-            filled
-          />
-          <Button
-            title="Back ID"
-            onPress={backID}
-            style={styles.button}
-            filled
-          />
-        </View>
-
-        <View style={{ marginBottom: 12 }}>
-          <Button
-            onPress={signOut}
-            title="Submit"
-            filled
-            style={{
-              marginTop: 18,
-              marginBottom: 4,
-            }}
-          />
-        </View>
-      </View>
-    </SafeAreaView>
+      </SafeAreaView>
+    </ScrollView>
   );
 };
 
@@ -275,11 +289,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 
-  idContainerButton: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginHorizontal: 40, // Add horizontal margin to each containe
-  },
   button: {
     margin: 6,
     borderRadius: 6,
@@ -292,6 +301,11 @@ const styles = StyleSheet.create({
     fontSize: 20,
   },
 
+  idContainerButton: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginHorizontal: 40, // Add horizontal margin to each containe
+  },
   idContainer: {
     flexDirection: "row",
     justifyContent: "space-between",

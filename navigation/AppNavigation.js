@@ -13,6 +13,8 @@ import { AuthProvider, useAuthContext } from '../hooks/AuthContext';
 import { useGetIsStudent } from '../hooks/dataHooks/useGetIsStudent';
 import { BottomTabNavigator } from './BottomTabNavigator';
 import EditProfileScreen from '../screens/EditProfileScreen';
+import MultiStepForm from '../screens/MultiStepForm';
+
 const Stack = createNativeStackNavigator();
 
 const AuthenticatedApp = () => {
@@ -29,13 +31,13 @@ const AuthenticatedApp = () => {
         {user && isEmailVerified && !isLoading ? (
           <>
             {isStudent !== null && !loading ? (
-              isStudent.is_student === 0 ? (
+              isStudent.studentInfo?.is_student === 0 ? (
                 <Stack.Screen
                   name="VerificationConfirmation"
                   component={VerificationConfirmation}
                   options={{ headerShown: false }}
                 />
-              ) : isStudent.is_student === 1 && !loading ? (
+              ) : isStudent.studentInfo?.is_student === 1 && !loading ? (
                 <Stack.Screen
                   name="BottomTabNavigator"
                   component={BottomTabNavigator} // Render BottomTabNavigator within a Screen component
@@ -49,14 +51,24 @@ const AuthenticatedApp = () => {
                     options={{ headerShown: false }}
                   />
                   <Stack.Screen
-                    name="VerificationScreen"
-                    component={VerificationScreen}
+                    name="MultiStepForm"
+                    component={MultiStepForm}
+                    options={{ headerShown: false }}
+                  />
+                  <Stack.Screen
+                    name="VerificationConfirmation"
+                    component={VerificationConfirmation}
                     options={{ headerShown: false }}
                   />
                 </>
               )
             ) : (
               <>
+                {/* <Stack.Screen
+                  name="VerificationScreen"
+                  component={VerificationScreen}
+                  options={{ headerShown: false }}
+                /> */}
                 <Stack.Screen
                   name="VerificationNotification"
                   component={VerificationNotification}
@@ -64,10 +76,11 @@ const AuthenticatedApp = () => {
                 />
 
                 <Stack.Screen
-                  name="VerificationScreen"
-                  component={VerificationScreen}
+                  name="MultiStepForm"
+                  component={MultiStepForm}
                   options={{ headerShown: false }}
                 />
+
                 <Stack.Screen
                   name="VerificationConfirmation"
                   component={VerificationConfirmation}

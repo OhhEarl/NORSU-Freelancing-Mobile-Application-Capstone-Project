@@ -1,24 +1,24 @@
-import {View, Text, Pressable, TextInput} from 'react-native';
-import React, {useState, useEffect} from 'react';
-import {SafeAreaView} from 'react-native-safe-area-context';
-import Button from '../components/Button';
-import COLORS from '../constants/colors';
-import {useIsFocused} from '@react-navigation/native';
-import auth from '@react-native-firebase/auth';
-import DeviceInfo from 'react-native-device-info';
-import axios from 'axios';
-const Signup = ({navigation}) => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
+import { View, Text, Pressable, TextInput } from "react-native";
+import React, { useState, useEffect } from "react";
+import { SafeAreaView } from "react-native-safe-area-context";
+import Button from "../components/Button";
+import COLORS from "../constants/colors";
+import { useIsFocused } from "@react-navigation/native";
+import auth from "@react-native-firebase/auth";
+import DeviceInfo from "react-native-device-info";
+import axios from "axios";
+const Signup = ({ navigation }) => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const isFocused = useIsFocused();
   const uniqueId = DeviceInfo.getUniqueId();
   useEffect(() => {
     if (!isFocused) {
-      setEmail('');
-      setPassword('');
-      setErrorMessage('');
+      setEmail("");
+      setPassword("");
+      setErrorMessage("");
     }
   }, [isFocused]);
 
@@ -27,45 +27,57 @@ const Signup = ({navigation}) => {
     if (!email || !password) {
       return;
     } else if (password.length < 8) {
-      setErrorMessage('Password must be at least 8 characters long.');
+      setErrorMessage("Password must be at least 8 characters long.");
       setLoading(false);
       return;
     }
 
-    setErrorMessage('');
+    setErrorMessage("");
 
     auth()
       .createUserWithEmailAndPassword(email, password)
-      .then(async userCredential => {
+      .then(async (userCredential) => {
         const user = userCredential.user;
         if (!user.emailVerified) {
           await user.sendEmailVerification();
-          navigation.navigate('Login');
-          alert('Please verify your email before logging in.');
+          navigation.replace("Login");
+          alert("Please verify your email before logging in.");
           return;
         }
+      })
+      .catch((error) => {
+        if (error.code === "auth/email-already-in-use") {
+          setErrorMessage("Email address is already in use!");
+        }
+
+        if (error.code === "auth/invalid-email") {
+          setErrorMessage("Email address is invalid!");
+        }
+
+        alert(error);
       });
   };
 
   const handleSignupButtonClick = () => {
     if (!email || !password) {
-      setErrorMessage('Email and password are required.');
+      setErrorMessage("Email and password are required.");
     } else {
       handleSignup();
     }
   };
 
   return (
-    <SafeAreaView style={{flex: 1, backgroundColor: COLORS.white}}>
-      <View style={{flex: 1, marginHorizontal: 22, justifyContent: 'center'}}>
-        <View style={{marginVertical: 22, alignItems: 'center'}}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.white }}>
+      <View style={{ flex: 1, marginHorizontal: 22, justifyContent: "center" }}>
+        <View style={{ marginVertical: 22, alignItems: "center" }}>
           <Text
             style={{
               fontSize: 35,
-              fontWeight: 'bold',
+              fontWeight: "bold",
               marginVertical: 12,
               color: COLORS.black,
-            }}>
+            }}
+          >
             Create an account
           </Text>
 
@@ -73,75 +85,80 @@ const Signup = ({navigation}) => {
             style={{
               fontSize: 16,
               color: COLORS.black,
-            }}>
+            }}
+          >
             Get paid for passion!
           </Text>
         </View>
 
-        <View style={{marginBottom: 12}}>
+        <View style={{ marginBottom: 12 }}>
           <Text
             style={{
               fontSize: 16,
               fontWeight: 400,
               marginVertical: 8,
-            }}>
+            }}
+          >
             Email address
           </Text>
 
           <View
             style={{
-              width: '100%',
+              width: "100%",
               height: 48,
               borderColor: COLORS.black,
               borderWidth: 1,
               borderRadius: 8,
-              alignItems: 'center',
-              justifyContent: 'center',
+              alignItems: "center",
+              justifyContent: "center",
               paddingLeft: 22,
-            }}>
+            }}
+          >
             <TextInput
               placeholder="Enter your email address"
               placeholderTextColor={COLORS.black}
-              onChangeText={text => setEmail(text)}
+              onChangeText={(text) => setEmail(text)}
               value={email}
               keyboardType="email-address"
               autoCapitalize="none"
               style={{
-                width: '100%',
+                width: "100%",
               }}
             />
           </View>
         </View>
 
-        <View style={{marginBottom: 12}}>
+        <View style={{ marginBottom: 12 }}>
           <Text
             style={{
               fontSize: 16,
               fontWeight: 400,
               marginVertical: 8,
-            }}>
+            }}
+          >
             Password
           </Text>
 
           <View
             style={{
-              width: '100%',
+              width: "100%",
               height: 48,
               borderColor: COLORS.black,
               borderWidth: 1,
               borderRadius: 8,
-              alignItems: 'center',
-              justifyContent: 'center',
+              alignItems: "center",
+              justifyContent: "center",
               paddingLeft: 22,
-            }}>
+            }}
+          >
             <TextInput
               placeholder="Enter your password"
               placeholderTextColor={COLORS.black}
-              onChangeText={text => setPassword(text)}
+              onChangeText={(text) => setPassword(text)}
               value={password}
               secureTextEntry
               style={{
-                width: '100%',
+                width: "100%",
               }}
             />
 
@@ -162,7 +179,7 @@ const Signup = ({navigation}) => {
 
                         </TouchableOpacity> */}
           </View>
-          <Text style={{color: 'red', marginTop: 5}}>{errorMessage}</Text>
+          <Text style={{ color: "red", marginTop: 5 }}>{errorMessage}</Text>
         </View>
 
         {/* <View style={{
@@ -191,22 +208,24 @@ const Signup = ({navigation}) => {
 
         <View
           style={{
-            flexDirection: 'row',
-            justifyContent: 'center',
+            flexDirection: "row",
+            justifyContent: "center",
             marginVertical: 22,
-          }}>
-          <Text style={{fontSize: 16, color: COLORS.black}}>
+          }}
+        >
+          <Text style={{ fontSize: 16, color: COLORS.black }}>
             Already have an account?
           </Text>
-          <Pressable onPress={() => navigation.navigate('Login')}>
+          <Pressable onPress={() => navigation.navigate("Login")}>
             <Text
               style={{
                 fontSize: 16,
                 color: COLORS.primary,
-                fontWeight: 'bold',
+                fontWeight: "bold",
                 marginLeft: 6,
-                textDecorationLine: 'underline',
-              }}>
+                textDecorationLine: "underline",
+              }}
+            >
               Login
             </Text>
           </Pressable>

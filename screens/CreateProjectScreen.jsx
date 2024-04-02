@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ScrollView,
   StyleSheet,
@@ -8,10 +8,13 @@ import {
   View,
   Button,
   Modal,
+  Alert,
 } from "react-native";
+
 import LinearGradient from "react-native-linear-gradient";
-import { useState } from "react";
 import FontAwesome from "react-native-vector-icons/FontAwesome";
+import Ionicons from "react-native-vector-icons/Ionicons";
+import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import DateTimePicker from "react-native-ui-datepicker";
 import dayjs from "dayjs";
 import { COLORS, UTILITIES } from "../assets/constants/index";
@@ -21,13 +24,19 @@ import {
   SelectList,
   MultipleSelectList,
 } from "react-native-dropdown-select-list";
+import DocumentPicker from "react-native-document-picker";
+import CurrencyInput from "react-native-currency-input";
+import RNFS from "react-native-fs";
+3;
 
-const CreateProjectScreen = () => {
+const CreateProjectScreen = ({ route }) => {
+  const [selectedFile, setSelectedFile] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [jobTitle, setJobTitle] = useState(""); //! Project Name
   const [jobCategory, setJobCategory] = useState(""); //! Project Category
   const [jobTags, setJobTags] = useState(""); //! Project Tags
   const [jobDescription, setJobDescription] = useState(""); //! Project Description
-  const [jobBudgetFrom, setJobBudgetFrom] = useState(""); //! Project Budget Range From
+  const [jobBudgetFrom, setJobBudgetFrom] = useState("0.00"); //! Project Budget Range From
   const [jobBudgetTo, setJobBudgetTo] = useState(""); //! Project Budget Range To
   const [startDate, setStartDate] = useState(dayjs()); //! Project Schedule From
   const [endDate, setEndDate] = useState(dayjs()); //! Project Schedule To
@@ -36,6 +45,8 @@ const CreateProjectScreen = () => {
   const [selectListData, setSelectListData] = useState(jobCategory); //! FOR PROJECT CATEGORY
   const [placeholder, setPlaceholder] = useState("No Data Found"); //! PLACEHOLDER FOR PROJECT CATEGORY IF NO DATA FOUND
   const defaultSkills = []; //! JobTags default null array
+
+  const isStudent = route.params?.isStudent;
 
   //! --------------------PROJECT CATEGORY ------------------------- //
   useEffect(() => {
@@ -78,11 +89,47 @@ const CreateProjectScreen = () => {
   //* --------------------------------------------------------------- *//
 
   //! --------------------DOCUMENT PICKER ------------------------- !//
-  _pickDocument = async () => {
-    let result = await DocumentPicker.getDocumentAsync({});
 
-    alert(result.uri);
+  const pickDocument = async () => {
+    try {
+      const results = await DocumentPicker.pick({
+        type: [DocumentPicker.types.allFiles],
+        allowMultiSelection: true,
+      });
+      results.forEach(async (result) => {
+        console.log(result);
+        const fileSize = result.size;
+        console.log(fileSize); // Not sure why you're using result.uri here, it's typically used for the file path
+        const maxSize = 15 * 1024 * 1024;
+        if (fileSize > maxSize) {
+          Alert.alert(
+            "File Size Limit Exceeded",
+            "Please select a file up to 15 MB."
+          );
+        } else {
+          setLoading(true);
+          setSelectedFile((prevSelectedFiles) => [
+            ...prevSelectedFiles,
+            result,
+          ]);
+          setLoading(false);
+        }
+      });
+    } catch (err) {
+      if (DocumentPicker.isCancel(err)) {
+        return false;
+      } else {
+        throw err;
+      }
+    }
   };
+
+  const removeSelectedFile = (indexToRemove) => {
+    setSelectedFile((prevSelectedFiles) => {
+      return prevSelectedFiles.filter((_, index) => index !== indexToRemove);
+    });
+  };
+
   //! --------------------DOCUMENT PICKER ------------------------- !//
 
   return (
@@ -116,6 +163,7 @@ const CreateProjectScreen = () => {
             dropdownItemStyles={{ marginVertical: 5 }}
             boxStyles={{
               backgroundColor: COLORS.inputField,
+              borderWidth: 0,
               minHeight: 50,
               alignItems: "center",
               paddingVertical: 5,
@@ -132,12 +180,13 @@ const CreateProjectScreen = () => {
           <MultipleSelectList
             setSelected={setJobTags}
             data={JobSkills[jobCategory] || defaultSkills}
-            placeholder={"Select Skill Tags"}
+            placeholder={"Select `Skill Tags"}
             label="Skill Tags"
             defaultOption={jobCategory && JobSkills[jobCategory][0]}
             dropdownItemStyles={{ marginVertical: 5 }}
             boxStyles={{
               backgroundColor: COLORS.inputField,
+              borderWidth: 0,
               minHeight: 50,
               alignItems: "center",
               paddingVertical: 5,
@@ -174,7 +223,7 @@ const CreateProjectScreen = () => {
               { height: 65, justifyContent: "space-around" },
             ]}
           >
-            <View style={styles.fromContainer}>
+            <View>
               <Text style={{ fontFamily: "Roboto-Light", marginBottom: 3 }}>
                 Start Date:
               </Text>
@@ -186,7 +235,7 @@ const CreateProjectScreen = () => {
             </View>
             <View style={styles.verticalLine} />
 
-            <View style={styles.toContainer}>
+            <View>
               <Text style={{ fontFamily: "Roboto-Light" }}>End Date:</Text>
               <TouchableOpacity onPress={() => togglePicker("end")}>
                 <Text style={styles.date}>
@@ -238,37 +287,59 @@ const CreateProjectScreen = () => {
         </View>
 
         <View style={UTILITIES.inputContainer}>
-          <Text style={UTILITIES.title}>Schedule</Text>
-          <View
-            style={[
-              UTILITIES.inputField,
-              { height: 65, justifyContent: "space-around" },
-            ]}
-          >
-            <View style={styles.fromContainer}>
-              <Text style={{ fontFamily: "Roboto-Light" }}>Start Budget</Text>
-              <TextInput
-                style={[styles.date, { marginTop: 0, paddingVertical: 0 }]}
-                placeholder="₱0.00"
-                type="text"
+          <Text style={UTILITIES.title}>Budget</Text>
+          <View style={styles.inputRow}>
+            <View style={styles.inputColumn}>
+              <Text style={styles.label}>Start Budget:</Text>
+
+              <CurrencyInput
+                style={styles.textInput}
+                value={jobBudgetFrom}
+                onChangeValue={setJobBudgetFrom}
+                prefix="₱"
+                delimiter=","
+                separator="."
+                precision={2}
+                minValue={0}
+                onChangeText={(formattedValue) => {
+                  if (!formattedValue || parseFloat(formattedValue) === 0) {
+                    // Reset the input value to the default state
+                    setJobBudgetFrom("0.00");
+                  }
+                }}
               />
             </View>
-            <View style={styles.verticalLine} />
-
-            <View style={styles.toContainer}>
-              <Text style={{ fontFamily: "Roboto-Light" }}>End Budget</Text>
-              <TextInput
-                style={[styles.date, { paddingVertical: 0 }]}
-                placeholder="₱0.00"
-                type="text"
+            <MaterialIcons name={"horizontal-rule"} size={20} />
+            <View style={styles.inputColumn}>
+              <Text style={styles.label}>End Budget:</Text>
+              <CurrencyInput
+                style={styles.textInput}
+                value={jobBudgetTo}
+                onChangeValue={setJobBudgetTo}
+                prefix="₱"
+                delimiter=","
+                separator="."
+                precision={2}
+                minValue={0}
+                onChangeText={(formattedValue) => {
+                  if (!formattedValue || parseFloat(formattedValue) === 0) {
+                    // Reset the input value to the default state
+                    setJobBudgetTo("0.00");
+                  }
+                }}
               />
             </View>
           </View>
         </View>
 
-        <View style={UTILITIES.inputContainer}>
-          <View style={[UTILITIES.inputField, { height: 80 }]}>
-            <TouchableOpacity onPress={_pickDocument}>
+        <View style={[UTILITIES.inputContainer, { marginBottom: 25 }]}>
+          <View
+            style={[
+              UTILITIES.inputField,
+              { height: 80, justifyContent: "center" },
+            ]}
+          >
+            <TouchableOpacity onPress={pickDocument}>
               <FontAwesome
                 name="cloud-upload"
                 size={38}
@@ -278,6 +349,49 @@ const CreateProjectScreen = () => {
               <Text style={styles.uploadText}>Upload Your Files</Text>
             </TouchableOpacity>
           </View>
+        </View>
+
+        <View>
+          {selectedFile.map((file, index) => (
+            <View key={index} style={styles.selectedFileContainer}>
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <Ionicons
+                  name={"document-text-outline"}
+                  size={36}
+                  color={"white"}
+                />
+                <Text
+                  style={{
+                    marginStart: 10,
+                    fontSize: 15,
+                    fontWeight: "600",
+                    color: "white",
+                  }}
+                >
+                  {loading
+                    ? "Loading..."
+                    : file.name.length > 15
+                    ? `${file.name.substring(
+                        0,
+                        file.name.lastIndexOf(".")
+                      )}...${file.name.substring(
+                        file.name.lastIndexOf(".") + 1
+                      )}`
+                    : file.name}
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={{ marginLeft: "auto" }}
+                onPress={() => removeSelectedFile(index)}
+              >
+                <Ionicons
+                  name={"close-circle-outline"}
+                  size={30}
+                  color={"white"}
+                />
+              </TouchableOpacity>
+            </View>
+          ))}
         </View>
 
         <TouchableOpacity style={{ marginBottom: 30 }}>
@@ -326,21 +440,6 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
 
-  inputFieldBudget: {
-    justifyContent: "space-between",
-    alignItems: "center",
-    backgroundColor: "#F5F5F5",
-    paddingLeft: 16,
-    fontSize: 18,
-    width: "50%",
-    fontFamily: "ProximaNova-Bold",
-  },
-
-  budgetInputSeparator: {
-    justifyContent: "center", // Center separator vertically
-    alignItems: "center", // Center separator horizontally
-  },
-
   modalContainer: {
     flex: 1,
     justifyContent: "center",
@@ -370,5 +469,40 @@ const styles = StyleSheet.create({
   uploadLogo: {
     alignSelf: "center", // Center the icon horiz
     color: COLORS.secondary,
+  },
+
+  selectedFileContainer: {
+    display: "flex",
+    flexDirection: "row",
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: 8,
+    paddingVertical: 10,
+    borderRadius: 10,
+    alignItems: "center",
+    marginVertical: 5,
+  },
+
+  inputRow: {
+    borderRadius: 10,
+    flexDirection: "row",
+    backgroundColor: COLORS.inputField,
+    justifyContent: "space-between",
+    alignItems: "center",
+    fontSize: 18,
+    fontFamily: "ProximaNova-Bold",
+  },
+  inputColumn: {
+    flex: 1,
+    padding: 10,
+  },
+
+  textInput: {
+    padding: 5,
+    fontSize: 16,
+    textAlign: "center",
+  },
+  label: {
+    textAlign: "center",
+    fontFamily: "Roboto-Light",
   },
 });

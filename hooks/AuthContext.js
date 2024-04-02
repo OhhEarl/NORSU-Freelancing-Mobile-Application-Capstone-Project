@@ -30,6 +30,7 @@ export const AuthProvider = ({ children, navigation }) => {
   const [isEmailVerified, setIsEmailVerified] = useState(false);
   const [token, setToken] = useState(null);
   const [userDataLoading, setUserDataLoading] = useState(false);
+
   const onGoogleButtonPress = async () => {
     try {
       setIsLoading(true);
@@ -46,6 +47,7 @@ export const AuthProvider = ({ children, navigation }) => {
         },
       });
       const data = response.data;
+
       if (data) {
         await AsyncStorage.setItem('userInformation', JSON.stringify(data));
         await setUserData(data);
@@ -71,19 +73,19 @@ export const AuthProvider = ({ children, navigation }) => {
   };
 
   const handleSignIn = async () => {
-    setIsLoading(true);
     try {
       const userCredential = await auth().signInWithEmailAndPassword(
         email,
         password,
       );
       const userAuth = userCredential.user;
-
-      if (!userAuth.emailVerified) {
-        alert(
+      if (userAuth.emailVerified === false) {
+        setError(
           'Email is not verified. Please verify your email before logging in.',
         );
+
       } else {
+        setIsLoading(true);
         const response = await axios.post(
           'http://10.0.2.2:8000/api/email-password/auth/register',
           {
@@ -103,10 +105,13 @@ export const AuthProvider = ({ children, navigation }) => {
             'userInformation',
             JSON.stringify(data),
           );
+
           await setUserData(data);
+          setIsLoading(false);
         }
         setUser(userAuth);
-        setIsLoading(false);
+
+
       }
     } catch (error) {
       if (error.code === 'auth/invalid-email') {
@@ -118,8 +123,12 @@ export const AuthProvider = ({ children, navigation }) => {
       } else {
         alert(error);
       }
+
+
     }
   };
+
+
 
   useEffect(() => {
     const unsubscribe = auth().onAuthStateChanged(user => {

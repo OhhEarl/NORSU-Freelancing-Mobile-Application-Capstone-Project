@@ -37,7 +37,7 @@ const JobSkills = {
         { key: 28, value: "Poster Design" },
         { key: 29, value: "Infographic Design" },
         { key: 30, value: "Presentation Design" },
-        { key: 31, value: "Vkeyeo Editing" },
+        { key: 31, value: "Video Editing" },
         { key: 32, value: "Animation" },
         { key: 33, value: "Digital Illustration" },
         { key: 34, value: "Logo Design" },

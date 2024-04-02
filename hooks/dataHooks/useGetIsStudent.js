@@ -1,7 +1,7 @@
-import React, {useState, useEffect} from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Alert } from 'react-native';
+
 
 export const useGetIsStudent = () => {
   const [token, setToken] = useState(null);
@@ -19,7 +19,7 @@ export const useGetIsStudent = () => {
         const token = parsedUserInfo.token;
         setToken(token)
       } catch (error) {
-       alert(error)
+        return
       }
     };
     getToken();
@@ -27,7 +27,7 @@ export const useGetIsStudent = () => {
 
   useEffect(() => {
     const fetchIsStudent = async () => {
-      if (token) { // Check if token exists
+      if (token) {
         setLoading(true);
         try {
           const config = {
@@ -46,7 +46,7 @@ export const useGetIsStudent = () => {
             setIsStudent(null);
           }
         } catch (error) {
-          setError(error);
+          return
         } finally {
           setLoading(false);
         }

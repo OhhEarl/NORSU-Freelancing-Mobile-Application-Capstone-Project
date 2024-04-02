@@ -15,11 +15,13 @@ import Button from "../components/Button";
 import { useIsFocused } from "@react-navigation/native";
 import { COLORS, UTILITIES } from "../assets/constants/index";
 import { useAuthContext } from "../hooks/AuthContext";
-
+import Ionicons from "react-native-vector-icons/Ionicons";
 const Login = ({ navigation }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isPasswordShown, setIsPasswordShown] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isPasswordShown, setIsPasswordShown] = useState(true);
+
   const isFocused = useIsFocused();
   const {
     error,
@@ -27,14 +29,32 @@ const Login = ({ navigation }) => {
     handleSignIn,
     setEmailLogin,
     setPasswordLogin,
-  } = useAuthContext(); // Access
+    setLoading,
+  } = useAuthContext();
 
   useEffect(() => {
     if (!isFocused) {
       setEmail("");
       setPassword("");
+      setErrorMessage("");
     }
   }, [isFocused]);
+
+  useEffect(() => {
+    if (error) {
+      setErrorMessage(error);
+    } else {
+      setErrorMessage(null);
+    }
+  }, [error]);
+
+  const handleSignInWithValidation = () => {
+    if (!email.trim() || !password.trim()) {
+      setErrorMessage("Please enter both email and password.");
+    } else {
+      handleSignIn();
+    }
+  };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.white }}>
@@ -94,27 +114,26 @@ const Login = ({ navigation }) => {
               }}
               value={password}
               style={UTILITIES.inputField}
+              secureTextEntry={isPasswordShown}
             />
 
-            {/* <TouchableOpacity
-                    onPress={() => setIsPasswordShown(!isPasswordShown)}
-                    style={{
-                        position: "absolute",
-                        right: 12
-                    }}
-                >
-                    {
-                        isPasswordShown == true ? (
-                            <Ionicons name="eye-off" size={24} color={COLORS.black} />
-                        ) : (
-                            <Ionicons name="eye" size={24} color={COLORS.black} />
-                        )
-                    }
-
-                </TouchableOpacity> */}
+            <TouchableOpacity
+              onPress={() => setIsPasswordShown(!isPasswordShown)}
+              style={{
+                position: "absolute",
+                right: 12,
+                top: "25%",
+              }}
+            >
+              {isPasswordShown == true ? (
+                <Ionicons name="eye-off" size={24} color={COLORS.black} />
+              ) : (
+                <Ionicons name="eye" size={24} color={COLORS.black} />
+              )}
+            </TouchableOpacity>
           </View>
 
-          {error && (
+          {errorMessage && (
             <Text
               style={{
                 fontSize: 14,
@@ -124,7 +143,7 @@ const Login = ({ navigation }) => {
                 marginLeft: 3,
               }}
             >
-              {error}
+              {errorMessage}
             </Text>
           )}
         </View>
@@ -144,7 +163,7 @@ const Login = ({ navigation }) => {
         </View> */}
 
         <Button
-          onPress={handleSignIn}
+          onPress={handleSignInWithValidation}
           title="Login"
           filled
           style={{

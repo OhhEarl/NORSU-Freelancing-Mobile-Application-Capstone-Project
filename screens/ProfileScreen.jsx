@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   StyleSheet,
   Text,
@@ -11,12 +11,38 @@ import {
 import Feather from "react-native-vector-icons/Feather";
 import Entypo from "react-native-vector-icons/Entypo";
 import AntDesign from "react-native-vector-icons/AntDesign";
-import { useGetIsStudent } from "../hooks/dataHooks/useGetIsStudent";
 import { COLORS, UTILITIES } from "../assets/constants/index";
 import { SafeAreaView } from "react-native-safe-area-context";
-
+import { useAuthContext } from "../hooks/AuthContext";
+import { GoogleSignin } from "@react-native-google-signin/google-signin";
+import auth from "@react-native-firebase/auth";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useGetIsStudent } from "../hooks/dataHooks/useGetIsStudent";
+import axios from "axios";
 const ProfileScreen = ({ navigation }) => {
   const [error, loading, isStudent] = useGetIsStudent();
+  const { userData, setUserData, isLoading } = useAuthContext();
+
+  const signOut = async () => {
+    try {
+      await GoogleSignin.signOut();
+      await auth().signOut();
+      let url = "http://10.0.2.2:8000/api/google-callback/auth/google-signout";
+      let response = await axios.post(url, isStudent?.token, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${isStudent?.token}`,
+        },
+      });
+
+      if ((response.status = 200)) {
+        await AsyncStorage.removeItem("userInformation");
+        await setUserData(null);
+      }
+    } catch (error) {
+      alert(error);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.mainContainer}>
@@ -32,7 +58,7 @@ const ProfileScreen = ({ navigation }) => {
               }}
             />
 
-            <TouchableOpacity>
+            <TouchableOpacity onPress={signOut}>
               <View style={styles.log}>
                 <Entypo
                   name="log-out"
@@ -53,7 +79,9 @@ const ProfileScreen = ({ navigation }) => {
               }}
             />
             <Text style={styles.userText}>
-              {isStudent?.first_name + " " + isStudent?.last_name}
+              {isStudent?.studentInfo?.first_name +
+                " " +
+                isStudent?.studentInfo?.last_name}
             </Text>
             <Text style={styles.course}>{isStudent?.course}</Text>
           </View>
