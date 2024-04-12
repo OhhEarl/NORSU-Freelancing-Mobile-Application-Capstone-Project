@@ -3,41 +3,54 @@ import {
   View,
   StyleSheet,
   Image,
+  TextInput,
   Text,
   FlatList,
   TouchableOpacity,
   TouchableWithoutFeedback,
+  Keyboard,
+  ScrollView,
 } from "react-native";
 
 import { SafeAreaView } from "react-native-safe-area-context";
-import { TextInput } from "react-native-paper";
-import { COLORS } from "../assets/constants/index";
-import Button from "../components/Buttons/Button";
+
+import * as theme from "../assets/constants/theme";
+import Button from "../components/Button";
 import areasOfExpertise from "../hooks/AreaOfExpertise";
-const VerificationScreen1 = ({ onNext, values, setValues }) => {
+import Feather from "react-native-vector-icons/Feather";
+import Tags from "react-native-tags";
+const VerificationScreen1 = ({ onNext, values, setValues, navigation }) => {
   const [inputText, setInputText] = useState("");
   const [suggestions, setSuggestions] = useState([]);
+
   const [errorMessage, setErrorMessage] = useState(false);
+  const onChangeSkills = (newSkills) => {
+    setValues((prev) => ({ ...prev, skillTags: newSkills }));
+  };
 
   const handleInputChange = (text) => {
     setInputText(text); // Update the state
     setValues({ ...values, areaOfExpertise: text }); // Update the values state
-    console.log(text); // Log the current value of the input
-    const filteredSuggestions = Object.values(
-      areasOfExpertise.areasOfExpertise
-    ).filter((category) => category.toLowerCase().includes(text.toLowerCase()));
-    setSuggestions(filteredSuggestions);
+    if (text === "") {
+      setSuggestions([]); // Clear suggestions when input is empty
+    } else {
+      const filteredSuggestions = Object.values(
+        areasOfExpertise.areasOfExpertise
+      ).filter((category) =>
+        category.toLowerCase().includes(text.toLowerCase())
+      );
+      setSuggestions(filteredSuggestions);
+    }
   };
   const handleSuggestionPress = (category) => {
     const key = Object.keys(areasOfExpertise.areasOfExpertise).find(
       (key) => areasOfExpertise.areasOfExpertise[key] === category
     );
-    console.log("Selected suggestion - Key:", key, "Value:", category);
+
     setInputText(category); // Set the category as the input text
     setValues({ ...values, areaOfExpertise: key }); // Set the key as the value for areaOfExpertise in the props
     setSuggestions([]); // Clear suggestions
   };
-
   const handlePressOutside = () => {
     setSuggestions([]); // Clear suggestions when pressing outside the TextInput or FlatList
   };
@@ -57,128 +70,209 @@ const VerificationScreen1 = ({ onNext, values, setValues }) => {
     }
   };
   return (
-    <TouchableWithoutFeedback onPress={handlePressOutside}>
-      <View style={[styles.container]}>
-        <View style={{ flex: 1, backgroundColor: "white" }}>
+    <ScrollView style={{ paddingVertical: 10 }}>
+      <TouchableWithoutFeedback
+        onPress={(handlePressOutside, Keyboard.dismiss)}
+      >
+        <View
+          style={{ flex: 1, backgroundColor: "white", paddingHorizontal: 30 }}
+        >
           <View
             style={{
-              flex: 1,
-              justifyContent: "center",
-              alignContent: "center",
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginTop: 20,
             }}
           >
-            <View style={{ marginVertical: 18 }}>
+            <Feather
+              name="arrow-left"
+              size={24}
+              color={theme.colors.BLACKS}
+              onPress={() => {
+                navigation.goBack();
+              }}
+            />
+            <Text
+              style={{
+                marginRight: 25,
+                fontFamily: "Roboto-Bold",
+                color: theme.colors.BLACKS,
+                fontSize: 18,
+              }}
+            >
+              STEP 1
+            </Text>
+            <Text></Text>
+          </View>
+          <View>
+            <View style={{ marginVertical: 18, marginTop: 30 }}>
               <Text
                 style={{
                   fontSize: 18,
                   fontFamily: "Roboto-Bold",
-                  color: "black",
+                  color: theme.colors.BLACKS,
                   textAlign: "center",
                 }}
               >
                 Please fill up the following to proceed!
               </Text>
             </View>
-            <View style={{ marginBottom: 6 }}>
+            <View style={styles.inputFieldContainer}>
+              <Text style={styles.inputLabel}>Username</Text>
               <TextInput
-                mode="outlined"
-                style={{ margin: 8 }}
-                label="Username"
+                placeholderTextColor="#000"
+                style={styles.inputField}
                 placeholder="Enter your username"
                 value={values.userName}
                 onChangeText={(text) =>
                   setValues({ ...values, userName: text })
                 }
-                outlineColor={COLORS.black} // Change the outline color based on the theme's primary color
-                activeOutlineColor={COLORS.primary}
               />
             </View>
-            <View style={{ marginBottom: 6 }}>
+            <View style={styles.inputFieldContainer}>
+              <Text style={styles.inputLabel}>First Name</Text>
               <TextInput
-                mode="outlined"
-                style={{ margin: 8 }}
-                label="First Name"
+                placeholderTextColor="#000"
+                style={styles.inputField}
                 placeholder="Enter your first name"
                 value={values.firstName}
                 onChangeText={(text) =>
                   setValues({ ...values, firstName: text })
                 }
-                outlineColor={COLORS.black} // Change the outline color based on the theme's primary color
-                activeOutlineColor={COLORS.primary}
               />
             </View>
 
-            <View style={{ marginBottom: 6 }}>
+            <View style={styles.inputFieldContainer}>
+              <Text style={styles.inputLabel}>Last Name</Text>
               <TextInput
-                mode="outlined"
-                style={{ margin: 8 }}
-                label="Last Name"
+                placeholderTextColor="#000"
+                style={styles.inputField}
                 placeholder="Enter your last name"
                 value={values.lastName}
                 onChangeText={(text) =>
                   setValues({ ...values, lastName: text })
                 }
-                outlineColor={COLORS.black} // Change the outline color based on the theme's primary color
-                activeOutlineColor={COLORS.primary}
               />
             </View>
 
-            <View style={{ marginBottom: 12 }}>
-              <TextInput
-                mode="outlined"
-                style={{ margin: 8 }}
-                label="Area of Expertise"
-                placeholder="Choose or input your area of expertise"
-                value={inputText}
-                onChangeText={handleInputChange}
-                outlineColor={COLORS.black}
-                activeOutlineColor={COLORS.primary}
-              />
-
-              <FlatList
-                style={{ height: 150, backgroundColor: "white" }}
-                data={suggestions}
-                renderItem={({ item }) => (
-                  <TouchableOpacity onPress={() => handleSuggestionPress(item)}>
-                    <View style={{ padding: 10 }}>
+            <View style={theme.utilities.inputFieldContainer}>
+              <Text style={styles.inputLabel}>Skills</Text>
+              <Tags
+                style={[
+                  styles.inputField,
+                  { paddingVertical: 5, paddingStart: 0 },
+                ]}
+                initialText="Enter Skill Tags"
+                onChangeTags={onChangeSkills}
+                inputStyle={{
+                  fontFamily: "Raleway-Medium",
+                  backgroundColor: "white",
+                  color: "black",
+                }}
+                renderTag={({
+                  tag,
+                  index,
+                  onPress,
+                  deleteTagOnPress,
+                  readonly,
+                }) => {
+                  return (
+                    <TouchableOpacity
+                      key={`${tag}-${index}`}
+                      onPress={onPress}
+                      style={{ marginStart: 12 }}
+                    >
                       <Text
                         style={{
-                          marginStart: 12,
-                          fontWeight: 600,
-                          fontSize: 14,
+                          padding: 5,
+                          paddingHorizontal: 10,
+                          backgroundColor: theme.colors.primary,
+                          color: "white",
+                          borderRadius: 10,
                         }}
                       >
-                        {item}
+                        {tag}
                       </Text>
-                    </View>
-                  </TouchableOpacity>
-                )}
-                keyExtractor={(item, index) => index.toString()}
+                    </TouchableOpacity>
+                  );
+                }}
               />
             </View>
+            <TouchableWithoutFeedback onPress={handlePressOutside}>
+              <View style={styles.inputFieldContainer}>
+                <Text style={styles.inputLabel}>Area of Expertise</Text>
+                <TextInput
+                  style={styles.inputField}
+                  label="Area of Expertise"
+                  placeholderTextColor="#000"
+                  placeholder="Choose or input your area of expertise"
+                  value={inputText}
+                  onChangeText={handleInputChange}
+                />
+                <FlatList
+                  style={{ maxHeight: 150, backgroundColor: "white" }}
+                  data={suggestions}
+                  scrollEnabled={false}
+                  renderItem={({ item }) => (
+                    <TouchableOpacity
+                      onPress={() => handleSuggestionPress(item)}
+                    >
+                      <View>
+                        <Text
+                          style={{
+                            marginTop: 12,
+                            marginStart: 12,
+                            fontWeight: 600,
+                            fontSize: 14,
+                            marginBottom: 5,
+                          }}
+                        >
+                          {item}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                  )}
+                  keyExtractor={(item, index) => index.toString()}
+                />
+              </View>
+            </TouchableWithoutFeedback>
           </View>
 
-          <Button
-            title="Next"
+          <View
             style={{
-              position: "absolute",
+              position: "relative",
+              marginTop: 60,
               width: "100%",
-              bottom: 0,
-              zIndex: -1,
             }}
-            onPress={handleNextPress}
-            filled
-          />
+          >
+            <Button title="Next" onPress={handleNextPress} filled />
+          </View>
         </View>
-      </View>
-    </TouchableWithoutFeedback>
+      </TouchableWithoutFeedback>
+    </ScrollView>
   );
 };
 
 export default VerificationScreen1;
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
+  inputFieldContainer: {
+    marginVertical: 10,
+    width: "100%",
+  },
+  inputLabel: {
+    fontFamily: "Roboto-Bold",
+    color: theme.colors.BLACKS,
+    marginBottom: 5,
+    marginStart: 5,
+    fontSize: 15,
+  },
+  inputField: {
+    width: "100%",
+    borderWidth: 1,
+    borderColor: theme.colors.primary,
+    borderRadius: 10,
+    paddingStart: 15,
+    fontFamily: "Roboto-Regular",
   },
 });

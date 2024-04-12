@@ -1,28 +1,19 @@
-import {
-  View,
-  StyleSheet,
-  Image,
-  Text,
-  ScrollView,
-  FlatList,
-} from "react-native";
-import Button from "../components/Buttons/Button";
+import { View, StyleSheet, Text, ScrollView } from "react-native";
 import { React, useEffect, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import axios from "axios";
-import { launchImageLibrary } from "react-native-image-picker";
-import { GoogleSignin } from "@react-native-google-signin/google-signin";
-import auth from "@react-native-firebase/auth";
-import { useAuthContext } from "../hooks/AuthContext";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { COLORS } from "../assets/constants/index";
 import { TextInput } from "react-native-paper";
+import { GoogleSignin } from "@react-native-google-signin/google-signin";
+import { useAuthContext } from "../hooks/AuthContext";
+import axios from "axios";
+import Button from "../components/Button";
+import auth from "@react-native-firebase/auth";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as theme from "../assets/constants/theme";
 import areasOfExpertise from "../hooks/AreaOfExpertise";
 
-const VerificationScreen = ({ navigation, route }) => {
+const VerificationScreen = ({ navigation }) => {
   const { userData, setUserData, isLoading } = useAuthContext();
   const [token, setToken] = useState(null);
-
   const [username, setUsername] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -70,7 +61,7 @@ const VerificationScreen = ({ navigation, route }) => {
 
   const handleInputChange = (text) => {
     setInputText(text); // Update the state
-    console.log(text); // Log the current value of the input
+
     const filteredSuggestions = Object.values(
       areasOfExpertise.areasOfExpertise
     ).filter((category) => category.toLowerCase().includes(text.toLowerCase()));
@@ -80,7 +71,7 @@ const VerificationScreen = ({ navigation, route }) => {
     const key = Object.keys(areasOfExpertise.areasOfExpertise).find(
       (key) => areasOfExpertise.areasOfExpertise[key] === category
     );
-    console.log("Selected suggestion - Key:", key, "Value:", category);
+
     setInputText(category);
     setSuggestions([]); // Clear suggestions when a suggestion is selected
   };
@@ -147,7 +138,7 @@ const VerificationScreen = ({ navigation, route }) => {
 
   return (
     <ScrollView>
-      <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.white }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.WHITE }}>
         <View
           style={{ flex: 1, marginHorizontal: 22, justifyContent: "center" }}
         >
@@ -156,7 +147,7 @@ const VerificationScreen = ({ navigation, route }) => {
               style={{
                 fontSize: 18,
                 fontFamily: "Roboto-Bold",
-                color: "black",
+                color: theme.colors.BLACKS,
               }}
             >
               Please fill up the following to proceed!
@@ -171,8 +162,8 @@ const VerificationScreen = ({ navigation, route }) => {
               placeholder="Enter your username"
               onChangeText={(text) => setUsername(text)}
               value={username}
-              outlineColor={COLORS.black} // Change the outline color based on the theme's primary color
-              activeOutlineColor={COLORS.primary}
+              outlineColor={theme.colors.BLACKS} // Change the outline color based on the theme's primary color
+              activeOutlineColor={theme.colors.primary}
             />
           </View>
           <View style={{ marginBottom: 12 }}>
@@ -183,8 +174,8 @@ const VerificationScreen = ({ navigation, route }) => {
               placeholder="Enter your first name"
               onChangeText={(text) => setFirstName(text)}
               value={firstName}
-              outlineColor={COLORS.black} // Change the outline color based on the theme's primary color
-              activeOutlineColor={COLORS.primary}
+              outlineColor={theme.colors.BLACKS} // Change the outline color based on the theme's primary color
+              activeOutlineColor={theme.colors.primary}
             />
           </View>
 
@@ -196,8 +187,8 @@ const VerificationScreen = ({ navigation, route }) => {
               placeholder="Enter your last name"
               onChangeText={(text) => setLastName(text)}
               value={lastName}
-              outlineColor={COLORS.black} // Change the outline color based on the theme's primary color
-              activeOutlineColor={COLORS.primary}
+              outlineColor={theme.colors.BLACKS} // Change the outline color based on the theme's primary color
+              activeOutlineColor={theme.colors.PRIMARY}
             />
           </View>
 
@@ -209,8 +200,8 @@ const VerificationScreen = ({ navigation, route }) => {
               placeholder="Choose your area of expertise"
               value={inputText}
               onChangeText={handleInputChange}
-              outlineColor={COLORS.black}
-              activeOutlineColor={COLORS.primary}
+              outlineColor={theme.colors.BLACKS}
+              activeOutlineColor={theme.colors.primary}
             />
             {isSuggestion && <Text>Input is a suggestion</Text>}
             <View style={{ backgroundColor: "red" }}>
@@ -232,8 +223,8 @@ const VerificationScreen = ({ navigation, route }) => {
               placeholder="Enter your course"
               onChangeText={(text) => setCourse(text)}
               value={course}
-              outlineColor={COLORS.black} // Change the outline color based on the theme's primary color
-              activeOutlineColor={COLORS.primary}
+              outlineColor={theme.colors.BLACKS} // Change the outline color based on the theme's primary color
+              activeOutlineColor={theme.colors.primary}
             />
           </View>
 
@@ -245,8 +236,8 @@ const VerificationScreen = ({ navigation, route }) => {
               placeholder="Enter your ID number"
               onChangeText={(text) => setIDnumber(text)}
               value={IDnumber}
-              outlineColor={COLORS.black} // Change the outline color based on the theme's primary color
-              activeOutlineColor={COLORS.primary}
+              outlineColor={theme.colors.BLACKS} // Change the outline color based on the theme's primary color
+              activeOutlineColor={theme.colors.primary}
             />
           </View>
 
@@ -258,8 +249,8 @@ const VerificationScreen = ({ navigation, route }) => {
               placeholder="Enter your year level"
               onChangeText={(text) => setYearLevel(text)}
               value={yearLevel}
-              outlineColor={COLORS.black} // Change the outline color based on the theme's primary color
-              activeOutlineColor={COLORS.primary}
+              outlineColor={theme.colors.BLACKS} // Change the outline color based on the theme's primary color
+              activeOutlineColor={theme.colors.primary}
             />
           </View>
 
@@ -304,7 +295,7 @@ const styles = StyleSheet.create({
   idContainerButton: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginHorizontal: 40, // Add horizontal margin to each containe
+    marginHorizontal: 40, // Add horizontal margin to each container
   },
   idContainer: {
     flexDirection: "row",
@@ -315,7 +306,7 @@ const styles = StyleSheet.create({
     flex: 0.5, // Set each container to 50% width
     alignItems: "center", // Center image horizontally
     justifyContent: "center", // Center image vertically
-    borderColor: "black",
+    borderColor: theme.colors.BLACKS,
     borderWidth: 1,
     borderRadius: 6,
     marginHorizontal: 15, // Add horizontal margin to each containe

@@ -4,24 +4,29 @@ import {
   Text,
   View,
   Image,
-  ScrollView,
   TouchableOpacity,
+  Modal,
 } from "react-native";
 
 import Feather from "react-native-vector-icons/Feather";
-import Entypo from "react-native-vector-icons/Entypo";
+
 import AntDesign from "react-native-vector-icons/AntDesign";
+import { TabView, SceneMap, TabBar } from "react-native-tab-view";
 import { COLORS, UTILITIES } from "../assets/constants/index";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuthContext } from "../hooks/AuthContext";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
+import { useGetIsStudent } from "../hooks/dataHooks/useGetIsStudent";
 import auth from "@react-native-firebase/auth";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useGetIsStudent } from "../hooks/dataHooks/useGetIsStudent";
 import axios from "axios";
+import * as theme from "../assets/constants/theme";
+import LoadingComponent from "../components/LoadingComponent";
+
 const ProfileScreen = ({ navigation }) => {
   const [error, loading, isStudent] = useGetIsStudent();
   const { userData, setUserData, isLoading } = useAuthContext();
+  const [modalVisible, setModalVisible] = useState(false);
 
   const signOut = async () => {
     try {
@@ -46,9 +51,11 @@ const ProfileScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.mainContainer}>
-      <ScrollView>
-        <View style={styles.container}>
-          <View style={styles.logoutContainer}>
+      {loading ? (
+        <LoadingComponent />
+      ) : (
+        <>
+          <View>
             <Feather
               name="arrow-left"
               size={24}
@@ -57,107 +64,101 @@ const ProfileScreen = ({ navigation }) => {
                 navigation.goBack();
               }}
             />
-
-            <TouchableOpacity onPress={signOut}>
-              <View style={styles.log}>
-                <Entypo
-                  name="log-out"
-                  size={20}
-                  color="white"
-                  style={{ alignSelf: "center", marginLeft: 5 }}
-                />
-                <Text style={styles.logout}>LOGOUT</Text>
-              </View>
-            </TouchableOpacity>
           </View>
-
           <View style={styles.innerContainer}>
             <Image
               style={styles.image}
-              source={{
-                uri: `https://img.freepik.com/free-psd/3d-illustration-person-with-sunglasses_23-2149436188.jpg?w=740&t=st=1670148608~exp=1670149208~hmac=bc57b66d67d2b9f4929c8e592ff17e8c8660721608add2f18fc20d19c1aab7e4`,
-              }}
+              source={
+                isStudent?.studentInfo?.user_avatar
+                  ? { uri: isStudent?.studentInfo?.user_avatar }
+                  : {
+                      uri: "https://img.freepik.com/free-psd/3d-illustration-person-with-sunglasses_23-2149436188.jpg?w=740&t=st=1670148608~exp=1670149208~hmac=bc57b66d67d2b9f4929c8e592ff17e8c8660721608add2f18fc20d19c1aab7e4",
+                    }
+              }
             />
             <Text style={styles.userText}>
               {isStudent?.studentInfo?.first_name +
                 " " +
                 isStudent?.studentInfo?.last_name}
             </Text>
-            <Text style={styles.course}>{isStudent?.course}</Text>
-          </View>
-
-          <View style={UTILITIES.inputContainer}>
-            <Text style={UTILITIES.title}>First Name</Text>
-            <View style={[UTILITIES.inputField]}>
-              <Text style={styles.textField}>{isStudent?.first_name}</Text>
-            </View>
-          </View>
-
-          <View style={UTILITIES.inputContainer}>
-            <Text style={UTILITIES.title}>Last Name</Text>
-            <View style={[UTILITIES.inputField]}>
-              <Text style={styles.textField}>{isStudent?.last_name}</Text>
-            </View>
-          </View>
-          <View style={UTILITIES.inputContainer}>
-            <Text style={UTILITIES.title}>Usermame</Text>
-            <View style={[UTILITIES.inputField]}>
-              <Text style={styles.textField}>ohhEarl</Text>
-            </View>
-          </View>
-
-          <View style={UTILITIES.inputContainer}>
-            <Text
-              style={[
-                UTILITIES.title,
-                { marginStart: 7, color: COLORS.primary, fontSize: 16 },
-              ]}
-            >
-              Course
+            <Text style={styles.areaExpertise}>
+              {isStudent?.studentInfo?.area_of_expertise}
             </Text>
-            <View style={[UTILITIES.inputField]}>
-              <Text style={styles.textField}>{isStudent?.course}</Text>
-            </View>
           </View>
 
-          <View style={[UTILITIES.inputContainer]}>
-            <Text style={UTILITIES.title}>About me</Text>
-            <View
-              style={[UTILITIES.inputField, { maxHeight: 200, height: 150 }]}
+          <View style={styles.anotherContainer}>
+            <TouchableOpacity>
+              <View style={styles.seperateContainer}>
+                <Text style={styles.seperateText}>Projects Completed</Text>
+                <AntDesign name="arrowright" size={20} color="black" />
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity>
+              <View style={styles.seperateContainer}>
+                <Text style={styles.seperateText}>Proposals Submitted</Text>
+                <AntDesign name="arrowright" size={20} color="black" />
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity>
+              <View style={styles.seperateContainer}>
+                <Text style={styles.seperateText}>Accepted Proposals</Text>
+                <AntDesign name="arrowright" size={20} color="black" />
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() =>
+                navigation.navigate("EditProfileScreen", {
+                  project: isStudent?.studentInfo,
+                })
+              }
             >
-              <Text style={[styles.textField]}>
-                Lorem ipsum dolor sit amet consectetur adipisicing elit. Laborum
-                laboriosam rerum amet cupiditate deleniti aut, ut fuga officiis?
-                Explicabo, at asperiores? Modi, sint ipsam! Itaque eligendi
-                voluptates voluptas obcaecati vero. Lorem ipsum dolor sit amet.
-              </Text>
-            </View>
+              <View style={styles.seperateContainer}>
+                <Text style={styles.seperateText}>Edit Profile</Text>
+                <AntDesign name="arrowright" size={20} color="black" />
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => setModalVisible(true)}>
+              <View
+                style={[
+                  styles.seperateContainer,
+                  { backgroundColor: theme.colors.primary, borderWidth: 0 },
+                ]}
+              >
+                <Text style={[styles.seperateText, { color: "white" }]}>
+                  Logout
+                </Text>
+                <AntDesign name="arrowright" size={20} color="white" />
+              </View>
+            </TouchableOpacity>
+            <Modal
+              animationType="fade "
+              transparent={true}
+              visible={modalVisible}
+              onRequestClose={() => {
+                Alert.alert("Modal has been closed.");
+                setModalVisible(!modalVisible);
+              }}
+            >
+              <View style={styles.centeredView}>
+                <View style={styles.modalView}>
+                  <TouchableOpacity
+                    style={[styles.button, styles.buttonClose]}
+                    onPress={() => setModalVisible(!modalVisible)}
+                  >
+                    <AntDesign name={"closecircle"} size={30} />
+                  </TouchableOpacity>
+                  <Text style={styles.modalText}>
+                    Are you Sure You Want To Logout?
+                  </Text>
+                  <TouchableOpacity onPress={signOut} style={styles.logout}>
+                    <Text style={styles.logoutText}>Yes</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </Modal>
           </View>
-
-          <TouchableOpacity
-            activeOpacity={0.5}
-            onPress={() => {
-              navigation.navigate("EditProfileScreen", {
-                profile: isStudent,
-              });
-            }}
-          >
-            <View style={[styles.seperateContainer, { marginBottom: 24 }]}>
-              <Text style={styles.seperateText}>Edit Profile</Text>
-              <AntDesign
-                name="arrowright"
-                size={20}
-                style={{
-                  alignSelf: "center",
-                  right: 10,
-                  position: "absolute",
-                }}
-                color="black"
-              />
-            </View>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
+        </>
+      )}
     </SafeAreaView>
   );
 };
@@ -168,6 +169,7 @@ const styles = StyleSheet.create({
   mainContainer: {
     flex: 1,
     backgroundColor: COLORS.WHITE,
+    padding: 24,
   },
   container: {
     paddingHorizontal: 24,
@@ -178,8 +180,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   image: {
-    height: 80,
-    width: 80,
+    height: 120,
+    width: 120,
     borderRadius: 70,
     borderWidth: 1,
     marginBottom: 10,
@@ -189,7 +191,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 
-  course: {
+  anotherContainer: {
+    alignItems: "center",
+    marginTop: 20,
+  },
+
+  areaExpertise: {
     textAlign: "center",
     fontSize: 16,
     fontFamily: "Roboto-Medium",
@@ -209,46 +216,77 @@ const styles = StyleSheet.create({
     color: "black",
   },
 
-  logoutContainer: {
+  seperateContainer: {
+    width: "100%",
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingTop: 32,
-    paddingBottom: 24,
-    alignItems: "center",
-  },
-  log: {
-    flexDirection: "row",
-    alignSelf: "center", // Center the button horizontally
-    borderRadius: 50,
-    borderColor: "#D6E6FF",
-    padding: 6,
-    backgroundColor: COLORS.primary,
-  },
-  logout: {
-    margin: 5,
-    color: COLORS.white,
-    fontWeight: "600",
-  },
-  seperateContainer: {
-    display: "flex",
-    flexDirection: "row",
     backgroundColor: "#fff",
-    padding: 3,
-    paddingStart: 15,
+    padding: 20,
     borderRadius: 10,
+    borderColor: theme.colors.BLACKS,
     elevation: 3,
+    borderWidth: 1,
     marginTop: 15,
     alignItems: "center",
-    shadowColor: "#171717",
-    shadowOffset: { width: -2, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
   },
-
   seperateText: {
-    margin: 18,
     fontSize: 18,
     fontFamily: "ProximaNova-Bold",
     color: "#212121",
+  },
+  centeredView: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 22,
+  },
+  modalView: {
+    margin: 20,
+    backgroundColor: "white",
+    borderRadius: 20,
+    padding: 35,
+    paddingVertical: 50,
+
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+    width: 300,
+    height: 250,
+  },
+
+  button: {
+    position: "absolute",
+    right: 20,
+    top: 20,
+  },
+  buttonOpen: {
+    backgroundColor: "#F194FF",
+  },
+
+  modalText: {
+    fontFamily: "Roboto-Medium",
+    color: "black",
+    fontSize: 18,
+    marginBottom: 15,
+    textAlign: "center",
+    marginTop: 20,
+  },
+  logout: {
+    width: "100%",
+    backgroundColor: theme.colors.primary,
+    padding: 15,
+    marginTop: 20,
+    borderRadius: 10,
+  },
+  logoutText: {
+    fontFamily: "Roboto-Bold",
+    color: "white",
+    fontSize: 24,
+    textAlign: "center",
   },
 });

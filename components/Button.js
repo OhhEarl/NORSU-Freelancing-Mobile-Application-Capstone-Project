@@ -1,12 +1,12 @@
 import { Text, TouchableOpacity, StyleSheet } from 'react-native'
 import React from 'react'
-import COLORS from '../constants/colors'
+import * as theme from "../assets/constants/theme";
 
 const Button = (props) => {
-    const filledBgColor = props.color || COLORS.primary;
-    const outlinedColor = COLORS.white;
+    const filledBgColor = props.color || theme.colors.primary;
+    const outlinedColor = theme.colors.WHITE;
     const bgColor = props.filled ? filledBgColor : outlinedColor;
-    const textColor = props.filled ? COLORS.white : COLORS.primary;
+    const textColor = props.filled ? theme.colors.WHITE : theme.colors.primary;
 
     return (
         <TouchableOpacity
@@ -26,7 +26,7 @@ const styles = StyleSheet.create({
     button: {
         paddingBottom: 16,
         paddingVertical: 10,
-        borderColor: COLORS.primary,
+        borderColor: theme.colors.primary,
         borderWidth: 2,
         borderRadius: 12,
         alignItems: 'center',

@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { useState, useEffect, React } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-
+import * as theme from "../assets/constants/theme";
 import Button from "../components/Button";
 import { useIsFocused } from "@react-navigation/native";
 import { COLORS, UTILITIES } from "../assets/constants/index";
@@ -64,7 +64,8 @@ const Login = ({ navigation }) => {
             style={{
               fontSize: 24,
               marginVertical: 12,
-              color: COLORS.black,
+
+              color: theme.colors.BLACKS,
               fontFamily: "Roboto-Bold",
             }}
           >
@@ -74,8 +75,8 @@ const Login = ({ navigation }) => {
           <Text
             style={{
               fontSize: 16,
-              color: COLORS.black,
-              fontFamily: "Roboto-Regular",
+              color: theme.colors.BLACKS,
+              fontFamily: "Roboto-Bold",
             }}
           >
             Hello again you have been missed!
@@ -83,7 +84,17 @@ const Login = ({ navigation }) => {
         </View>
 
         <View style={{ marginBottom: 12 }}>
-          <Text style={UTILITIES.title}>Email address</Text>
+          <Text
+            style={{
+              color: theme.colors.BLACKS,
+              fontFamily: "Roboto-Medium",
+              fontSize: theme.sizes.h3,
+              marginVertical: 3,
+              marginLeft: 2,
+            }}
+          >
+            Email address
+          </Text>
 
           <View>
             <TextInput
@@ -102,7 +113,17 @@ const Login = ({ navigation }) => {
         </View>
 
         <View style={{ marginBottom: 18, marginTop: 18 }}>
-          <Text style={UTILITIES.title}>Password</Text>
+          <Text
+            style={{
+              color: theme.colors.BLACKS,
+              fontFamily: "Roboto-Medium",
+              fontSize: theme.sizes.h3,
+              marginVertical: 3,
+              marginLeft: 2,
+            }}
+          >
+            Password
+          </Text>
 
           <View>
             <TextInput
@@ -243,7 +264,7 @@ const Login = ({ navigation }) => {
           <Text
             style={{
               fontSize: 16,
-              color: COLORS.black,
+              color: theme.colors.BLACKS,
               fontFamily: "Roboto-Regular",
             }}
           >
@@ -253,7 +274,7 @@ const Login = ({ navigation }) => {
             <Text
               style={{
                 fontSize: 16,
-                color: COLORS.primary,
+                color: theme.colors.primary,
 
                 marginLeft: 6,
                 textDecorationLine: "underline",

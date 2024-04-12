@@ -14,106 +14,119 @@ import { useGetIsStudent } from '../hooks/dataHooks/useGetIsStudent';
 import { BottomTabNavigator } from './BottomTabNavigator';
 import EditProfileScreen from '../screens/EditProfileScreen';
 import MultiStepForm from '../screens/MultiStepForm';
+import LoadingComponent from '../components/LoadingComponent';
+import ProjectDetailsScreen from '../screens/ProjectDetailsScreen';
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
 const Stack = createNativeStackNavigator();
 
 const AuthenticatedApp = () => {
   const { user, isLoading, isEmailVerified } = useAuthContext();
   const [error, loading, isStudent] = useGetIsStudent();
+  const [userInfo, setUserInfo] = useGetIsStudent();
 
-  if (isLoading || loading) {
-    return <ActivityIndicator size="large" style={styles.indicator} />;
-  }
+
 
   return (
+
     <NavigationContainer>
-      <Stack.Navigator>
-        {user && isEmailVerified && !isLoading ? (
-          <>
-            {isStudent !== null && !loading ? (
-              isStudent.studentInfo?.is_student === 0 ? (
-                <Stack.Screen
-                  name="VerificationConfirmation"
-                  component={VerificationConfirmation}
-                  options={{ headerShown: false }}
-                />
-              ) : isStudent.studentInfo?.is_student === 1 && !loading ? (
-                <Stack.Screen
-                  name="BottomTabNavigator"
-                  component={BottomTabNavigator} // Render BottomTabNavigator within a Screen component
-                  options={{ headerShown: false }}
-                />
+      {loading || isLoading ? (
+        <LoadingComponent />
+      ) : (
+        <Stack.Navigator>
+          {user && isEmailVerified && !isLoading ? (
+            <>
+              {isStudent !== null && !loading ? (
+                isStudent.studentInfo?.is_student === 0 ? (
+                  <Stack.Screen
+                    name="VerificationConfirmation"
+                    component={VerificationConfirmation}
+                    options={{ headerShown: false }}
+                  />
+                ) : isStudent.studentInfo?.is_student === 1 && !loading ? (
+                  <Stack.Screen
+                    name="BottomTabNavigator"
+                    component={BottomTabNavigator} // Render BottomTabNavigator within a Screen component
+                    options={{ headerShown: false }}
+                  />
+                ) : (
+                  <>
+                    <Stack.Screen
+                      name="VerificationNotification"
+                      component={VerificationNotification}
+                      options={{ headerShown: false }}
+                    />
+                    <Stack.Screen
+                      name="MultiStepForm"
+                      component={MultiStepForm}
+                      options={{ headerShown: false }}
+                    />
+                    <Stack.Screen
+                      name="VerificationConfirmation"
+                      component={VerificationConfirmation}
+                      options={{ headerShown: false }}
+                    />
+                  </>
+                )
               ) : (
                 <>
+                  {/* <Stack.Screen
+                  name="VerificationScreen"
+                  component={VerificationScreen}
+                  options={{ headerShown: false }}
+                /> */}
                   <Stack.Screen
                     name="VerificationNotification"
                     component={VerificationNotification}
                     options={{ headerShown: false }}
                   />
+
                   <Stack.Screen
                     name="MultiStepForm"
                     component={MultiStepForm}
                     options={{ headerShown: false }}
                   />
+
                   <Stack.Screen
                     name="VerificationConfirmation"
                     component={VerificationConfirmation}
                     options={{ headerShown: false }}
                   />
                 </>
-              )
-            ) : (
-              <>
-                {/* <Stack.Screen
-                  name="VerificationScreen"
-                  component={VerificationScreen}
-                  options={{ headerShown: false }}
-                /> */}
-                <Stack.Screen
-                  name="VerificationNotification"
-                  component={VerificationNotification}
-                  options={{ headerShown: false }}
-                />
+              )}
+            </>
+          ) : (
+            <>
+              <Stack.Screen
+                name="Welcome"
+                component={Welcome}
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen
+                name="Login"
+                component={Login}
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen
+                name="Signup"
+                component={Signup}
+                options={{ headerShown: false }}
+              />
+            </>
+          )}
 
-                <Stack.Screen
-                  name="MultiStepForm"
-                  component={MultiStepForm}
-                  options={{ headerShown: false }}
-                />
-
-                <Stack.Screen
-                  name="VerificationConfirmation"
-                  component={VerificationConfirmation}
-                  options={{ headerShown: false }}
-                />
-              </>
-            )}
-          </>
-        ) : (
-          <>
-            <Stack.Screen
-              name="Welcome"
-              component={Welcome}
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen
-              name="Login"
-              component={Login}
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen
-              name="Signup"
-              component={Signup}
-              options={{ headerShown: false }}
-            />
-          </>
-        )}
-        <Stack.Screen
-          name="EditProfileScreen"
-          component={EditProfileScreen}
-          options={{ headerShown: false }}
-        />
-      </Stack.Navigator>
+          <Stack.Screen
+            name="ProjectDetailsScreen"
+            component={ProjectDetailsScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="EditProfileScreen"
+            component={EditProfileScreen}
+            options={{ headerShown: false }}
+          />
+        </Stack.Navigator>
+      )}
     </NavigationContainer>
   );
 };

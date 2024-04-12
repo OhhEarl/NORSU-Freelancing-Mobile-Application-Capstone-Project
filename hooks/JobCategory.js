@@ -14,6 +14,25 @@ const JobCategory = [
     { key: '13', value: 'Study Skills and Organization' },
     { key: '14', value: 'Career Development' },
     { key: '15', value: 'Special Education Support' },
+    { key: '16', value: 'Event Planning and Coordination' },
+    { key: '17', value: 'Web Development and Design' },
+    { key: '18', value: 'Photography and Videography' },
+    { key: '19', value: 'Copywriting and Copyediting' },
+    { key: '20', value: 'Translation and Localization Services' },
+    { key: '21', value: 'Academic Research Assistance and Literature Review' },
+    { key: '22', value: 'Resume Writing' },
+    { key: '23', value: 'Voiceover Services' },
+    { key: '24', value: 'CAD Drafting and Design' },
+    { key: '25', value: 'Circuit Design and PCB Layout' },
+    { key: '26', value: 'Finite Element Analysis (FEA) and Simulation' },
+    { key: '27', value: '3D Printing and Rapid Prototyping' },
+    { key: '28', value: 'Structural Engineering Analysis' },
+    { key: '29', value: 'Renewable Energy System Design' },
+    { key: '30', value: 'Transportation Systems Engineering' },
+    { key: '31', value: 'Aerospace Engineering and Design' },
+    { key: '32', value: 'Juvenile Justice Programs and Services' },
+
+
 ]
 
 export default JobCategory

@@ -4,7 +4,7 @@ import VerificationScreen1 from "./VerificationScreen1";
 import VerificationScreen2 from "./VerificationScreen2";
 import { View } from "react-native";
 
-const MultiStepForm = ({ Navigation }) => {
+const MultiStepForm = ({ navigation }) => {
   const [step, setStep] = useState(1);
   const [formValues, setFormValues] = useState({
     userName: "",
@@ -14,6 +14,7 @@ const MultiStepForm = ({ Navigation }) => {
     norsuIDnumber: "",
     course: "",
     yearLevel: "",
+    skillTags: [],
   });
   const [selectedImageUriFront, setSelectedImageUriFront] = useState("");
   const [selectedImageUriBack, setSelectedImageUriBack] = useState("");
@@ -25,10 +26,12 @@ const MultiStepForm = ({ Navigation }) => {
   const handlePrev = () => {
     setStep(step - 1);
   };
+
   return (
     <View style={{ flex: 1, backgroundColor: "white" }}>
       {step === 1 && (
         <VerificationScreen1
+          navigation={navigation}
           onNext={handleNext}
           values={formValues}
           setValues={setFormValues}
@@ -37,7 +40,6 @@ const MultiStepForm = ({ Navigation }) => {
       {step === 2 && (
         <VerificationScreen2
           onPrev={handlePrev}
-          onNext={handleNext}
           values={formValues}
           setValues={setFormValues}
           selectedImageUriFront={selectedImageUriFront}

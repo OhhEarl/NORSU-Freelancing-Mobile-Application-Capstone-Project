@@ -1,14 +1,21 @@
 import { View, Text, StyleSheet, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Button from "../components/Buttons/Button";
+import Button from "../components/Button";
 import { React } from "react";
-import { useAuthContext } from "../hooks/AuthContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-const VerificationNotification = ({ navigation }) => {
-  const { userData } = useAuthContext();
 
-  retrieveData();
-  console.log(userData);
+const VerificationNotification = ({ navigation }) => {
+  const removeData = async () => {
+    try {
+      const data = await AsyncStorage.getItem("userInformation");
+      console.log("the data is ", data);
+    } catch (error) {
+      console.error("Error removing datas:", error);
+    }
+  };
+
+  removeData();
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
@@ -35,20 +42,19 @@ const VerificationNotification = ({ navigation }) => {
           </Text>
           <Text style={styles.secondParagraphHeader}>
             You just need to fill up some information which will help us to
-            build a secure system together
+            build a secure system together.
           </Text>
         </View>
 
         <View
           style={{
             position: "absolute",
-            bottom: 20,
+            bottom: 35,
             width: "100%",
           }}
         >
           <Button
             title="Verify"
-            // onPress={() => navigation.navigate("VerificationScreen")}
             onPress={() => navigation.navigate("MultiStepForm")}
             filled
           />
@@ -70,7 +76,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 30,
-    marginTop: -100,
+    marginTop: -130,
   },
   header: {
     textAlign: "center",
@@ -86,11 +92,13 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 24,
     fontSize: 16,
-    fontFamily: "Roboto-Regular",
+    fontFamily: "Roboto-Medium",
+    color: "black",
   },
   secondParagraphHeader: {
     textAlign: "center",
     fontSize: 16,
-    fontFamily: "Roboto-Regular",
+    fontFamily: "Roboto-Medium",
+    color: "black",
   },
 });

@@ -67,7 +67,7 @@ const areasOfExpertise = {
         "65": "Scriptwriter",
         "66": "Screenwriter",
         "67": "Editor & Proofreader",
-        "68": "Technical Writer",
+        "68": "Advertisement Writer",
         "69": "Grant Writer",
         "70": "Resume Writer",
         "71": "Cover Letter Writer",

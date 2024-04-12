@@ -10,31 +10,29 @@ import {
   Modal,
   Alert,
 } from "react-native";
-
+import * as theme from "../assets/constants/theme";
+import { SelectList } from "react-native-dropdown-select-list";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useGetIsStudent } from "../hooks/dataHooks/useGetIsStudent";
+import LoadingComponent from "../components/LoadingComponent";
 import LinearGradient from "react-native-linear-gradient";
 import FontAwesome from "react-native-vector-icons/FontAwesome";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import DateTimePicker from "react-native-ui-datepicker";
 import dayjs from "dayjs";
-import { COLORS, UTILITIES } from "../assets/constants/index";
 import JobCategory from "../hooks/JobCategory";
-import JobSkills from "../hooks/JobSkills";
-import {
-  SelectList,
-  MultipleSelectList,
-} from "react-native-dropdown-select-list";
 import DocumentPicker from "react-native-document-picker";
 import CurrencyInput from "react-native-currency-input";
-import RNFS from "react-native-fs";
-3;
+import axios from "axios";
+import Tags from "react-native-tags";
 
 const CreateProjectScreen = ({ route }) => {
   const [selectedFile, setSelectedFile] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [isloading, setIsLoading] = useState(false);
   const [jobTitle, setJobTitle] = useState(""); //! Project Name
   const [jobCategory, setJobCategory] = useState(""); //! Project Category
-  const [jobTags, setJobTags] = useState(""); //! Project Tags
+  const [jobTags, setJobTags] = useState(["Tags"]);
   const [jobDescription, setJobDescription] = useState(""); //! Project Description
   const [jobBudgetFrom, setJobBudgetFrom] = useState("0.00"); //! Project Budget Range From
   const [jobBudgetTo, setJobBudgetTo] = useState(""); //! Project Budget Range To
@@ -42,22 +40,24 @@ const CreateProjectScreen = ({ route }) => {
   const [endDate, setEndDate] = useState(dayjs()); //! Project Schedule To
   const [showStartDatePicker, setShowStartDatePicker] = useState(false); //! SHOW SCHEDULE PICKED FROM
   const [showEndDatePicker, setShowEndDatePicker] = useState(false); //! SHOW SCHEDULE PICKED FROM
-  const [selectListData, setSelectListData] = useState(jobCategory); //! FOR PROJECT CATEGORY
   const [placeholder, setPlaceholder] = useState("No Data Found"); //! PLACEHOLDER FOR PROJECT CATEGORY IF NO DATA FOUND
-  const defaultSkills = []; //! JobTags default null array
-
-  const isStudent = route.params?.isStudent;
+  const [error, loading, isStudent] = useGetIsStudent();
 
   //! --------------------PROJECT CATEGORY ------------------------- //
-  useEffect(() => {
-    if (jobTags.length > 0) {
-      setSelectListData([]);
-      setPlaceholder("Please Remove The Skill Tags First.");
-    } else {
-      setPlaceholder("No Data Found");
-      setSelectListData(JobCategory);
+  const initializeDefaultTags = () => {
+    if (jobTags.length === 0) {
+      setJobTags(["Tags"]); // Set default tags if jobTags is empty
     }
-  }, [jobTags]);
+  };
+
+  useEffect(() => {
+    initializeDefaultTags();
+  }, []); // Empty dependency array ensures this effect runs only once when component mounts
+
+  const onChangeTags = (tags) => {
+    setJobTags(tags);
+  };
+
   //! --------------------PROJECT CATEGORY ------------------------- //
 
   //* --------------------------------------------------------------- *//
@@ -97,9 +97,8 @@ const CreateProjectScreen = ({ route }) => {
         allowMultiSelection: true,
       });
       results.forEach(async (result) => {
-        console.log(result);
         const fileSize = result.size;
-        console.log(fileSize); // Not sure why you're using result.uri here, it's typically used for the file path
+
         const maxSize = 15 * 1024 * 1024;
         if (fileSize > maxSize) {
           Alert.alert(
@@ -107,12 +106,12 @@ const CreateProjectScreen = ({ route }) => {
             "Please select a file up to 15 MB."
           );
         } else {
-          setLoading(true);
+          setIsLoading(true);
           setSelectedFile((prevSelectedFiles) => [
             ...prevSelectedFiles,
             result,
           ]);
-          setLoading(false);
+          setIsLoading(false);
         }
       });
     } catch (err) {
@@ -132,280 +131,388 @@ const CreateProjectScreen = ({ route }) => {
 
   //! --------------------DOCUMENT PICKER ------------------------- !//
 
+  //! --------------------HANDLE SUBMIT BUTTON ------------------------- !//
+
+  const handleSubmit = async () => {
+    if (
+      !jobTitle ||
+      !jobCategory ||
+      !jobTags ||
+      !jobDescription ||
+      !startDate ||
+      !endDate ||
+      !jobBudgetFrom ||
+      !jobBudgetTo
+    ) {
+      Alert.alert(
+        "Error",
+        "Please fill in all required fields and upload at least one file."
+      );
+      return;
+    } else {
+      setIsLoading(true);
+      const formData = new FormData();
+      formData.append("student_user_id", isStudent?.studentInfo?.id);
+      formData.append("job_title", jobTitle);
+      formData.append("job_category_id", jobCategory);
+      formData.append("job_description", jobDescription);
+      formData.append("job_start_date", startDate.toISOString().split("T")[0]);
+      formData.append("job_end_date", endDate.toISOString().split("T")[0]);
+      formData.append("job_budget_from", jobBudgetFrom);
+      formData.append("job_budget_to", jobBudgetTo);
+      jobTags.forEach((tag, index) => {
+        formData.append(`job_tags[${index}]`, tag);
+      });
+      selectedFile.forEach((file, index) => {
+        formData.append(`attachments[${index}]`, {
+          uri: file.uri,
+          name: file.name,
+          type: file.type,
+        });
+      });
+
+      try {
+        let url = "http://10.0.2.2:8000/api/create-jobs";
+        const response = await axios.post(url, formData, {
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${isStudent?.token}`,
+          },
+        });
+
+        if (response.status === 201) {
+          alert("Job has been posted successfully.");
+        } else {
+          alert("Something went wrong. Please Try Again!");
+        }
+      } catch (err) {
+        alert(err);
+      } finally {
+        setJobTitle("");
+        setJobDescription("");
+        setJobBudgetFrom("");
+        setJobBudgetTo("");
+        setSelectedFile([]);
+        setStartDate(dayjs());
+        setEndDate(dayjs());
+        setIsLoading(false);
+      }
+    }
+  };
+
   return (
-    <View style={styles.container}>
-      <ScrollView
-        style={{ marginTop: 30, paddingHorizontal: 20 }}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ flexGrow: 1 }}
-      >
-        <View>
-          <Text style={UTILITIES.header}>Let's Get Your Job Listed!</Text>
-        </View>
-
-        <View style={UTILITIES.inputContainer}>
-          <Text style={UTILITIES.title}>Project Name</Text>
-          <TextInput
-            style={UTILITIES.inputField}
-            placeholder="App Design and Development"
-            type="text"
-            value={jobTitle}
-            onChange={(e) => setJobTitle(e.nativeEvent.text)}
-          />
-        </View>
-
-        <View style={UTILITIES.inputContainer}>
-          <Text style={UTILITIES.title}>Project Category</Text>
-          <SelectList
-            setSelected={setJobCategory}
-            data={selectListData}
-            placeholder={"Select Category"}
-            dropdownItemStyles={{ marginVertical: 5 }}
-            boxStyles={{
-              backgroundColor: COLORS.inputField,
-              borderWidth: 0,
-              minHeight: 50,
-              alignItems: "center",
-              paddingVertical: 5,
-              paddingHorizontal: 10,
-              paddingLeft: 16,
-            }}
-            fontFamily="Raleway-Medium"
-            notFoundText={placeholder}
-          />
-        </View>
-
-        <View style={UTILITIES.inputContainer}>
-          <Text style={UTILITIES.title}>Project Tags</Text>
-          <MultipleSelectList
-            setSelected={setJobTags}
-            data={JobSkills[jobCategory] || defaultSkills}
-            placeholder={"Select `Skill Tags"}
-            label="Skill Tags"
-            defaultOption={jobCategory && JobSkills[jobCategory][0]}
-            dropdownItemStyles={{ marginVertical: 5 }}
-            boxStyles={{
-              backgroundColor: COLORS.inputField,
-              borderWidth: 0,
-              minHeight: 50,
-              alignItems: "center",
-              paddingVertical: 5,
-              paddingHorizontal: 10,
-              paddingLeft: 16,
-            }}
-            fontFamily="Raleway-Medium"
-            notFoundText={placeholder}
-          />
-        </View>
-
-        <View style={UTILITIES.inputContainer}>
-          <Text style={UTILITIES.title}>Project Description</Text>
-          <TextInput
-            style={[UTILITIES.inputField, { height: 100 }]}
-            placeholder="Enter some brief about project "
-            type="text"
-            value={jobDescription}
-            onChange={(e) => setJobDescription(e.nativeEvent.text)}
-            multiline
-            autoCorrect={false}
-            numberOfLines={4} // Set the maximum number of lines to 4
-            maxHeight={100} // Set the maximum height to 100 units
-            maxLength={250}
-            textAlignVertical="top"
-          />
-        </View>
-
-        <View style={UTILITIES.inputContainer}>
-          <Text style={UTILITIES.title}>Schedule</Text>
-          <View
-            style={[
-              UTILITIES.inputField,
-              { height: 65, justifyContent: "space-around" },
-            ]}
-          >
-            <View>
-              <Text style={{ fontFamily: "Roboto-Light", marginBottom: 3 }}>
-                Start Date:
-              </Text>
-              <TouchableOpacity onPress={() => togglePicker("start")}>
-                <Text style={styles.date}>
-                  {dayjs(startDate).format("MM/DD/YYYY")}
-                </Text>
-              </TouchableOpacity>
-            </View>
-            <View style={styles.verticalLine} />
-
-            <View>
-              <Text style={{ fontFamily: "Roboto-Light" }}>End Date:</Text>
-              <TouchableOpacity onPress={() => togglePicker("end")}>
-                <Text style={styles.date}>
-                  {dayjs(endDate).format("MM/DD/YYYY")}
-                </Text>
-              </TouchableOpacity>
-            </View>
-
-            <Modal
-              visible={showStartDatePicker}
-              transparent={true}
-              animationType="slide"
-              onRequestClose={() => setShowStartDatePicker(false)}
-            >
-              <View style={styles.modalContainer}>
-                <View style={styles.pickerContainer}>
-                  <DateTimePicker
-                    date={startDate}
-                    onChange={(params) => onStartDateChange(params.date)}
-                  />
-                  <Button
-                    title="Close"
-                    onPress={() => setShowStartDatePicker(false)}
-                  />
-                </View>
-              </View>
-            </Modal>
-
-            <Modal
-              visible={showEndDatePicker}
-              transparent={true}
-              animationType="slide"
-              onRequestClose={() => setShowEndDatePicker(false)}
-            >
-              <View style={styles.modalContainer}>
-                <View style={styles.pickerContainer}>
-                  <DateTimePicker
-                    date={endDate}
-                    onChange={(params) => onEndDateChange(params.date)}
-                  />
-                  <Button
-                    title="Close"
-                    onPress={() => setShowEndDatePicker(false)}
-                  />
-                </View>
-              </View>
-            </Modal>
+    <SafeAreaView style={styles.container}>
+      {isloading ? (
+        <LoadingComponent />
+      ) : (
+        <ScrollView
+          style={{ marginTop: 30, paddingHorizontal: 20 }}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ flexGrow: 1 }}
+        >
+          <View>
+            <Text style={theme.utilities.header}>
+              Let's Get Your Project Listed!
+            </Text>
           </View>
-        </View>
 
-        <View style={UTILITIES.inputContainer}>
-          <Text style={UTILITIES.title}>Budget</Text>
-          <View style={styles.inputRow}>
-            <View style={styles.inputColumn}>
-              <Text style={styles.label}>Start Budget:</Text>
-
-              <CurrencyInput
-                style={styles.textInput}
-                value={jobBudgetFrom}
-                onChangeValue={setJobBudgetFrom}
-                prefix="₱"
-                delimiter=","
-                separator="."
-                precision={2}
-                minValue={0}
-                onChangeText={(formattedValue) => {
-                  if (!formattedValue || parseFloat(formattedValue) === 0) {
-                    // Reset the input value to the default state
-                    setJobBudgetFrom("0.00");
-                  }
-                }}
-              />
-            </View>
-            <MaterialIcons name={"horizontal-rule"} size={20} />
-            <View style={styles.inputColumn}>
-              <Text style={styles.label}>End Budget:</Text>
-              <CurrencyInput
-                style={styles.textInput}
-                value={jobBudgetTo}
-                onChangeValue={setJobBudgetTo}
-                prefix="₱"
-                delimiter=","
-                separator="."
-                precision={2}
-                minValue={0}
-                onChangeText={(formattedValue) => {
-                  if (!formattedValue || parseFloat(formattedValue) === 0) {
-                    // Reset the input value to the default state
-                    setJobBudgetTo("0.00");
-                  }
-                }}
-              />
-            </View>
+          <View style={theme.utilities.inputContainer}>
+            <Text style={theme.utilities.title}>Project Name</Text>
+            <TextInput
+              style={theme.utilities.inputField}
+              placeholder="App Design and Development"
+              type="text"
+              value={jobTitle}
+              onChange={(e) => setJobTitle(e.nativeEvent.text)}
+            />
           </View>
-        </View>
 
-        <View style={[UTILITIES.inputContainer, { marginBottom: 25 }]}>
-          <View
-            style={[
-              UTILITIES.inputField,
-              { height: 80, justifyContent: "center" },
-            ]}
-          >
-            <TouchableOpacity onPress={pickDocument}>
-              <FontAwesome
-                name="cloud-upload"
-                size={38}
-                color="black"
-                style={styles.uploadLogo}
-              />
-              <Text style={styles.uploadText}>Upload Your Files</Text>
-            </TouchableOpacity>
+          <View style={theme.utilities.inputContainer}>
+            <Text style={theme.utilities.title}>Project Category</Text>
+            <SelectList
+              setSelected={setJobCategory}
+              data={JobCategory}
+              placeholder={"Select Category"}
+              dropdownItemStyles={{ marginVertical: 5 }}
+              boxStyles={{
+                backgroundColor: theme.colors.inputField,
+                borderWidth: 0,
+                minHeight: 50,
+                alignItems: "center",
+                paddingVertical: 5,
+                paddingHorizontal: 10,
+                paddingLeft: 16,
+              }}
+              fontFamily="Raleway-Medium"
+              notFoundText={placeholder}
+            />
           </View>
-        </View>
 
-        <View>
-          {selectedFile.map((file, index) => (
-            <View key={index} style={styles.selectedFileContainer}>
-              <View style={{ flexDirection: "row", alignItems: "center" }}>
-                <Ionicons
-                  name={"document-text-outline"}
-                  size={36}
-                  color={"white"}
-                />
-                <Text
-                  style={{
-                    marginStart: 10,
-                    fontSize: 15,
-                    fontWeight: "600",
-                    color: "white",
-                  }}
+          <View style={theme.utilities.inputContainer}>
+            <Text style={theme.utilities.title}>Project Tags</Text>
+            <Tags
+              style={{
+                paddingVertical: 5,
+                borderRadius: 10,
+                width: "100%",
+                justifyContent: "center",
+                alignItems: "center",
+                backgroundColor: theme.colors.inputField,
+              }}
+              initialTags={jobTags}
+              onChangeTags={onChangeTags}
+              inputStyle={{
+                paddingLeft: 12,
+                fontFamily: "Raleway-Medium",
+                backgroundColor: theme.colors.inputField,
+                color: "black",
+              }}
+              renderTag={({
+                tag,
+                index,
+                onPress,
+                deleteTagOnPress,
+                readonly,
+              }) => (
+                <TouchableOpacity
+                  key={`${tag}-${index}`}
+                  onPress={onPress}
+                  style={{ marginStart: 12 }}
                 >
-                  {loading
-                    ? "Loading..."
-                    : file.name.length > 15
-                    ? `${file.name.substring(
-                        0,
-                        file.name.lastIndexOf(".")
-                      )}...${file.name.substring(
-                        file.name.lastIndexOf(".") + 1
-                      )}`
-                    : file.name}
+                  <Text
+                    style={{
+                      paddingVertical: 6,
+                      backgroundColor: "white",
+                      paddingVertical: 5,
+                      paddingHorizontal: 7.5,
+                      borderRadius: 10,
+                      fontFamily: "Raleway-Medium",
+                    }}
+                  >
+                    {`\u25CF ${tag}`}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+
+          <View style={theme.utilities.inputContainer}>
+            <Text style={theme.utilities.title}>Project Description</Text>
+            <TextInput
+              style={[theme.utilities.inputField, { height: 100 }]}
+              placeholder="Enter some brief about project "
+              type="text"
+              value={jobDescription}
+              onChangeText={(text) => {
+                // Limit input to 250 characters
+                if (text.length <= 250) {
+                  setJobDescription(text);
+                }
+              }}
+              multiline
+              autoCorrect={false}
+              numberOfLines={4}
+              maxHeight={100}
+              maxLength={250}
+              textAlignVertical="top"
+            />
+            <View style={{ alignItems: "flex-end", marginRight: 5 }}>
+              <Text>{jobDescription.length} / 250</Text>
+            </View>
+          </View>
+
+          <View style={theme.utilities.inputContainer}>
+            <Text style={theme.utilities.title}>Schedule</Text>
+            <View
+              style={[
+                theme.utilities.inputField,
+                { height: 65, justifyContent: "space-around" },
+              ]}
+            >
+              <View>
+                <Text style={{ fontFamily: "Roboto-Light", marginBottom: 3 }}>
+                  Start Date:
                 </Text>
+                <TouchableOpacity onPress={() => togglePicker("start")}>
+                  <Text style={styles.date}>
+                    {dayjs(startDate).format("MM/DD/YYYY")}
+                  </Text>
+                </TouchableOpacity>
               </View>
-              <TouchableOpacity
-                style={{ marginLeft: "auto" }}
-                onPress={() => removeSelectedFile(index)}
+              <View style={styles.verticalLine} />
+
+              <View>
+                <Text style={{ fontFamily: "Roboto-Light" }}>End Date:</Text>
+                <TouchableOpacity onPress={() => togglePicker("end")}>
+                  <Text style={styles.date}>
+                    {dayjs(endDate).format("MM/DD/YYYY")}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              <Modal
+                visible={showStartDatePicker}
+                transparent={true}
+                animationType="slide"
+                onRequestClose={() => setShowStartDatePicker(false)}
               >
-                <Ionicons
-                  name={"close-circle-outline"}
-                  size={30}
-                  color={"white"}
+                <View style={styles.modalContainer}>
+                  <View style={styles.pickerContainer}>
+                    <DateTimePicker
+                      date={startDate}
+                      onChange={(params) => onStartDateChange(params.date)}
+                    />
+                    <Button
+                      title="Close"
+                      onPress={() => setShowStartDatePicker(false)}
+                    />
+                  </View>
+                </View>
+              </Modal>
+
+              <Modal
+                visible={showEndDatePicker}
+                transparent={true}
+                animationType="slide"
+                onRequestClose={() => setShowEndDatePicker(false)}
+              >
+                <View style={styles.modalContainer}>
+                  <View style={styles.pickerContainer}>
+                    <DateTimePicker
+                      date={endDate}
+                      onChange={(params) => onEndDateChange(params.date)}
+                    />
+                    <Button
+                      title="Close"
+                      onPress={() => setShowEndDatePicker(false)}
+                    />
+                  </View>
+                </View>
+              </Modal>
+            </View>
+          </View>
+
+          <View style={theme.utilities.inputContainer}>
+            <Text style={theme.utilities.title}>Budget</Text>
+            <View style={styles.inputRow}>
+              <View style={styles.inputColumn}>
+                <Text style={styles.label}>Start Budget:</Text>
+
+                <CurrencyInput
+                  style={styles.textInput}
+                  value={jobBudgetFrom}
+                  onChangeValue={setJobBudgetFrom}
+                  prefix="₱"
+                  delimiter=","
+                  separator="."
+                  precision={2}
+                  minValue={0}
+                  onChangeText={(formattedValue) => {
+                    if (!formattedValue || parseFloat(formattedValue) === 0) {
+                      setJobBudgetFrom("0.00");
+                    }
+                  }}
                 />
+              </View>
+              <MaterialIcons name={"horizontal-rule"} size={20} />
+              <View style={styles.inputColumn}>
+                <Text style={styles.label}>End Budget:</Text>
+                <CurrencyInput
+                  style={styles.textInput}
+                  value={jobBudgetTo}
+                  onChangeValue={setJobBudgetTo}
+                  prefix="₱"
+                  delimiter=","
+                  separator="."
+                  precision={2}
+                  minValue={0}
+                  onChangeText={(formattedValue) => {
+                    if (!formattedValue || parseFloat(formattedValue) === 0) {
+                      // Reset the input value to the default state
+                      setJobBudgetTo("0.00");
+                    }
+                  }}
+                />
+              </View>
+            </View>
+          </View>
+
+          <View style={[theme.utilities.inputContainer, { marginBottom: 25 }]}>
+            <View
+              style={[
+                theme.utilities.inputField,
+                { height: 80, justifyContent: "center" },
+              ]}
+            >
+              <TouchableOpacity onPress={pickDocument}>
+                <FontAwesome
+                  name="cloud-upload"
+                  size={38}
+                  color="black"
+                  style={styles.uploadLogo}
+                />
+                <Text style={styles.uploadText}>Upload Your Files</Text>
               </TouchableOpacity>
             </View>
-          ))}
-        </View>
+          </View>
 
-        <TouchableOpacity style={{ marginBottom: 30 }}>
-          <LinearGradient
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            colors={[COLORS.primary, COLORS.secondary]}
-            style={styles.linearGradientText}
-          >
-            <Text style={styles.postText}>SUBMIT</Text>
-          </LinearGradient>
-        </TouchableOpacity>
-      </ScrollView>
-    </View>
+          <View>
+            {selectedFile.map((file, index) => (
+              <View key={index} style={styles.selectedFileContainer}>
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
+                  <Ionicons
+                    name={"document-text-outline"}
+                    size={36}
+                    color={theme.colors.WHITE}
+                  />
+                  <Text
+                    style={{
+                      marginStart: 10,
+                      fontSize: 15,
+                      fontWeight: "600",
+                      color: theme.colors.WHITE,
+                    }}
+                  >
+                    {isloading
+                      ? "Loading..."
+                      : file.name.length > 15
+                      ? `${file.name.substring(
+                          0,
+                          file.name.lastIndexOf(".")
+                        )}...${file.name.substring(
+                          file.name.lastIndexOf(".") + 1
+                        )}`
+                      : file.name}
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  style={{ marginLeft: "auto" }}
+                  onPress={() => removeSelectedFile(index)}
+                >
+                  <Ionicons
+                    name={"close-circle-outline"}
+                    size={30}
+                    color={theme.colors.WHITE}
+                  />
+                </TouchableOpacity>
+              </View>
+            ))}
+          </View>
+
+          <TouchableOpacity style={{ marginBottom: 30 }} onPress={handleSubmit}>
+            <LinearGradient
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              colors={[theme.colors.primary, theme.colors.secondary]}
+              style={styles.linearGradientText}
+            >
+              <Text style={styles.postText}>SUBMIT</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+        </ScrollView>
+      )}
+    </SafeAreaView>
   );
 };
 
@@ -414,12 +521,13 @@ export default CreateProjectScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.WHITE,
+    backgroundColor: theme.colors.WHITE,
+    position: "relative",
   },
 
   uploadText: {
     fontSize: 18,
-    color: COLORS.BLACKS,
+    color: theme.colors.BLACK,
     fontFamily: "Roboto-Bold",
   },
 
@@ -432,7 +540,7 @@ const styles = StyleSheet.create({
   },
 
   postText: {
-    color: "#fff",
+    color: theme.colors.WHITE,
     alignSelf: "center",
     padding: 13,
     fontWeight: "700",
@@ -448,7 +556,7 @@ const styles = StyleSheet.create({
   },
 
   pickerContainer: {
-    backgroundColor: "white",
+    backgroundColor: theme.colors.WHITE,
     padding: 30,
     borderRadius: 10,
     width: "90%",
@@ -457,7 +565,7 @@ const styles = StyleSheet.create({
   verticalLine: {
     width: 2,
     height: "70%",
-    backgroundColor: "gray", // Adjust color as needed
+    backgroundColor: theme.colors.gray,
   },
 
   date: {
@@ -468,13 +576,13 @@ const styles = StyleSheet.create({
 
   uploadLogo: {
     alignSelf: "center", // Center the icon horiz
-    color: COLORS.secondary,
+    color: theme.colors.secondary,
   },
 
   selectedFileContainer: {
     display: "flex",
     flexDirection: "row",
-    backgroundColor: COLORS.primary,
+    backgroundColor: theme.colors.primary,
     paddingHorizontal: 8,
     paddingVertical: 10,
     borderRadius: 10,
@@ -485,7 +593,7 @@ const styles = StyleSheet.create({
   inputRow: {
     borderRadius: 10,
     flexDirection: "row",
-    backgroundColor: COLORS.inputField,
+    backgroundColor: theme.colors.inputField,
     justifyContent: "space-between",
     alignItems: "center",
     fontSize: 18,

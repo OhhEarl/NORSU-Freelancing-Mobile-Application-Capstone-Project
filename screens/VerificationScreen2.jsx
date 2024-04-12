@@ -1,14 +1,23 @@
 import { React, useEffect, useState } from "react";
-import { View, StyleSheet, Image } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { TextInput } from "react-native-paper";
-import { COLORS } from "../assets/constants/index";
-import Button from "../components/Buttons/Button";
+import {
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
+  Image,
+  ScrollView,
+  BackHandler,
+} from "react-native";
 import { launchImageLibrary } from "react-native-image-picker";
-import axios from "axios";
-import { useAuthContext } from "../hooks/AuthContext";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { SelectList } from "react-native-dropdown-select-list";
 import { useNavigation } from "@react-navigation/native";
+import { useAuthContext } from "../hooks/AuthContext";
+import Button from "../components/Button";
+import axios from "axios";
+import Feather from "react-native-vector-icons/Feather";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as theme from "../assets/constants/theme";
+
 const VerificationScreen2 = ({
   values,
   setValues,
@@ -16,6 +25,7 @@ const VerificationScreen2 = ({
   setSelectedImageUriFront,
   selectedImageUriBack,
   setSelectedImageUriBack,
+  onPrev,
 }) => {
   const navigation = useNavigation();
   const { userData } = useAuthContext();
@@ -40,6 +50,35 @@ const VerificationScreen2 = ({
 
     retrieveToken();
   }, []);
+  useEffect(() => {
+    const backAction = () => {
+      // Trigger onPrev function
+      onPrev();
+      // Return true to prevent default back button behavior
+      return true;
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      "hardwareBackPress",
+      backAction
+    );
+
+    return () => backHandler.remove(); // Cleanup the event listener on component unmount
+  }, [onPrev]);
+  console.log(values);
+  const yearLevelOptions = [
+    { key: "1", value: "1st Year" },
+    { key: "2", value: "2nd Year" },
+    { key: "3", value: "3rd Year" },
+    { key: "4", value: "4th Year" },
+    { key: "5", value: "5th Year" },
+  ];
+  const handleYearLevelChange = (selectedValue) => {
+    setValues((prevValues) => ({ ...prevValues, yearLevel: selectedValue }));
+  };
+  const selectedYearLevel = yearLevelOptions.find(
+    (option) => option.key === values.yearLeveL
+  );
 
   useEffect(() => {
     if (userData && userData.user && userData.user.id) {
@@ -114,7 +153,8 @@ const VerificationScreen2 = ({
       !values.course ||
       !values.areaOfExpertise ||
       !values.norsuIDnumber ||
-      !values.yearLevel
+      !values.yearLeveL ||
+      !values.skillTags
     ) {
       alert("Please fill all fields and select both front and back ID's.");
       return;
@@ -139,6 +179,9 @@ const VerificationScreen2 = ({
     formData.append("firstName", values.firstName);
     formData.append("lastName", values.lastName);
     formData.append("areaOfExpertise", values.areaOfExpertise);
+    formValues.skillTags.forEach((tag) => {
+      formData.append("student_skills[]", tag);
+    });
     formData.append("course", values.course);
     formData.append("yearLevel", values.yearLevel);
     formData.append("norsuIDnumber", values.norsuIDnumber);
@@ -167,60 +210,87 @@ const VerificationScreen2 = ({
     }
   };
   return (
-    <View
-      style={[
-        styles.container,
-        {
-          flexDirection: "column",
-        },
-      ]}
-    >
+    <ScrollView style={{ paddingVertical: 10 }}>
       <View
-        style={{
-          flex: 1,
-          backgroundColor: "white",
-          justifyContent: "center",
-          alignContent: "center",
-        }}
+        style={{ flex: 1, backgroundColor: "white", paddingHorizontal: 30 }}
       >
-        <View style={{ marginBottom: 6 }}>
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginTop: 20,
+            marginBottom: 20,
+          }}
+        >
+          <Feather
+            name="arrow-left"
+            size={24}
+            color={theme.colors.BLACKS}
+            onPress={onPrev}
+          />
+          <Text
+            style={{
+              marginRight: 25,
+              fontFamily: "Roboto-Bold",
+              color: theme.colors.BLACKS,
+              fontSize: 18,
+            }}
+          >
+            STEP 2
+          </Text>
+          <Text></Text>
+        </View>
+        <View style={styles.inputFieldContainer}>
+          <Text style={styles.inputLabel}>ID Number</Text>
           <TextInput
-            mode="outlined"
-            style={{ margin: 8 }}
-            label="NORSU ID Number"
+            style={styles.inputField}
+            placeholderTextColor="#000"
             placeholder="Enter NORSU ID number"
             value={values.norsuIDnumber}
             onChangeText={(text) =>
               setValues({ ...values, norsuIDnumber: text })
             }
-            outlineColor={COLORS.black} // Change the outline color based on the theme's primary color
-            activeOutlineColor={COLORS.primary}
           />
         </View>
 
-        <View style={{ marginBottom: 6 }}>
+        <View style={styles.inputFieldContainer}>
+          <Text style={styles.inputLabel}>Course</Text>
           <TextInput
-            mode="outlined"
-            style={{ margin: 8 }}
-            label="Course"
+            style={styles.inputField}
+            placeholderTextColor="#000"
             placeholder="Enter your course"
             value={values.course}
             onChangeText={(text) => setValues({ ...values, course: text })}
-            outlineColor={COLORS.black} // Change the outline color based on the theme's primary color
-            activeOutlineColor={COLORS.primary}
           />
         </View>
 
-        <View style={{ marginBottom: 6 }}>
-          <TextInput
-            mode="outlined"
-            style={{ margin: 8 }}
-            label="Year Level"
-            placeholder="Enter your year level"
-            value={values.yearLevel}
-            onChangeText={(text) => setValues({ ...values, yearLevel: text })}
-            outlineColor={COLORS.black} // Change the outline color based on the theme's primary color
-            activeOutlineColor={COLORS.primary}
+        <View style={styles.inputFieldContainer}>
+          <Text style={styles.inputLabel}>Year Level</Text>
+          <SelectList
+            key={`yearLevel-${values.yearLevel}`} // Ensure a unique key for each SelectList instance
+            setSelected={handleYearLevelChange}
+            style={styles.inputField}
+            data={yearLevelOptions.map((item) => ({
+              ...item,
+              value: item.value,
+            }))}
+            placeholder="Select your year level"
+            search={false}
+            dropdownTextStyles={{
+              color: "black",
+            }}
+            boxStyles={{
+              paddingVertical: 15,
+              borderColor: theme.colors.primary,
+            }}
+            selectedValue={selectedYearLevel ? selectedYearLevel.value : ""}
+            defaultOption={{
+              key: values.yearLevel,
+              value:
+                yearLevelOptions.find((item) => item.key === values.yearLevel)
+                  ?.value || "",
+            }}
           />
         </View>
 
@@ -259,9 +329,9 @@ const VerificationScreen2 = ({
 
         <View>
           <Button
-            title="Verify"
+            title="Submit"
             style={{
-              position: "absolute",
+              position: "relative",
               width: "100%",
               marginTop: 20,
             }}
@@ -270,36 +340,32 @@ const VerificationScreen2 = ({
           />
         </View>
       </View>
-    </View>
+    </ScrollView>
   );
 };
 
 export default VerificationScreen2;
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-  },
-
   idContainerButton: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginHorizontal: 40, // Add horizontal margin to each containe
+    marginHorizontal: 40,
     marginTop: 20,
   },
   idContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
     height: 175,
+    marginTop: 20,
   },
   eachIDContainer: {
-    flex: 0.5, // Set each container to 50% width
-    alignItems: "center", // Center image horizontally
-    justifyContent: "center", // Center image vertically
+    flex: 0.5,
+    alignItems: "center",
+    justifyContent: "center",
     borderColor: "black",
     borderWidth: 1,
     borderRadius: 6,
-    marginHorizontal: 15, // Add horizontal margin to each containe
+    marginHorizontal: 15,
   },
 
   image: {
@@ -307,5 +373,28 @@ const styles = StyleSheet.create({
     height: "100%",
     alignSelf: "center",
     resizeMode: "stretch",
+  },
+
+  inputFieldContainer: {
+    marginVertical: 10,
+    width: "100%",
+  },
+  inputLabel: {
+    fontFamily: "Roboto-Bold",
+    color: theme.colors.BLACKS,
+    marginBottom: 5,
+    marginStart: 5,
+    fontSize: 15,
+  },
+  inputField: {
+    width: "100%",
+    borderWidth: 1,
+    borderColor: theme.colors.primary,
+    borderRadius: 10,
+    paddingStart: 15,
+    fontFamily: "Roboto-Regular",
+  },
+  button: {
+    paddingHorizontal: 10,
   },
 });

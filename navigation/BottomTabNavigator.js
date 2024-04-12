@@ -1,18 +1,14 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import Logout from '../hooks/Logout';
+import { StyleSheet, TouchableOpacity, View } from 'react-native'
+import { useGetIsStudent } from '../hooks/dataHooks/useGetIsStudent';
 import HomeScreen from '../screens/HomeScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import CreateProjectScreen from '../screens/CreateProjectScreen';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
-import { Text } from 'react-native-paper';
-
 import Entypo from 'react-native-vector-icons/Entypo';
-import { COLORS } from '../assets/constants';
-import IMAGES from '../assets/images';
-import { Image } from 'react-native';
-import COLOR from '../constants/colors';
-import { useGetIsStudent } from '../hooks/dataHooks/useGetIsStudent';
+import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import * as theme from "../assets/constants/theme";
+
 
 const Tab = createBottomTabNavigator();
 
@@ -21,24 +17,21 @@ export const BottomTabNavigator = () => {
   const [error, loading, isStudent] = useGetIsStudent();
 
   return (
-    <Tab.Navigator initialRouteName={HomeScreen}>
+    <Tab.Navigator>
       <Tab.Screen
-        name={"Home Screen"}
+        name={'HomeScreen'}
         component={HomeScreen}
         options={{
           title: 'Home',
+          headerShown: false,
           tabBarIcon: ({ focused }) => (
-            <Image
-              source={IMAGES.HOME}
-              style={{
-                height: 25,
-                width: 25,
-                tintColor: focused ? COLOR.primary : COLOR.BLACK,
-              }}
+            <Entypo
+              name="home"
+              size={25}
+              color={focused ? theme.colors.primary : theme.colors.BLACKS}
             />
           ),
-          tabBarActiveTintColor: COLORS.primary,
-          tabBarInactiveTintColor: COLORS.BLACK,
+
         }}
       />
 
@@ -52,7 +45,7 @@ export const BottomTabNavigator = () => {
             <Entypo
               name="suitcase"
               size={25}
-              color={focused ? COLOR.primary : COLOR.black}
+              color={focused ? theme.colors.primary : theme.colors.BLACKS}
             />
           ),
 
@@ -67,19 +60,17 @@ export const BottomTabNavigator = () => {
           title: 'Profile',
           headerShown: false,
           tabBarIcon: ({ focused }) => (
-            <Image
-              source={IMAGES.PROFILE}
-              style={{
-                height: 25,
-                width: 25,
-                tintColor: focused ? COLOR.primary : COLORS.BLACK,
-              }}
+            <FontAwesome
+              name="user"
+              size={25}
+              color={focused ? theme.colors.primary : theme.colors.BLACKS}
             />
           ),
-          tabBarActiveTintColor: COLORS.primary,
-          tabBarInactiveTintColor: COLORS.BLACK,
+
         }}
       />
+
+
     </Tab.Navigator>
   );
 };
@@ -89,7 +80,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 10,
-    backgroundColor: COLORS.grey,
+    backgroundColor: theme.colors.grey,
     opacity: 0.8,
     paddingVertical: 8,
     paddingHorizontal: 12,

@@ -1,12 +1,11 @@
 import { View, Text, Pressable, TextInput } from "react-native";
 import React, { useState, useEffect } from "react";
+import { useIsFocused } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Button from "../components/Button";
-import COLORS from "../constants/colors";
-import { useIsFocused } from "@react-navigation/native";
+import * as theme from "../assets/constants/theme";
 import auth from "@react-native-firebase/auth";
 import DeviceInfo from "react-native-device-info";
-import axios from "axios";
 const Signup = ({ navigation }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -67,7 +66,7 @@ const Signup = ({ navigation }) => {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.white }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.WHITE }}>
       <View style={{ flex: 1, marginHorizontal: 22, justifyContent: "center" }}>
         <View style={{ marginVertical: 22, alignItems: "center" }}>
           <Text
@@ -75,7 +74,7 @@ const Signup = ({ navigation }) => {
               fontSize: 35,
               fontWeight: "bold",
               marginVertical: 12,
-              color: COLORS.black,
+              color: theme.colors.BLACKS,
             }}
           >
             Create an account
@@ -84,7 +83,7 @@ const Signup = ({ navigation }) => {
           <Text
             style={{
               fontSize: 16,
-              color: COLORS.black,
+              color: theme.colors.BLACKS,
             }}
           >
             Get paid for passion!
@@ -106,7 +105,7 @@ const Signup = ({ navigation }) => {
             style={{
               width: "100%",
               height: 48,
-              borderColor: COLORS.black,
+              borderColor: theme.colors.BLACKS,
               borderWidth: 1,
               borderRadius: 8,
               alignItems: "center",
@@ -116,7 +115,7 @@ const Signup = ({ navigation }) => {
           >
             <TextInput
               placeholder="Enter your email address"
-              placeholderTextColor={COLORS.black}
+              placeholderTextColor={theme.colors.BLACKS}
               onChangeText={(text) => setEmail(text)}
               value={email}
               keyboardType="email-address"
@@ -143,7 +142,7 @@ const Signup = ({ navigation }) => {
             style={{
               width: "100%",
               height: 48,
-              borderColor: COLORS.black,
+              borderColor: theme.colors.BLACKS,
               borderWidth: 1,
               borderRadius: 8,
               alignItems: "center",
@@ -153,7 +152,7 @@ const Signup = ({ navigation }) => {
           >
             <TextInput
               placeholder="Enter your password"
-              placeholderTextColor={COLORS.black}
+              placeholderTextColor={theme.colors.BLACKS}
               onChangeText={(text) => setPassword(text)}
               value={password}
               secureTextEntry
@@ -213,14 +212,14 @@ const Signup = ({ navigation }) => {
             marginVertical: 22,
           }}
         >
-          <Text style={{ fontSize: 16, color: COLORS.black }}>
+          <Text style={{ fontSize: 16, color: theme.colors.BLACKS }}>
             Already have an account?
           </Text>
           <Pressable onPress={() => navigation.navigate("Login")}>
             <Text
               style={{
                 fontSize: 16,
-                color: COLORS.primary,
+                color: theme.colors.primary,
                 fontWeight: "bold",
                 marginLeft: 6,
                 textDecorationLine: "underline",

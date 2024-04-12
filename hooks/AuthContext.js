@@ -24,13 +24,9 @@ export const AuthProvider = ({ children, navigation }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [userData, setUserData] = useState(null);
-  const uniqueId = DeviceInfo.getUniqueId();
   const [email, setEmailLogin] = useState('');
   const [password, setPasswordLogin] = useState('');
   const [isEmailVerified, setIsEmailVerified] = useState(false);
-  const [token, setToken] = useState(null);
-  const [userDataLoading, setUserDataLoading] = useState(false);
-
   const onGoogleButtonPress = async () => {
     try {
       setIsLoading(true);
@@ -54,10 +50,10 @@ export const AuthProvider = ({ children, navigation }) => {
         await auth().signInWithCredential(googleCredential);
       }
     } catch (error) {
-      if (error.code === statusCodes.SIGN_IN_CANCELLED) {
-        await GoogleSignin.revokeAccess().then(() =>
-          navigation.navigate('Login'),
-        );
+
+      if (error.code === 12501) {
+        await GoogleSignin.revokeAccess()
+        navigation.navigate('Login')
       } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
         alert(statusCodes.PLAY_SERVICES_NOT_AVAILABLE);
       } else if (error.code === statusCodes.IN_PROGRESS) {
@@ -65,7 +61,7 @@ export const AuthProvider = ({ children, navigation }) => {
       } else if (error.code === statusCodes.SIGN_IN_REQUIRED) {
         alert('Signin Required');
       } else {
-        setError('Something Went Wrong! Please Try Again.');
+        alert('Something Went Wrong! Please Try Again.');
       }
     } finally {
       setIsLoading(false);
@@ -105,13 +101,10 @@ export const AuthProvider = ({ children, navigation }) => {
             'userInformation',
             JSON.stringify(data),
           );
-
           await setUserData(data);
           setIsLoading(false);
         }
         setUser(userAuth);
-
-
       }
     } catch (error) {
       if (error.code === 'auth/invalid-email') {
