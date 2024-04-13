@@ -11,49 +11,49 @@ export const useGetIsStudent = () => {
   const [prevIsStudent, setPrevIsStudent] = useState(null);
   const [intervalId, setIntervalId] = useState(null);
 
-  useEffect(() => {
-    const getToken = async () => {
+  const getToken = async () => {
+    try {
+      const userInfo = await AsyncStorage.getItem('userInformation');
+      const parsedUserInfo = JSON.parse(userInfo);
+      const token = parsedUserInfo.token;
+      setToken(token);
+    } catch (error) {
+      return;
+    }
+  };
+  const fetchIsStudent = async () => {
+    if (token) {
+      setLoading(true);
       try {
-        const userInfo = await AsyncStorage.getItem('userInformation');
-        const parsedUserInfo = JSON.parse(userInfo);
-        const token = parsedUserInfo.token;
-        setToken(token)
+        const config = {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        };
+        const response = await axios.get(
+          'http://10.0.2.2:8000/api/fetch-user-data',
+          config,
+        );
+        const data = response.data;
+        if (data) {
+          setIsStudent(data);
+          console.log(data)
+        } else {
+          setIsStudent(null);
+        }
       } catch (error) {
-        return
+        setError(error);
+      } finally {
+        setLoading(false);
       }
-    };
+    }
+  };
+
+  useEffect(() => {
     getToken();
   }, []);
 
   useEffect(() => {
-    const fetchIsStudent = async () => {
-      if (token) {
-        setLoading(true);
-        try {
-          const config = {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          };
-          const response = await axios.get(
-            'http://10.0.2.2:8000/api/fetch-user-data',
-            config,
-          );
-          const data = response.data;
-          if (data) {
-            setIsStudent(data);
-            console.log('the data is', data)
-          } else {
-            setIsStudent(null);
-          }
-        } catch (error) {
-          return
-        } finally {
-          setLoading(false);
-        }
-      }
-    };
-
     if (token) {
       fetchIsStudent();
       const id = setInterval(fetchIsStudent, 1800000); // Interval set to 3 minutes
@@ -69,6 +69,6 @@ export const useGetIsStudent = () => {
     setPrevIsStudent(isStudent);
   }, [isStudent, prevIsStudent, intervalId]);
 
-  return [error, loading, isStudent];
+  return [error, loading, isStudent, fetchIsStudent];
 };
 

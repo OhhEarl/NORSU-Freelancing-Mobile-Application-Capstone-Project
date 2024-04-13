@@ -96,7 +96,7 @@ const HomeScreen = ({ navigation }) => {
             <Text style={styles.popularText}>Recent Projects</Text>
             {listLoading ? (
               <LoadingComponent />
-            ) : (
+            ) : filteredItems.length ? (
               <FlatList
                 data={filteredItems}
                 keyExtractor={(item) => item.id.toString()}
@@ -107,6 +107,38 @@ const HomeScreen = ({ navigation }) => {
                 )}
                 showsVerticalScrollIndicator={false}
               />
+            ) : (
+              <View
+                style={{
+                  flex: 1,
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              >
+                <View
+                  style={{
+                    justifyContent: "center",
+                    alignItems: "center",
+                  }}
+                >
+                  <Image
+                    source={require("../assets/no-data-found.jpg")}
+                    style={{
+                      height: 100,
+                      width: 100,
+                    }}
+                  />
+                  <Text
+                    style={{
+                      fontFamily: "Roboto-Bold",
+                      fontSize: 18,
+                      color: "black",
+                    }}
+                  >
+                    NO PROJECTS FOUND
+                  </Text>
+                </View>
+              </View>
             )}
           </View>
         </View>

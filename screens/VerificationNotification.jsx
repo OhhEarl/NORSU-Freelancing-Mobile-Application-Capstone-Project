@@ -14,8 +14,6 @@ const VerificationNotification = ({ navigation }) => {
     }
   };
 
-  removeData();
-
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>

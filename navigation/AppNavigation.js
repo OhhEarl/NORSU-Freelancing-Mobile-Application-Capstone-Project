@@ -22,13 +22,9 @@ const Stack = createNativeStackNavigator();
 
 const AuthenticatedApp = () => {
   const { user, isLoading, isEmailVerified } = useAuthContext();
-  const [error, loading, isStudent] = useGetIsStudent();
-  const [userInfo, setUserInfo] = useGetIsStudent();
-
-
-
+  const [error, loading, isStudent, fetchIsStudent] = useGetIsStudent();
+  console.log(isStudent)
   return (
-
     <NavigationContainer>
       {loading || isLoading ? (
         <LoadingComponent />

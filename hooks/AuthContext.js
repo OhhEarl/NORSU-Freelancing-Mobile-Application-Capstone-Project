@@ -27,6 +27,7 @@ export const AuthProvider = ({ children, navigation }) => {
   const [email, setEmailLogin] = useState('');
   const [password, setPasswordLogin] = useState('');
   const [isEmailVerified, setIsEmailVerified] = useState(false);
+
   const onGoogleButtonPress = async () => {
     try {
       setIsLoading(true);
@@ -49,6 +50,7 @@ export const AuthProvider = ({ children, navigation }) => {
         await setUserData(data);
         await auth().signInWithCredential(googleCredential);
       }
+      setIsLoading(false);
     } catch (error) {
 
       if (error.code === 12501) {
@@ -63,8 +65,6 @@ export const AuthProvider = ({ children, navigation }) => {
       } else {
         alert('Something Went Wrong! Please Try Again.');
       }
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -113,6 +113,7 @@ export const AuthProvider = ({ children, navigation }) => {
         setError('The user account has been disabled.');
       } else if (error.code === 'auth/invalid-credential') {
         setError('Invalid email address or password.');
+
       } else {
         alert(error);
       }
@@ -123,8 +124,9 @@ export const AuthProvider = ({ children, navigation }) => {
 
 
 
+
   useEffect(() => {
-    const unsubscribe = auth().onAuthStateChanged(user => {
+    const unsubscribe = auth().onAuthStateChanged(async (user) => {
       setIsLoading(true);
       if (user) {
         setUser(user);

@@ -65,7 +65,7 @@ const VerificationScreen2 = ({
 
     return () => backHandler.remove(); // Cleanup the event listener on component unmount
   }, [onPrev]);
-  console.log(values);
+
   const yearLevelOptions = [
     { key: "1", value: "1st Year" },
     { key: "2", value: "2nd Year" },

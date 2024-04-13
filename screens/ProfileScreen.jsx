@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useFocusEffect } from "@react-navigation/native";
 import {
   StyleSheet,
   Text,
@@ -24,8 +25,8 @@ import * as theme from "../assets/constants/theme";
 import LoadingComponent from "../components/LoadingComponent";
 
 const ProfileScreen = ({ navigation }) => {
-  const [error, loading, isStudent] = useGetIsStudent();
-  const { userData, setUserData, isLoading } = useAuthContext();
+  const [error, loading, isStudent, fetchIsStudent] = useGetIsStudent();
+  const { setUserData } = useAuthContext();
   const [modalVisible, setModalVisible] = useState(false);
 
   const signOut = async () => {
@@ -109,6 +110,8 @@ const ProfileScreen = ({ navigation }) => {
               onPress={() =>
                 navigation.navigate("EditProfileScreen", {
                   project: isStudent?.studentInfo,
+                  token: isStudent?.token,
+                  fetchIsStudent: fetchIsStudent,
                 })
               }
             >

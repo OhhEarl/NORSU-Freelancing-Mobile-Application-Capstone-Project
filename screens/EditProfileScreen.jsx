@@ -1,4 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
+import { useFocusEffect } from "@react-navigation/native";
+import { useGetIsStudent } from "../hooks/dataHooks/useGetIsStudent";
+
 import {
   StyleSheet,
   Text,
@@ -9,6 +12,7 @@ import {
   TextInput,
   FlatList,
   TouchableWithoutFeedback,
+  Alert,
 } from "react-native";
 import areasOfExpertise from "../hooks/AreaOfExpertise";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -18,8 +22,14 @@ import Tags from "react-native-tags";
 import { launchImageLibrary } from "react-native-image-picker";
 import LoadingComponent from "../components/LoadingComponent";
 import { ActivityIndicator } from "react-native-paper";
+import Button from "../components/Button";
+import axios from "axios";
 const EditProfileScreen = ({ navigation, route }) => {
-  const user = route.params.project;
+  const [user, setUser] = useState(route.params?.project);
+  const [token, setToken] = useState(route.params?.token);
+  const [fetchIsStudent, setFetchIsStudent] = useState(
+    route.params?.fetchIsStudent
+  );
 
   const [userAvatar, setUserAvatar] = useState(user?.user_avatar);
   const [userName, setUserName] = useState(user?.user_name);
@@ -27,7 +37,7 @@ const EditProfileScreen = ({ navigation, route }) => {
   const [suggestions, setSuggestions] = useState([]);
   const [areaExpertise, setAreaExpertise] = useState(user?.area_of_expertise);
   const [aboutMe, setAboutMe] = useState("");
-  const [studentSkills, setStudentSkills] = useState([]);
+  const [studentSkills, setStudentSkills] = useState(user?.skill_tags || []);
   const [loading, setLoading] = useState(false);
 
   const imageAvatar = async () => {
@@ -121,178 +131,239 @@ const EditProfileScreen = ({ navigation, route }) => {
     setStudentSkills(tag);
   };
 
+  const updateProfile = async () => {
+    if (!userName || !areaExpertise || !studentSkills) {
+      Alert.alert("Error", "Please fill in all required fields.");
+      return;
+    } else {
+      setLoading(true);
+
+      const formData = new FormData();
+
+      formData.append("student_user_id", user?.user_id);
+      formData.append("user_name", userName);
+      formData.append("area_of_expertise", areaExpertise);
+      formData.append("about_me", aboutMe);
+      studentSkills.forEach((skill, index) => {
+        formData.append(`student_skills[${index}]`, skill);
+      });
+      formData.append("user_avatar", {
+        uri: userAvatar,
+        name: `${userAvatar.split("/").pop()}`,
+        type: `image/${userAvatar.split(".").pop()}`,
+      });
+      let url = "http://10.0.2.2:8000/api/student-validations/update";
+      try {
+        const response = await axios.post(url, formData, {
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (response.status === 201) {
+          fetchIsStudent();
+        }
+      } catch (error) {
+        console.log(
+          "Error:",
+          error.response ? error.response.data : error.message
+        );
+      } finally {
+        setLoading(false);
+        navigation.navigate("EditProfileScreen");
+      }
+    }
+  };
+
   return (
     <SafeAreaView style={styles.mainContainer}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <View
-          style={{
-            flexDirection: "row",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          <Feather
-            name="arrow-left"
-            size={24}
-            color={theme.colors.BLACKS}
-            onPress={() => {
-              navigation.goBack();
-            }}
-          />
-          <Text
+      {loading ? (
+        <LoadingComponent />
+      ) : (
+        <ScrollView showsVerticalScrollIndicator={false}>
+          <View
             style={{
-              marginRight: 25,
-              fontFamily: "Roboto-Bold",
-              color: theme.colors.primary,
-              fontSize: 18,
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
             }}
           >
-            EDIT PROFILE
-          </Text>
-          <Text></Text>
-        </View>
-
-        <View style={styles.innerContainer}>
-          <View style={styles.imageContainer}>
-            {loading ? (
-              <ActivityIndicator size={5} />
-            ) : (
-              <Image
-                objectFit="contain"
-                style={styles.image}
-                source={{
-                  uri:
-                    userAvatar ||
-                    "https://img.freepik.com/free-psd/3d-illustration-person-with-sunglasses_23-2149436188.jpg?w=740&t=st=1670148608~exp=1670149208~hmac=bc57b66d67d2b9f4929c8e592ff17e8c8660721608add2f18fc20d19c1aab7e4",
-                }}
-              />
-            )}
-
-            <TouchableOpacity
-              style={styles.editIconContainer}
-              onPress={imageAvatar}
+            <Feather
+              name="arrow-left"
+              size={24}
+              color={theme.colors.BLACKS}
+              onPress={() => {
+                navigation.goBack();
+              }}
+            />
+            <Text
+              style={{
+                marginRight: 25,
+                fontFamily: "Roboto-Bold",
+                color: theme.colors.primary,
+                fontSize: 18,
+              }}
             >
-              <Feather name="camera" size={20} color="white" />
-            </TouchableOpacity>
-          </View>
-          <View style={styles.inputFieldContainer}>
-            <Text style={styles.inputLabel}>Username</Text>
-            <TextInput
-              placeholder="Username"
-              type="text"
-              value={userName}
-              onChange={(e) => setUserName(e.nativeEvent.text)}
-              style={styles.inputField}
-            />
+              EDIT PROFILE
+            </Text>
+            <Text></Text>
           </View>
 
-          <TouchableWithoutFeedback onPress={handlePressOutside}>
+          <View style={styles.innerContainer}>
+            <View style={styles.imageContainer}>
+              {loading ? (
+                <ActivityIndicator size={5} />
+              ) : (
+                <Image
+                  objectFit="contain"
+                  style={styles.image}
+                  source={{
+                    uri:
+                      userAvatar ||
+                      "https://img.freepik.com/free-psd/3d-illustration-person-with-sunglasses_23-2149436188.jpg?w=740&t=st=1670148608~exp=1670149208~hmac=bc57b66d67d2b9f4929c8e592ff17e8c8660721608add2f18fc20d19c1aab7e4",
+                  }}
+                />
+              )}
+
+              <TouchableOpacity
+                style={styles.editIconContainer}
+                onPress={imageAvatar}
+              >
+                <Feather name="camera" size={20} color="white" />
+              </TouchableOpacity>
+            </View>
             <View style={styles.inputFieldContainer}>
-              <Text style={styles.inputLabel}>Area of Expertise</Text>
+              <Text style={styles.inputLabel}>Username</Text>
               <TextInput
-                placeholder="Enter area of expertise"
-                value={areaExpertise}
-                onChangeText={handleInputChange}
+                placeholder="Username"
+                type="text"
+                value={userName}
+                onChange={(e) => setUserName(e.nativeEvent.text)}
                 style={styles.inputField}
-                onBlur={handleInputBlur}
-              />
-              <FlatList
-                style={{
-                  maxHeight: 150,
-                  backgroundColor: "white",
-                }}
-                data={suggestions.filter((item) => item !== areaExpertise)} // Filter out the initial value
-                renderItem={({ item }) => (
-                  <TouchableOpacity onPress={() => handleSuggestionPress(item)}>
-                    <Text
-                      style={{
-                        marginTop: 12,
-                        marginStart: 12,
-                        fontWeight: 600,
-                        fontSize: 14,
-                        marginBottom: 5,
-                      }}
-                      key={item}
-                    >
-                      {item}
-                    </Text>
-                  </TouchableOpacity>
-                )}
-                keyExtractor={(item, index) => String(index)}
-                scrollEnabled={false}
               />
             </View>
-          </TouchableWithoutFeedback>
-          <View style={theme.utilities.inputFieldContainer}>
-            <Text style={styles.inputLabel}>Skills</Text>
-            <Tags
-              style={[
-                styles.inputField,
-                { paddingVertical: 5, paddingStart: 0 },
-              ]}
-              initialTags={studentSkills}
-              onChangeTags={onChangeSkills}
-              inputStyle={{
-                fontFamily: "Raleway-Medium",
-                backgroundColor: "white",
-                color: "black",
-              }}
-              renderTag={({
-                tag,
-                index,
-                onPress,
-                deleteTagOnPress,
-                readonly,
-              }) => {
-                return (
-                  <TouchableOpacity
-                    key={`${tag}-${index}`}
-                    onPress={onPress}
-                    style={{ marginStart: 12 }}
-                  >
-                    <Text
-                      style={{
-                        padding: 5,
-                        paddingHorizontal: 10,
-                        backgroundColor: theme.colors.primary,
-                        color: "white",
-                        borderRadius: 10,
-                      }}
-                    >
-                      {tag}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              }}
-            />
-          </View>
-          <View style={styles.inputFieldContainer}>
-            <Text style={styles.inputLabel}>About Me</Text>
-            <TextInput
-              style={styles.inputField}
-              placeholder="Enter something about yourself. "
-              type="text"
-              value={aboutMe}
-              onChangeText={(text) => {
-                // Limit input to 250 characters
-                if (text.length <= 300) {
-                  setAboutMe(text);
-                }
-              }}
-              multiline
-              autoCorrect={false}
-              numberOfLines={4}
-              maxHeight={100}
-              maxLength={250}
-              textAlignVertical="top"
-            />
 
-            <View style={{ alignItems: "flex-end", marginRight: 5 }}>
-              <Text>{aboutMe.length} / 300</Text>
+            <TouchableWithoutFeedback onPress={handlePressOutside}>
+              <View style={styles.inputFieldContainer}>
+                <Text style={styles.inputLabel}>Area of Expertise</Text>
+                <TextInput
+                  placeholder="Enter area of expertise"
+                  value={areaExpertise}
+                  onChangeText={handleInputChange}
+                  style={styles.inputField}
+                  onBlur={handleInputBlur}
+                />
+                <FlatList
+                  style={{
+                    maxHeight: 150,
+                    backgroundColor: "white",
+                  }}
+                  data={suggestions.filter((item) => item !== areaExpertise)} // Filter out the initial value
+                  renderItem={({ item }) => (
+                    <TouchableOpacity
+                      onPress={() => handleSuggestionPress(item)}
+                    >
+                      <Text
+                        style={{
+                          marginTop: 12,
+                          marginStart: 12,
+                          fontWeight: 600,
+                          fontSize: 14,
+                          marginBottom: 5,
+                        }}
+                        key={item}
+                      >
+                        {item}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                  keyExtractor={(item, index) => String(index)}
+                  scrollEnabled={false}
+                />
+              </View>
+            </TouchableWithoutFeedback>
+            <View style={theme.utilities.inputFieldContainer}>
+              <Text style={styles.inputLabel}>Skill Tags</Text>
+              <Tags
+                style={[
+                  styles.inputField,
+                  { paddingVertical: 5, paddingStart: 0 },
+                ]}
+                initialTags={studentSkills}
+                onChangeTags={onChangeSkills}
+                inputStyle={{
+                  fontFamily: "Raleway-Medium",
+                  backgroundColor: "white",
+                  color: "black",
+                }}
+                renderTag={({
+                  tag,
+                  index,
+                  onPress,
+                  deleteTagOnPress,
+                  readonly,
+                }) => {
+                  return (
+                    <TouchableOpacity
+                      key={`${tag}-${index}`}
+                      onPress={onPress}
+                      style={{ marginStart: 12 }}
+                    >
+                      <Text
+                        style={{
+                          padding: 5,
+                          paddingHorizontal: 10,
+                          backgroundColor: theme.colors.primary,
+                          color: "white",
+                          borderRadius: 10,
+                        }}
+                      >
+                        {tag}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                }}
+              />
+            </View>
+            <View style={styles.inputFieldContainer}>
+              <Text style={styles.inputLabel}>About Me</Text>
+              <TextInput
+                style={styles.inputField}
+                placeholder="Enter something about yourself. "
+                type="text"
+                value={aboutMe}
+                onChangeText={(text) => {
+                  // Limit input to 250 characters
+                  if (text.length <= 300) {
+                    setAboutMe(text);
+                  }
+                }}
+                multiline
+                autoCorrect={false}
+                numberOfLines={4}
+                maxHeight={100}
+                maxLength={250}
+                textAlignVertical="top"
+              />
+
+              <View style={{ alignItems: "flex-end", marginRight: 5 }}>
+                <Text>{aboutMe.length} / 300</Text>
+              </View>
+            </View>
+
+            <View
+              style={{
+                position: "relative",
+                width: "100%",
+                marginTop: 20,
+              }}
+            >
+              <Button title="Update" onPress={updateProfile} filled />
             </View>
           </View>
-        </View>
-      </ScrollView>
+        </ScrollView>
+      )}
     </SafeAreaView>
   );
 };
