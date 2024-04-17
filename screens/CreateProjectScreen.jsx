@@ -28,6 +28,7 @@ import axios from "axios";
 import Tags from "react-native-tags";
 
 const CreateProjectScreen = ({ route }) => {
+  const { project, isEditing } = route.params || {};
   const [selectedFile, setSelectedFile] = useState([]);
   const [isloading, setIsLoading] = useState(false);
   const [jobTitle, setJobTitle] = useState(""); //! Project Name
@@ -43,6 +44,20 @@ const CreateProjectScreen = ({ route }) => {
   const [placeholder, setPlaceholder] = useState("No Data Found"); //! PLACEHOLDER FOR PROJECT CATEGORY IF NO DATA FOUND
   const [error, loading, isStudent] = useGetIsStudent();
 
+  useEffect(() => {
+    if (isEditing && project) {
+      setJobTitle(project.job_title || "");
+      setJobCategory(project.job_category_id || "");
+      setJobDescription(project.job_description || "");
+      setJobBudgetFrom(project.job_budget_from.toString() || "0.00");
+      setJobBudgetTo(project.job_budget_to.toString() || "");
+      setStartDate(dayjs(project.job_start_date) || dayjs());
+      setEndDate(dayjs(project.job_end_date) || dayjs());
+      setJobTags(project.job_tags || ["Tags"]);
+    } else {
+      initializeDefaultTags();
+    }
+  }, [project, isEditing]);
   //! --------------------PROJECT CATEGORY ------------------------- //
   const initializeDefaultTags = () => {
     if (jobTags.length === 0) {

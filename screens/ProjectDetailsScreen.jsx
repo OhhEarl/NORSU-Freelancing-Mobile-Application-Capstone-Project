@@ -1,19 +1,53 @@
-import React, { useState } from "react";
 import {
   StyleSheet,
   View,
   Text,
   TouchableOpacity,
-  Pressable,
+  ScrollView,
 } from "react-native";
 import * as theme from "../assets/constants/theme";
-import Icon from "react-native-vector-icons/MaterialIcons";
+import Feather from "react-native-vector-icons/Feather";
 import Ionicons from "react-native-vector-icons/Ionicons";
+import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
+import RNFS from "react-native-fs";
+import Button from "../components/Button";
 const ProjectDetailsScreen = ({ route, navigation }) => {
   const { project } = route.params;
+  const { id } = route.params;
+
+  const handleDownload = async (filePath) => {
+    try {
+      const url = filePath;
+      const downloadDest = `${RNFS.DocumentDirectoryPath}/url.jpg`;
+
+      const options = {
+        fromUrl: url,
+        toFile: downloadDest,
+        background: true,
+        begin: (res) => {
+          console.log("begin", res);
+        },
+        progress: (res) => {
+          console.log("progress", res);
+        },
+      };
+
+      const ret = RNFS.downloadFile(options);
+
+      ret.promise.then((response) => {
+        if (response.statusCode === 200) {
+          console.log("File downloaded to ", downloadDest);
+        } else {
+          console.log("Download error");
+        }
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   dayjs.extend(relativeTime);
   const formattedStartDate = dayjs(project?.job_start_date).format(
@@ -34,133 +68,181 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
             onPress={() => navigation.goBack()}
             style={{ zIndex: 999 }}
           >
-            <Icon
-              name="arrow-back-ios-new"
-              size={20}
+            <Feather
+              name="arrow-left"
+              size={24}
               color={theme.colors.BLACKS}
+              onPress={() => {
+                navigation.goBack();
+              }}
             />
           </TouchableOpacity>
-          <Text style={styles.titleName}>Project Overview</Text>
+          <Text
+            style={{
+              marginRight: 25,
+              fontFamily: "Roboto-Medium",
+              color: theme.colors.BLACKS,
+              fontSize: 18,
+            }}
+          >
+            Project Overview
+          </Text>
+          <MaterialCommunityIcons
+            name="square-edit-outline"
+            size={24}
+            color={theme.colors.BLACKS}
+            onPress={() =>
+              navigation.navigate("CreateProjectScreen", {
+                project,
+                isEditing: true,
+              })
+            }
+          />
         </View>
-
-        <View style={styles.overviewContainer}>
-          <Text style={styles.projectTitle}>{project?.job_title}</Text>
-          <View
-            style={{
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <Text style={styles.jobTime}>
-              Posted {dayjs(project?.created_at).fromNow()}
-            </Text>
-          </View>
-
-          <View style={styles.rowContainer}>
-            <View style={styles.priceContainer}>
-              <View style={styles.jobPriceRow}>
-                <Text style={styles.jobPrice}>₱{project?.job_budget_from}</Text>
-                <Text style={styles.jobPrice}> - </Text>
-                <Text style={styles.jobPrice}>₱{project?.job_budget_to}</Text>
-              </View>
-              <Text style={styles.jobRangePrice}>Budget</Text>
-            </View>
-
-            <View style={styles.priceContainer}>
-              <View style={styles.jobPriceRow}>
-                <Text style={styles.jobPrice}>{durationInDays} Days</Text>
-              </View>
-              <Text style={styles.jobRangePrice}>Duration</Text>
-            </View>
-
-            <View style={styles.priceContainer}>
-              <View style={styles.jobPriceRow}>
-                <Text style={styles.jobPrice}>0</Text>
-              </View>
-              <Text style={styles.jobRangePrice}>Proposal</Text>
-            </View>
-          </View>
-
-          <View style={styles.projectDescription}>
-            <Text style={styles.projectDescriptionTitle}>
-              Project Description
-            </Text>
-            <Text style={styles.jobDescription}>
-              {project?.job_description}
-            </Text>
-          </View>
-
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              marginVertical: 10,
-            }}
-          >
-            <View>
-              <Text>Start Date</Text>
-              <Text style={[styles.dateRange, { marginRight: 115 }]}>
-                {formattedStartDate}
+        <ScrollView style={{ flex: 1 }}>
+          <View style={styles.overviewContainer}>
+            <Text style={styles.projectTitle}>{project?.job_title}</Text>
+            <View
+              style={{
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Text style={styles.jobTime}>
+                Posted {dayjs(project?.created_at).fromNow()}
               </Text>
             </View>
-            <View>
-              <Text>End Date</Text>
-              <Text style={styles.dateRange}>{formattedEndDate}</Text>
-            </View>
-          </View>
 
-          <View>
-            <Text style={styles.projectDescriptionTitle}>Tags</Text>
-            <View style={styles.jobTagsContainer}>
-              {project?.job_tags.length > 0 &&
-                project?.job_tags.map((tag, index) => (
-                  <Text key={index} style={styles.jobTag}>
-                    {tag.job_tags}
+            <View style={styles.rowContainer}>
+              <View style={styles.priceContainer}>
+                <View style={styles.jobPriceRow}>
+                  <Text style={styles.jobPrice}>
+                    ₱{project?.job_budget_from}
                   </Text>
+                  <Text style={styles.jobPrice}> - </Text>
+                  <Text style={styles.jobPrice}>₱{project?.job_budget_to}</Text>
+                </View>
+                <Text style={styles.jobRangePrice}>Budget</Text>
+              </View>
+
+              <View style={styles.priceContainer}>
+                <View style={styles.jobPriceRow}>
+                  <Text style={styles.jobPrice}>{durationInDays} Days</Text>
+                </View>
+                <Text style={styles.jobRangePrice}>Duration</Text>
+              </View>
+
+              <View style={styles.priceContainer}>
+                <View style={styles.jobPriceRow}>
+                  <Text style={styles.jobPrice}>0</Text>
+                </View>
+                <Text style={styles.jobRangePrice}>Proposal</Text>
+              </View>
+            </View>
+
+            <View style={styles.projectDescription}>
+              <Text style={styles.projectDescriptionTitle}>
+                Project Description
+              </Text>
+              <Text style={styles.jobDescription}>
+                {project?.job_description}
+              </Text>
+            </View>
+
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                marginVertical: 10,
+              }}
+            >
+              <View>
+                <Text>Start Date</Text>
+                <Text style={[styles.dateRange, { marginRight: 115 }]}>
+                  {formattedStartDate}
+                </Text>
+              </View>
+              <View>
+                <Text>End Date</Text>
+                <Text style={styles.dateRange}>{formattedEndDate}</Text>
+              </View>
+            </View>
+
+            <View>
+              <Text style={styles.projectDescriptionTitle}>Tags</Text>
+              <View style={styles.jobTagsContainer}>
+                {project?.job_tags?.length > 0 &&
+                  project?.job_tags?.map((tag, index) => (
+                    <Text key={index} style={styles.jobTag}>
+                      {tag?.job_tags}
+                    </Text>
+                  ))}
+              </View>
+            </View>
+
+            <View>
+              <Text style={styles.projectDescriptionTitle}>Attachment</Text>
+              {project?.attachments?.length > 0 &&
+                project?.attachments?.map((attachment, index) => (
+                  <View
+                    key={attachment.id}
+                    style={styles.selectedFileContainer}
+                  >
+                    <Ionicons
+                      name={"document-text-outline"}
+                      size={25}
+                      color={theme.colors.BLACKS}
+                    />
+                    <Text
+                      style={{
+                        marginStart: 10,
+                        fontSize: 15,
+                        fontWeight: "600",
+                        color: theme.colors.BLACKS,
+                      }}
+                    >
+                      {attachment.original_name?.length > 15
+                        ? `${attachment.original_name?.substring(
+                            0,
+                            10
+                          )}...${attachment?.original_name?.substring(
+                            attachment?.original_name?.lastIndexOf(".") + 1
+                          )}`
+                        : attachment?.original_name}
+                    </Text>
+                    <TouchableOpacity
+                      style={{ marginLeft: "auto", marginRight: 5 }}
+                      onPress={() => handleDownload(attachment.file_path)}
+                    >
+                      <Ionicons
+                        name={"cloud-download-outline"}
+                        size={18}
+                        color={theme.colors.BLACKS}
+                      />
+                    </TouchableOpacity>
+                  </View>
                 ))}
             </View>
           </View>
 
-          <View>
-            <Text style={styles.projectDescriptionTitle}>Attachment</Text>
-            {project?.attachments.length > 0 &&
-              project?.attachments.map((attachment, index) => (
-                <View key={attachment.id} style={styles.selectedFileContainer}>
-                  <Ionicons
-                    name={"document-text-outline"}
-                    size={36}
-                    color={theme.colors.WHITE}
-                  />
-                  <Text
-                    style={{
-                      marginStart: 10,
-                      fontSize: 15,
-                      fontWeight: "600",
-                      color: theme.colors.WHITE,
-                    }}
-                  >
-                    {attachment.original_name?.length > 15
-                      ? `${attachment.original_name?.substring(
-                          0,
-                          10
-                        )}...${attachment?.original_name?.substring(
-                          attachment?.original_name?.lastIndexOf(".") + 1
-                        )}`
-                      : attachment?.original_name}
-                  </Text>
-                  <TouchableOpacity
-                    style={{ marginLeft: "auto", marginRight: 5 }}
-                  >
-                    <Ionicons
-                      name={"cloud-download-outline"}
-                      size={25}
-                      color={theme.colors.WHITE}
-                    />
-                  </TouchableOpacity>
-                </View>
-              ))}
-          </View>
-        </View>
+          {id == project.student_user_id ? (
+            ""
+          ) : (
+            <View style={styles.applyNow}>
+              <Button
+                title="Apply Now"
+                filled
+                style={{ borderRadius: 50 }}
+                onPress={() =>
+                  navigation.navigate("ProposalScreen", {
+                    project: project,
+                    user_id: route.params.user_id,
+                  })
+                }
+              />
+            </View>
+          )}
+        </ScrollView>
       </View>
     </SafeAreaView>
   );
@@ -176,6 +258,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: theme.colors.inputField,
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   container: {
     backgroundColor: theme.colors.WHITE,
@@ -183,7 +267,6 @@ const styles = StyleSheet.create({
 
   titleName: {
     textAlign: "center", // Center text horizontally
-    flex: 1, // Allow the text to expand to take available space
     marginLeft: -40, // Offset the text to the left to align with the center
     fontSize: 20,
     fontFamily: "Roboto-Bold",
@@ -205,11 +288,12 @@ const styles = StyleSheet.create({
     shadowRadius: 1.51,
     elevation: 2,
     padding: 30,
-    paddingTop: 50,
+    paddingTop: 30,
+    height: 800,
   },
 
   projectTitle: {
-    fontFamily: "Roboto-Bold",
+    fontFamily: "Roboto-Medium",
     textAlign: "center",
     color: theme.colors.BLACKS,
     fontSize: theme.sizes.h4 + 2,
@@ -223,7 +307,7 @@ const styles = StyleSheet.create({
 
   dateRange: {
     color: theme.colors.primary,
-    fontFamily: "Roboto-Bold",
+    fontFamily: "Roboto-Medium",
     fontSize: theme.sizes.h2 + 3,
     marginTop: 4,
   },
@@ -252,7 +336,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   jobPrice: {
-    fontFamily: "Roboto-Bold",
+    fontFamily: "Roboto-Medium",
     fontSize: theme.sizes.h2 + 1,
     color: theme.colors.BLACKS,
   },
@@ -263,7 +347,7 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
   projectDescriptionTitle: {
-    fontFamily: "Roboto-Bold",
+    fontFamily: "Roboto-Medium",
     fontSize: theme.sizes.h3 + 2,
     color: theme.colors.BLACKS,
     paddingVertical: 4,
@@ -293,10 +377,19 @@ const styles = StyleSheet.create({
   selectedFileContainer: {
     display: "flex",
     flexDirection: "row",
-    backgroundColor: theme.colors.primary,
+    backgroundColor: theme.colors.white,
     padding: 10,
     borderRadius: 10,
     alignItems: "center",
     marginVertical: 5,
+    borderWidth: 1,
+    borderColor: theme.colors.grey,
+  },
+  applyNow: {
+    position: "absolute",
+    bottom: 20, // This will stick the Apply Now button to the bottom
+    left: "20%",
+    right: 0,
+    width: "60%",
   },
 });

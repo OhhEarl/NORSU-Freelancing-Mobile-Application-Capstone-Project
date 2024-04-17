@@ -26,7 +26,6 @@ const ProjectComponent = ({ item }) => {
     return (
         <View style={styles.container}>
             <View style={styles.textContainer}>
-
                 <Text style={styles.jobTitle}>{item?.job_title}</Text>
                 <View style={{ flexDirection: 'row' }}>
                     <Text style={styles.jobTime}>Posted {dayjs(item?.created_at).fromNow()}</Text>
@@ -104,7 +103,7 @@ const styles = StyleSheet.create({
     jobTitle: {
         fontSize: theme.sizes.h3 + 2,
         color: theme.colors.primary,
-        fontFamily: 'Roboto-Bold'
+        fontFamily: 'Roboto-Medium'
     },
     jobTime: {
         color: theme.colors.gray,
@@ -130,7 +129,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     jobPrice: {
-        fontFamily: 'Roboto-Bold',
+        fontFamily: 'Roboto-Medium',
         fontSize: theme.sizes.h2 + 1,
         color: theme.colors.BLACKS,
     },
@@ -158,7 +157,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 15,
         fontSize: theme.sizes.h2 - 1,
         color: theme.colors.primary,
-        fontFamily: 'Roboto-Bold'
+        fontFamily: 'Roboto-Medium'
     }
 })
 

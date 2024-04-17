@@ -23,7 +23,7 @@ const HomeScreen = ({ navigation }) => {
 
   const { items, projectError, listLoading, isStudent } = useGetProjectList();
   useEffect(() => {
-    // Filter items based on the search query
+    console.log(isStudent);
     if (searchQuery.trim() === "") {
       setFilteredItems(items);
     } else {
@@ -40,6 +40,8 @@ const HomeScreen = ({ navigation }) => {
     navigation.navigate("ProjectDetailsScreen", {
       project: item,
       user_avatar: isStudent?.studentInfo?.user_avatar,
+      user_id: isStudent?.studentInfo?.user_id,
+      id: isStudent?.studentInfo?.id,
     });
   };
 
@@ -96,7 +98,7 @@ const HomeScreen = ({ navigation }) => {
             <Text style={styles.popularText}>Recent Projects</Text>
             {listLoading ? (
               <LoadingComponent />
-            ) : filteredItems.length ? (
+            ) : filteredItems?.length ? (
               <FlatList
                 data={filteredItems}
                 keyExtractor={(item) => item.id.toString()}

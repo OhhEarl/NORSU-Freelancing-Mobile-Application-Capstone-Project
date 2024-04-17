@@ -44,7 +44,7 @@ const FreelancerProfileScreen = ({ navigation }) => {
   ]);
   const [error, loading, isStudent] = useGetIsStudent();
   const { userData, setUserData, isLoading } = useAuthContext();
-  console.log(isStudent);
+
   const renderScene = ({ route }) => {
     switch (route.key) {
       case "portfolio":

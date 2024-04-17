@@ -1,6 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
-import { useFocusEffect } from "@react-navigation/native";
-import { useGetIsStudent } from "../hooks/dataHooks/useGetIsStudent";
+import React, { useEffect, useState } from "react";
 
 import {
   StyleSheet,
@@ -24,13 +22,11 @@ import LoadingComponent from "../components/LoadingComponent";
 import { ActivityIndicator } from "react-native-paper";
 import Button from "../components/Button";
 import axios from "axios";
+import { useGetIsStudent } from "../hooks/dataHooks/useGetIsStudent";
 const EditProfileScreen = ({ navigation, route }) => {
   const [user, setUser] = useState(route.params?.project);
   const [token, setToken] = useState(route.params?.token);
-  const [fetchIsStudent, setFetchIsStudent] = useState(
-    route.params?.fetchIsStudent
-  );
-
+  const [error, isStudent, fetchIsStudent] = useGetIsStudent();
   const [userAvatar, setUserAvatar] = useState(user?.user_avatar);
   const [userName, setUserName] = useState(user?.user_name);
   const [inputText, setInputText] = useState("");
@@ -38,6 +34,7 @@ const EditProfileScreen = ({ navigation, route }) => {
   const [areaExpertise, setAreaExpertise] = useState(user?.area_of_expertise);
   const [aboutMe, setAboutMe] = useState("");
   const [studentSkills, setStudentSkills] = useState(user?.skill_tags || []);
+  const [portfolioImages, setPortfolioImages] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const imageAvatar = async () => {
@@ -130,6 +127,61 @@ const EditProfileScreen = ({ navigation, route }) => {
   const onChangeSkills = (tag) => {
     setStudentSkills(tag);
   };
+  const selectImage = async () => {
+    try {
+      const result = await launchImageLibrary();
+      if (result.didCancel) {
+        return;
+      }
+      if (result.error) {
+        return;
+      }
+      const fileSizeLimitMB = 2;
+      const fileSizeInMB = result.assets[0].fileSize / (1024 * 1024); // Convert to MB
+      const fileFormatType = result.assets[0].type; // Get file format type
+      const fileFormat = ["image/jpeg", "image/jpg", "image/png"];
+      if (fileSizeInMB > fileSizeLimitMB) {
+        alert("Cannot upload files larger than 2MB");
+      } else if (!fileFormat.includes(fileFormatType)) {
+        alert("Please upload an image in JPEG, JPG, or PNG format.");
+      } else {
+        const imageUri = result.assets[0].uri;
+        handleImageAdd(imageUri);
+      }
+    } catch (error) {
+      alert("Error:", error);
+    }
+  };
+
+  const handleImageAdd = (imageUri) => {
+    setPortfolioImages((prevImages) => [...prevImages, imageUri]);
+  };
+
+  const handleImageDelete = (index) => {
+    Alert.alert(
+      "Delete Image",
+      "Are you sure you want to delete this image?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Delete",
+          onPress: () => {
+            const newImages = [...portfolioImages];
+            newImages.splice(index, 1);
+            setPortfolioImages((prevImages) => {
+              const newImages = [...prevImages];
+              newImages.splice(index, 1);
+              return newImages;
+            });
+          },
+        },
+      ],
+      { cancelable: false }
+    );
+  };
 
   const updateProfile = async () => {
     if (!userName || !areaExpertise || !studentSkills) {
@@ -152,6 +204,14 @@ const EditProfileScreen = ({ navigation, route }) => {
         name: `${userAvatar.split("/").pop()}`,
         type: `image/${userAvatar.split(".").pop()}`,
       });
+      portfolioImages.forEach((image, index) => {
+        const formattedImage = {
+          uri: image,
+          name: `${image.split("/").pop()}`,
+          type: `image/${image.split(".").pop()}`,
+        };
+        formData.append("student_portfolio[]", formattedImage); // Notice the key change here
+      });
       let url = "http://10.0.2.2:8000/api/student-validations/update";
       try {
         const response = await axios.post(url, formData, {
@@ -163,19 +223,42 @@ const EditProfileScreen = ({ navigation, route }) => {
         });
         if (response.status === 201) {
           fetchIsStudent();
+          navigation.navigate("EditProfileScreen", { onProfileUpdate: true });
         }
       } catch (error) {
-        console.log(
-          "Error:",
-          error.response ? error.response.data : error.message
-        );
+        alert(error, "Please Try Again.");
       } finally {
         setLoading(false);
-        navigation.navigate("EditProfileScreen");
       }
     }
   };
 
+  const fetchPortfolio = async (studentUserId) => {
+    try {
+      const response = await axios.get(
+        `http://10.0.2.2:8000/api/student-portfolio/${studentUserId}`,
+        {
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      if (response.data && response.data.portfolio) {
+        const portfolioImages = response.data.portfolio.map(
+          (portfolio) => portfolio?.student_portfolio_path
+        );
+        setPortfolioImages(portfolioImages);
+      }
+    } catch (error) {
+      alert(error, "Please close the application and open again.");
+    }
+  };
+
+  useEffect(() => {
+    fetchPortfolio(user?.user_id);
+  }, [user?.user_id]);
   return (
     <SafeAreaView style={styles.mainContainer}>
       {loading ? (
@@ -200,12 +283,12 @@ const EditProfileScreen = ({ navigation, route }) => {
             <Text
               style={{
                 marginRight: 25,
-                fontFamily: "Roboto-Bold",
-                color: theme.colors.primary,
+                fontFamily: "Roboto-Medium",
+                color: theme.colors.BLACKS,
                 fontSize: 18,
               }}
             >
-              EDIT PROFILE
+              Edit Profile
             </Text>
             <Text></Text>
           </View>
@@ -352,6 +435,32 @@ const EditProfileScreen = ({ navigation, route }) => {
               </View>
             </View>
 
+            <View style={styles.inputFieldContainer}>
+              <Text style={styles.inputLabel}>Portfolio</Text>
+              <View style={styles.portfolioContainer}>
+                {portfolioImages.map((image, index) => (
+                  <View key={index} style={styles.portfolioImageContainer}>
+                    <Image
+                      source={{ uri: `http://10.0.2.2:8000/${image}` }}
+                      style={styles.portfolioImage}
+                    />
+                    <TouchableOpacity
+                      style={styles.closeButton}
+                      onPress={() => handleImageDelete(index)}
+                    >
+                      <Text style={styles.closeButtonText}>X</Text>
+                    </TouchableOpacity>
+                  </View>
+                ))}
+                <TouchableOpacity
+                  style={styles.addImageContainer}
+                  onPress={selectImage}
+                >
+                  <Text style={styles.addImageText}>+</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
             <View
               style={{
                 position: "relative",
@@ -420,5 +529,49 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingStart: 15,
     fontFamily: "Roboto-Regular",
+  },
+
+  portfolioContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "flex-start",
+    alignItems: "center",
+  },
+  portfolioImageContainer: {
+    position: "relative",
+    width: 100,
+    height: 100,
+    marginRight: 11,
+    marginBottom: 5,
+  },
+  portfolioImage: {
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
+    borderRadius: 10,
+  },
+  closeButton: {
+    position: "absolute",
+    top: 5,
+    right: 5,
+    backgroundColor: "rgba(255,255,255,0.7)",
+    borderRadius: 10,
+    padding: 5,
+  },
+  closeButtonText: {
+    color: "red",
+    fontSize: 16,
+  },
+  addImageContainer: {
+    width: 100,
+    height: 100,
+    backgroundColor: "lightgray",
+    borderRadius: 10,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  addImageText: {
+    fontSize: 40,
+    color: "gray",
   },
 });

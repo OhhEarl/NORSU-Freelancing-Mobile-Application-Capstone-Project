@@ -37,7 +37,7 @@ export const useGetIsStudent = () => {
         const data = response.data;
         if (data) {
           setIsStudent(data);
-          console.log(data)
+
         } else {
           setIsStudent(null);
         }

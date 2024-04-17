@@ -1,29 +1,30 @@
 import React from 'react';
-import { ActivityIndicator, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import Login from '../screens/Login';
-import Signup from '../screens/Signup';
-import Welcome from '../screens/Welcome';
-import VerificationScreen from '../screens/VerificationScreen';
-import VerificationNotification from '../screens/VerificationNotification';
-import VerificationConfirmation from '../screens/VerificationConfirmation';
-import HomeScreen from '../screens/HomeScreen';
 import { AuthProvider, useAuthContext } from '../hooks/AuthContext';
 import { useGetIsStudent } from '../hooks/dataHooks/useGetIsStudent';
 import { BottomTabNavigator } from './BottomTabNavigator';
+
+// Screens
+import Login from '../screens/Login';
+import Signup from '../screens/Signup';
+import Welcome from '../screens/Welcome';
+import VerificationNotification from '../screens/VerificationNotification';
+import VerificationConfirmation from '../screens/VerificationConfirmation';
 import EditProfileScreen from '../screens/EditProfileScreen';
 import MultiStepForm from '../screens/MultiStepForm';
 import LoadingComponent from '../components/LoadingComponent';
 import ProjectDetailsScreen from '../screens/ProjectDetailsScreen';
-
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import ProposalScreen from '../screens/ProposalScreen';
+import ProposalSubmitted from '../screens/ProposalSubmitted';
+import ProjectCreated from '../screens/ProjectCreated';
 const Stack = createNativeStackNavigator();
 
 const AuthenticatedApp = () => {
   const { user, isLoading, isEmailVerified } = useAuthContext();
   const [error, loading, isStudent, fetchIsStudent] = useGetIsStudent();
-  console.log(isStudent)
+
   return (
     <NavigationContainer>
       {loading || isLoading ? (
@@ -119,6 +120,21 @@ const AuthenticatedApp = () => {
           <Stack.Screen
             name="EditProfileScreen"
             component={EditProfileScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="ProposalScreen"
+            component={ProposalScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="ProposalSubmitted"
+            component={ProposalSubmitted}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="ProjectCreated"
+            component={ProjectCreated}
             options={{ headerShown: false }}
           />
         </Stack.Navigator>

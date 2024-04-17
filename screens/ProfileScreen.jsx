@@ -24,10 +24,16 @@ import axios from "axios";
 import * as theme from "../assets/constants/theme";
 import LoadingComponent from "../components/LoadingComponent";
 
-const ProfileScreen = ({ navigation }) => {
+const ProfileScreen = ({ navigation, route }) => {
   const [error, loading, isStudent, fetchIsStudent] = useGetIsStudent();
   const { setUserData } = useAuthContext();
   const [modalVisible, setModalVisible] = useState(false);
+  useEffect(() => {
+    const unsubscribe = navigation.addListener("focus", () => {
+      fetchIsStudent();
+    });
+    return unsubscribe;
+  }, [navigation, fetchIsStudent]);
 
   const signOut = async () => {
     try {
@@ -94,24 +100,38 @@ const ProfileScreen = ({ navigation }) => {
                 <AntDesign name="arrowright" size={20} color="black" />
               </View>
             </TouchableOpacity>
-            <TouchableOpacity>
+            <TouchableOpacity
+              onPress={() =>
+                navigation.navigate("ProjectCreated", {
+                  user: isStudent?.studentInfo,
+                  token: isStudent?.token,
+                })
+              }
+            >
               <View style={styles.seperateContainer}>
-                <Text style={styles.seperateText}>Proposals Submitted</Text>
-                <AntDesign name="arrowright" size={20} color="black" />
-              </View>
-            </TouchableOpacity>
-            <TouchableOpacity>
-              <View style={styles.seperateContainer}>
-                <Text style={styles.seperateText}>Accepted Proposals</Text>
+                <Text style={styles.seperateText}>Projects Created</Text>
                 <AntDesign name="arrowright" size={20} color="black" />
               </View>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() =>
+                navigation.navigate("ProposalSubmitted", {
+                  user: isStudent?.studentInfo,
+                  token: isStudent?.token,
+                })
+              }
+            >
+              <View style={styles.seperateContainer}>
+                <Text style={styles.seperateText}>Proposals Submitted</Text>
+                <AntDesign name="arrowright" size={20} color="black" />
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() =>
                 navigation.navigate("EditProfileScreen", {
                   project: isStudent?.studentInfo,
                   token: isStudent?.token,
-                  fetchIsStudent: fetchIsStudent,
                 })
               }
             >
@@ -191,6 +211,7 @@ const styles = StyleSheet.create({
   },
   innerContainer: {
     marginHorizontal: 30,
+    marginTop: 20,
     alignItems: "center",
   },
 
