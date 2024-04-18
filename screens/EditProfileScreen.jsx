@@ -205,7 +205,14 @@ const EditProfileScreen = ({ navigation, route }) => {
         type: `image/${userAvatar.split(".").pop()}`,
       });
 
-      console.log(formData);
+      portfolioImages.forEach((image, index) => {
+        formData.append(`portfolio[${index}]`, {
+          uri: image,
+          name: `${image.split("/").pop()}`,
+          type: `image/${image.split(".").pop()}`,
+        });
+      });
+
       let url = "http://10.0.2.2:8000/api/student-validations/update";
       try {
         const response = await axios.post(url, formData, {
@@ -218,22 +225,23 @@ const EditProfileScreen = ({ navigation, route }) => {
 
         if (response.status === 200) {
           await fetchIsStudent();
-          Alert.alert("User updated Successfully.");
         }
       } catch (error) {
-        console.log(
+        Alert.alert(
           "Error:",
           error.response ? error.response.data : error.message
         );
       } finally {
         setLoading(false);
         navigation.navigate("EditProfileScreen");
+        Alert.alert("User updated Successfully.");
       }
     }
   };
 
   const fetchPortfolio = async (studentUserId) => {
     try {
+      setLoading(true);
       const response = await axios.get(
         `http://10.0.2.2:8000/api/student-portfolio/${studentUserId}`,
         {
@@ -244,14 +252,14 @@ const EditProfileScreen = ({ navigation, route }) => {
           },
         }
       );
+
       if (response.data && response.data.portfolio) {
-        const portfolioImages = response.data.portfolio.map(
-          (portfolio) => portfolio?.student_portfolio_path
-        );
-        setPortfolioImages(portfolioImages);
+        setPortfolioImages(response.data.portfolio);
       }
     } catch (error) {
       alert(error, "Please close the application and open again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -433,32 +441,36 @@ const EditProfileScreen = ({ navigation, route }) => {
                 <Text>{aboutMe.length} / 300</Text>
               </View>
             </View>
-            {/* 
-            <View style={styles.inputFieldContainer}>
-              <Text style={styles.inputLabel}>Portfolio</Text>
-              <View style={styles.portfolioContainer}>
-                {portfolioImages.map((image, index) => (
-                  <View key={index} style={styles.portfolioImageContainer}>
-                    <Image
-                      source={{ uri: `http://10.0.2.2:8000/${image}` }}
-                      style={styles.portfolioImage}
-                    />
-                    <TouchableOpacity
-                      style={styles.closeButton}
-                      onPress={() => handleImageDelete(index)}
-                    >
-                      <Text style={styles.closeButtonText}>X</Text>
-                    </TouchableOpacity>
-                  </View>
-                ))}
-                <TouchableOpacity
-                  style={styles.addImageContainer}
-                  onPress={selectImage}
-                >
-                  <Text style={styles.addImageText}>+</Text>
-                </TouchableOpacity>
+
+            {isLoading ? (
+              <LoadingComponent />
+            ) : (
+              <View style={styles.inputFieldContainer}>
+                <Text style={styles.inputLabel}>Portfolio</Text>
+                <View style={styles.portfolioContainer}>
+                  {portfolioImages.map((image, index) => (
+                    <View key={index} style={styles.portfolioImageContainer}>
+                      <Image
+                        source={{ uri: image }}
+                        style={styles.portfolioImage}
+                      />
+                      <TouchableOpacity
+                        style={styles.closeButton}
+                        onPress={() => handleImageDelete(index)}
+                      >
+                        <Text style={styles.closeButtonText}>X</Text>
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                  <TouchableOpacity
+                    style={styles.addImageContainer}
+                    onPress={selectImage}
+                  >
+                    <Text style={styles.addImageText}>+</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
-            </View> */}
+            )}
 
             <View
               style={{
