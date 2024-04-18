@@ -14,6 +14,7 @@ import * as theme from "../assets/constants/theme";
 import { SelectList } from "react-native-dropdown-select-list";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useGetIsStudent } from "../hooks/dataHooks/useGetIsStudent";
+import { useIsFocused } from "@react-navigation/native";
 import LoadingComponent from "../components/LoadingComponent";
 import LinearGradient from "react-native-linear-gradient";
 import FontAwesome from "react-native-vector-icons/FontAwesome";
@@ -28,11 +29,13 @@ import axios from "axios";
 import Tags from "react-native-tags";
 
 const CreateProjectScreen = ({ route }) => {
-  const { project, isEditing } = route.params || {};
+  const { project, isEditing } = route?.params || {};
+  const isFocused = useIsFocused();
+  const [projectID, setProjectID] = useState(null);
   const [selectedFile, setSelectedFile] = useState([]);
   const [isloading, setIsLoading] = useState(false);
   const [jobTitle, setJobTitle] = useState(""); //! Project Name
-  const [jobCategory, setJobCategory] = useState(""); //! Project Category
+  const [jobCategory, setJobCategory] = useState(null); //! Project Category
   const [jobTags, setJobTags] = useState(["Tags"]);
   const [jobDescription, setJobDescription] = useState(""); //! Project Description
   const [jobBudgetFrom, setJobBudgetFrom] = useState("0.00"); //! Project Budget Range From
@@ -43,22 +46,9 @@ const CreateProjectScreen = ({ route }) => {
   const [showEndDatePicker, setShowEndDatePicker] = useState(false); //! SHOW SCHEDULE PICKED FROM
   const [placeholder, setPlaceholder] = useState("No Data Found"); //! PLACEHOLDER FOR PROJECT CATEGORY IF NO DATA FOUND
   const [error, loading, isStudent] = useGetIsStudent();
-
-  useEffect(() => {
-    if (isEditing && project) {
-      setJobTitle(project.job_title || "");
-      setJobCategory(project.job_category_id || "");
-      setJobDescription(project.job_description || "");
-      setJobBudgetFrom(project.job_budget_from.toString() || "0.00");
-      setJobBudgetTo(project.job_budget_to.toString() || "");
-      setStartDate(dayjs(project.job_start_date) || dayjs());
-      setEndDate(dayjs(project.job_end_date) || dayjs());
-      setJobTags(project.job_tags || ["Tags"]);
-    } else {
-      initializeDefaultTags();
-    }
-  }, [project, isEditing]);
+  const [defaultCategory, setDefaultCategory] = useState(null);
   //! --------------------PROJECT CATEGORY ------------------------- //
+
   const initializeDefaultTags = () => {
     if (jobTags.length === 0) {
       setJobTags(["Tags"]); // Set default tags if jobTags is empty
@@ -72,6 +62,50 @@ const CreateProjectScreen = ({ route }) => {
   const onChangeTags = (tags) => {
     setJobTags(tags);
   };
+
+  useEffect(() => {
+    if (isEditing && project) {
+      setProjectID(project?.id);
+      setJobTitle(project.job_title || "");
+      setJobCategory(project.job_category_id || "");
+      setJobDescription(project.job_description || "");
+      setJobBudgetFrom(project.job_budget_from.toString() || "0.00");
+      setJobBudgetTo(project.job_budget_to.toString() || "");
+      setStartDate(dayjs(project.job_start_date) || dayjs());
+      setEndDate(dayjs(project.job_end_date) || dayjs());
+      setJobTags(project.job_tags || ["Tags"]);
+      setSelectedFile(project.attachments || "");
+    } else {
+      initializeDefaultTags();
+    }
+
+    if (project) {
+      const category = JobCategory.find(
+        (cat) => cat.key === project.job_category_id.toString()
+      );
+      if (category) {
+        setDefaultCategory(category); // Set the value of the category
+      } else {
+        setDefaultCategory(null);
+      }
+    }
+  }, [project, isEditing]);
+
+  useEffect(() => {
+    if (!isFocused) {
+      setJobTitle("");
+      setJobCategory("");
+      setJobDescription("");
+      setJobBudgetFrom("0.00");
+      setJobBudgetTo("");
+      setStartDate(dayjs());
+      setEndDate(dayjs());
+      setJobTags(["Tags"]);
+      setSelectedFile([]);
+      setProjectID(null);
+      setDefaultCategory(null);
+    }
+  }, [isFocused]);
 
   //! --------------------PROJECT CATEGORY ------------------------- //
 
@@ -148,7 +182,7 @@ const CreateProjectScreen = ({ route }) => {
 
   //! --------------------HANDLE SUBMIT BUTTON ------------------------- !//
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (projectID) => {
     if (
       !jobTitle ||
       !jobCategory ||
@@ -164,56 +198,68 @@ const CreateProjectScreen = ({ route }) => {
         "Please fill in all required fields and upload at least one file."
       );
       return;
-    } else {
-      setIsLoading(true);
-      const formData = new FormData();
-      formData.append("student_user_id", isStudent?.studentInfo?.id);
-      formData.append("job_title", jobTitle);
-      formData.append("job_category_id", jobCategory);
-      formData.append("job_description", jobDescription);
-      formData.append("job_start_date", startDate.toISOString().split("T")[0]);
-      formData.append("job_end_date", endDate.toISOString().split("T")[0]);
-      formData.append("job_budget_from", jobBudgetFrom);
-      formData.append("job_budget_to", jobBudgetTo);
-      jobTags.forEach((tag, index) => {
-        formData.append(`job_tags[${index}]`, tag);
-      });
-      selectedFile.forEach((file, index) => {
-        formData.append(`attachments[${index}]`, {
-          uri: file.uri,
-          name: file.name,
-          type: file.type,
-        });
-      });
-
-      try {
-        let url = "http://10.0.2.2:8000/api/create-jobs";
-        const response = await axios.post(url, formData, {
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "multipart/form-data",
-            Authorization: `Bearer ${isStudent?.token}`,
-          },
-        });
-
-        if (response.status === 201) {
-          alert("Job has been posted successfully.");
-        } else {
-          alert("Something went wrong. Please Try Again!");
-        }
-      } catch (err) {
-        alert(err);
-      } finally {
-        setJobTitle("");
-        setJobDescription("");
-        setJobBudgetFrom("");
-        setJobBudgetTo("");
-        setSelectedFile([]);
-        setStartDate(dayjs());
-        setEndDate(dayjs());
-        setIsLoading(false);
-      }
     }
+
+    setIsLoading(true);
+
+    const formData = new FormData();
+    formData.append("student_user_id", isStudent?.studentInfo?.id);
+    formData.append("job_title", jobTitle);
+    formData.append("job_category_id", jobCategory);
+    formData.append("job_description", jobDescription);
+    formData.append("job_start_date", startDate.toISOString().split("T")[0]);
+    formData.append("job_end_date", endDate.toISOString().split("T")[0]);
+    formData.append("job_budget_from", jobBudgetFrom);
+    formData.append("job_budget_to", jobBudgetTo);
+    jobTags.forEach((tag, index) => {
+      formData.append(`job_tags[${index}]`, tag);
+    });
+    selectedFile.forEach((file, index) => {
+      formData.append(`attachments[${index}]`, {
+        uri: file.uri,
+        name: file.name,
+        type: file.type,
+      });
+    });
+    console.log(formData);
+    try {
+      let url = projectID
+        ? `http://10.0.2.2:8000/api/update-jobs/${projectID}`
+        : "http://10.0.2.2:8000/api/create-jobs";
+      const response = await axios({
+        method: "post",
+        url: url,
+        data: formData,
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${isStudent?.token}`,
+        },
+      });
+
+      if (response.status === 201 || response.status === 200) {
+        alert(
+          projectID
+            ? "Job has been updated successfully."
+            : "Job has been posted successfully."
+        );
+      } else {
+        alert("Something went wrong. Please Try Again!");
+      }
+    } catch (err) {
+      alert(err);
+    } finally {
+      setJobTitle("");
+      setJobDescription("");
+      setJobBudgetFrom("");
+      setJobBudgetTo("");
+      setSelectedFile([]);
+      setStartDate(dayjs());
+      setEndDate(dayjs());
+      setIsLoading(false);
+    }
+
+    setIsLoading(false);
   };
 
   return (
@@ -247,6 +293,7 @@ const CreateProjectScreen = ({ route }) => {
             <Text style={theme.utilities.title}>Project Category</Text>
             <SelectList
               setSelected={setJobCategory}
+              defaultOption={defaultCategory}
               data={JobCategory}
               placeholder={"Select Category"}
               dropdownItemStyles={{ marginVertical: 5 }}
@@ -321,7 +368,7 @@ const CreateProjectScreen = ({ route }) => {
               value={jobDescription}
               onChangeText={(text) => {
                 // Limit input to 250 characters
-                if (text.length <= 250) {
+                if (text.length <= 300) {
                   setJobDescription(text);
                 }
               }}
@@ -333,7 +380,7 @@ const CreateProjectScreen = ({ route }) => {
               textAlignVertical="top"
             />
             <View style={{ alignItems: "flex-end", marginRight: 5 }}>
-              <Text>{jobDescription.length} / 250</Text>
+              <Text>{jobDescription.length} / 300</Text>
             </View>
           </View>
 
@@ -478,27 +525,35 @@ const CreateProjectScreen = ({ route }) => {
                 <View style={{ flexDirection: "row", alignItems: "center" }}>
                   <Ionicons
                     name={"document-text-outline"}
-                    size={36}
-                    color={theme.colors.WHITE}
+                    size={25}
+                    color={theme.colors.BLACKS}
                   />
                   <Text
                     style={{
                       marginStart: 10,
                       fontSize: 15,
                       fontWeight: "600",
-                      color: theme.colors.WHITE,
+                      color: theme.colors.BLACKS,
                     }}
                   >
-                    {isloading
-                      ? "Loading..."
-                      : file.name.length > 15
-                      ? `${file.name.substring(
+                    {file.original_name?.length > 10
+                      ? `${file.original_name?.substring(
                           0,
-                          file.name.lastIndexOf(".")
-                        )}...${file.name.substring(
+                          10
+                        )}...${file.original_name.substring(
+                          file.original_name.lastIndexOf(".") + 1
+                        )}`
+                      : file.original_name
+                      ? `${file.original_name} (${file.original_name.substring(
+                          file.original_name.lastIndexOf(".") + 1
+                        )})`
+                      : file.name?.length > 10
+                      ? `${file.name?.substring(0, 10)}...${file.name.substring(
                           file.name.lastIndexOf(".") + 1
                         )}`
-                      : file.name}
+                      : `${file.name} (${file.name.substring(
+                          file.name.lastIndexOf(".") + 1
+                        )})`}
                   </Text>
                 </View>
                 <TouchableOpacity
@@ -507,15 +562,18 @@ const CreateProjectScreen = ({ route }) => {
                 >
                   <Ionicons
                     name={"close-circle-outline"}
-                    size={30}
-                    color={theme.colors.WHITE}
+                    size={18}
+                    color={theme.colors.BLACKS}
                   />
                 </TouchableOpacity>
               </View>
             ))}
           </View>
 
-          <TouchableOpacity style={{ marginBottom: 30 }} onPress={handleSubmit}>
+          <TouchableOpacity
+            style={{ marginBottom: 30 }}
+            onPress={() => handleSubmit(projectID)}
+          >
             <LinearGradient
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
@@ -542,8 +600,8 @@ const styles = StyleSheet.create({
 
   uploadText: {
     fontSize: 18,
-    color: theme.colors.BLACK,
-    fontFamily: "Roboto-Bold",
+    color: theme.colors.BLACKS,
+    fontFamily: "Roboto-Medium",
   },
 
   linearGradientText: {
@@ -597,12 +655,13 @@ const styles = StyleSheet.create({
   selectedFileContainer: {
     display: "flex",
     flexDirection: "row",
-    backgroundColor: theme.colors.primary,
-    paddingHorizontal: 8,
-    paddingVertical: 10,
+    backgroundColor: theme.colors.white,
+    padding: 10,
     borderRadius: 10,
     alignItems: "center",
     marginVertical: 5,
+    borderWidth: 1,
+    borderColor: theme.colors.grey,
   },
 
   inputRow: {
@@ -623,6 +682,7 @@ const styles = StyleSheet.create({
     padding: 5,
     fontSize: 16,
     textAlign: "center",
+    fontFamily: "Roboto-Light",
   },
   label: {
     textAlign: "center",

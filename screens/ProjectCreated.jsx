@@ -21,6 +21,7 @@ const ProjectCreated = ({ route, navigation }) => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  console.log(JSON.stringify(data, null, 2));
   const fetchProposalSubmitted = async (userId) => {
     try {
       setLoading(true);
@@ -35,7 +36,7 @@ const ProjectCreated = ({ route, navigation }) => {
         }
       );
 
-      setData([response.data.data]);
+      setData(response.data.data);
     } catch (error) {
       alert(error, "Please close the application and open again.");
     } finally {
@@ -56,7 +57,6 @@ const ProjectCreated = ({ route, navigation }) => {
         onPress={() =>
           navigation.navigate("ProjectDetailsScreen", {
             project: item,
-            id: item.student_user_id,
           })
         }
       >

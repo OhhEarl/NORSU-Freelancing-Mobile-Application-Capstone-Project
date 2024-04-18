@@ -26,7 +26,7 @@ import { useGetIsStudent } from "../hooks/dataHooks/useGetIsStudent";
 const EditProfileScreen = ({ navigation, route }) => {
   const [user, setUser] = useState(route.params?.project);
   const [token, setToken] = useState(route.params?.token);
-  const [error, isStudent, fetchIsStudent] = useGetIsStudent();
+  const [error, loading, isStudent, fetchIsStudent] = useGetIsStudent();
   const [userAvatar, setUserAvatar] = useState(user?.user_avatar);
   const [userName, setUserName] = useState(user?.user_name);
   const [inputText, setInputText] = useState("");
@@ -35,7 +35,7 @@ const EditProfileScreen = ({ navigation, route }) => {
   const [aboutMe, setAboutMe] = useState("");
   const [studentSkills, setStudentSkills] = useState(user?.skill_tags || []);
   const [portfolioImages, setPortfolioImages] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setLoading] = useState(false);
 
   const imageAvatar = async () => {
     try {
@@ -204,14 +204,8 @@ const EditProfileScreen = ({ navigation, route }) => {
         name: `${userAvatar.split("/").pop()}`,
         type: `image/${userAvatar.split(".").pop()}`,
       });
-      portfolioImages.forEach((image, index) => {
-        const formattedImage = {
-          uri: image,
-          name: `${image.split("/").pop()}`,
-          type: `image/${image.split(".").pop()}`,
-        };
-        formData.append("student_portfolio[]", formattedImage); // Notice the key change here
-      });
+
+      console.log(formData);
       let url = "http://10.0.2.2:8000/api/student-validations/update";
       try {
         const response = await axios.post(url, formData, {
@@ -221,14 +215,19 @@ const EditProfileScreen = ({ navigation, route }) => {
             Authorization: `Bearer ${token}`,
           },
         });
-        if (response.status === 201) {
-          fetchIsStudent();
-          navigation.navigate("EditProfileScreen", { onProfileUpdate: true });
+
+        if (response.status === 200) {
+          await fetchIsStudent();
+          Alert.alert("User updated Successfully.");
         }
       } catch (error) {
-        alert(error, "Please Try Again.");
+        console.log(
+          "Error:",
+          error.response ? error.response.data : error.message
+        );
       } finally {
         setLoading(false);
+        navigation.navigate("EditProfileScreen");
       }
     }
   };
@@ -261,7 +260,7 @@ const EditProfileScreen = ({ navigation, route }) => {
   }, [user?.user_id]);
   return (
     <SafeAreaView style={styles.mainContainer}>
-      {loading ? (
+      {loading || isLoading ? (
         <LoadingComponent />
       ) : (
         <ScrollView showsVerticalScrollIndicator={false}>
@@ -434,7 +433,7 @@ const EditProfileScreen = ({ navigation, route }) => {
                 <Text>{aboutMe.length} / 300</Text>
               </View>
             </View>
-
+            {/* 
             <View style={styles.inputFieldContainer}>
               <Text style={styles.inputLabel}>Portfolio</Text>
               <View style={styles.portfolioContainer}>
@@ -459,7 +458,7 @@ const EditProfileScreen = ({ navigation, route }) => {
                   <Text style={styles.addImageText}>+</Text>
                 </TouchableOpacity>
               </View>
-            </View>
+            </View> */}
 
             <View
               style={{

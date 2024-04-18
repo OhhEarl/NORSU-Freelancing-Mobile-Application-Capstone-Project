@@ -28,6 +28,7 @@ const ProfileScreen = ({ navigation, route }) => {
   const [error, loading, isStudent, fetchIsStudent] = useGetIsStudent();
   const { setUserData } = useAuthContext();
   const [modalVisible, setModalVisible] = useState(false);
+
   useEffect(() => {
     const unsubscribe = navigation.addListener("focus", () => {
       fetchIsStudent();
@@ -58,20 +59,20 @@ const ProfileScreen = ({ navigation, route }) => {
 
   return (
     <SafeAreaView style={styles.mainContainer}>
+      <View>
+        <Feather
+          name="arrow-left"
+          size={24}
+          color={COLORS.black}
+          onPress={() => {
+            navigation.goBack();
+          }}
+        />
+      </View>
       {loading ? (
         <LoadingComponent />
       ) : (
         <>
-          <View>
-            <Feather
-              name="arrow-left"
-              size={24}
-              color={COLORS.black}
-              onPress={() => {
-                navigation.goBack();
-              }}
-            />
-          </View>
           <View style={styles.innerContainer}>
             <Image
               style={styles.image}
