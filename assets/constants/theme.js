@@ -36,14 +36,15 @@ const utilities = {
         alignItems: 'center',
         flexDirection: 'row',
         paddingLeft: 16,
-        fontFamily: 'Raleway-Medium',
-        backgroundColor: "#EAEAEA",
-        color: 'black'
+        fontFamily: 'Roboto-Light',
+        color: 'black',
+        borderWidth: 1,
+        borderColor: colors.primary
     },
     title: {
         marginBottom: 5,
         marginStart: 4,
-        fontFamily: 'Roboto-Bold',
+        fontFamily: 'Roboto-Medium',
         color: "#000000",
         fontSize: 16
     },

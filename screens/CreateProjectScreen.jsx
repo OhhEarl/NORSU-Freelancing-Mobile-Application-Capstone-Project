@@ -36,10 +36,10 @@ const CreateProjectScreen = ({ route }) => {
   const [isloading, setIsLoading] = useState(false);
   const [jobTitle, setJobTitle] = useState(""); //! Project Name
   const [jobCategory, setJobCategory] = useState(null); //! Project Category
-  const [jobTags, setJobTags] = useState(["Tags"]);
+  const [jobTags, setJobTags] = useState([]);
   const [jobDescription, setJobDescription] = useState(""); //! Project Description
-  const [jobBudgetFrom, setJobBudgetFrom] = useState("0.00"); //! Project Budget Range From
-  const [jobBudgetTo, setJobBudgetTo] = useState(""); //! Project Budget Range To
+  const [jobBudgetFrom, setJobBudgetFrom] = useState("0"); //! Project Budget Range From
+  const [jobBudgetTo, setJobBudgetTo] = useState("0"); //! Project Budget Range To
   const [startDate, setStartDate] = useState(dayjs()); //! Project Schedule From
   const [endDate, setEndDate] = useState(dayjs()); //! Project Schedule To
   const [showStartDatePicker, setShowStartDatePicker] = useState(false); //! SHOW SCHEDULE PICKED FROM
@@ -69,11 +69,11 @@ const CreateProjectScreen = ({ route }) => {
       setJobTitle(project.job_title || "");
       setJobCategory(project.job_category_id || "");
       setJobDescription(project.job_description || "");
-      setJobBudgetFrom(project.job_budget_from.toString() || "0.00");
-      setJobBudgetTo(project.job_budget_to.toString() || "");
+      setJobBudgetFrom(project.job_budget_from.toString() || "0");
+      setJobBudgetTo(project.job_budget_to.toString() || "0");
       setStartDate(dayjs(project.job_start_date) || dayjs());
       setEndDate(dayjs(project.job_end_date) || dayjs());
-      setJobTags(project.job_tags || ["Tags"]);
+      setJobTags(project.job_tags || []);
       setSelectedFile(project.attachments || "");
     } else {
       initializeDefaultTags();
@@ -96,7 +96,7 @@ const CreateProjectScreen = ({ route }) => {
       setJobTitle("");
       setJobCategory("");
       setJobDescription("");
-      setJobBudgetFrom("0.00");
+      setJobBudgetFrom("0");
       setJobBudgetTo("");
       setStartDate(dayjs());
       setEndDate(dayjs());
@@ -221,11 +221,13 @@ const CreateProjectScreen = ({ route }) => {
         type: file.type,
       });
     });
-    console.log(formData);
+
+    console.log(JSON.stringify(formData, null, 2));
+
     try {
       let url = projectID
-        ? `http://10.0.2.2:8000/api/update-jobs/${projectID}`
-        : "http://10.0.2.2:8000/api/create-jobs";
+        ? `http://10.0.2.2:8000/api/project/created/update/${projectID}`
+        : "http://10.0.2.2:8000/api/project/create-project";
       const response = await axios({
         method: "post",
         url: url,
@@ -251,12 +253,13 @@ const CreateProjectScreen = ({ route }) => {
     } finally {
       setJobTitle("");
       setJobDescription("");
-      setJobBudgetFrom("");
-      setJobBudgetTo("");
+      setJobBudgetFrom("0");
+      setJobBudgetTo("0");
       setSelectedFile([]);
       setStartDate(dayjs());
       setEndDate(dayjs());
       setIsLoading(false);
+      setJobCategory([]);
     }
 
     setIsLoading(false);
@@ -297,16 +300,8 @@ const CreateProjectScreen = ({ route }) => {
               data={JobCategory}
               placeholder={"Select Category"}
               dropdownItemStyles={{ marginVertical: 5 }}
-              boxStyles={{
-                backgroundColor: theme.colors.inputField,
-                borderWidth: 0,
-                minHeight: 50,
-                alignItems: "center",
-                paddingVertical: 5,
-                paddingHorizontal: 10,
-                paddingLeft: 16,
-              }}
-              fontFamily="Raleway-Medium"
+              boxStyles={theme.colors.inputField}
+              fontFamily="Roboto-Light"
               notFoundText={placeholder}
             />
           </View>
@@ -318,16 +313,15 @@ const CreateProjectScreen = ({ route }) => {
                 paddingVertical: 5,
                 borderRadius: 10,
                 width: "100%",
-                justifyContent: "center",
-                alignItems: "center",
-                backgroundColor: theme.colors.inputField,
+                borderWidth: 1,
+                borderColor: theme.colors.primary,
               }}
               initialTags={jobTags}
               onChangeTags={onChangeTags}
               inputStyle={{
                 paddingLeft: 12,
-                fontFamily: "Raleway-Medium",
-                backgroundColor: theme.colors.inputField,
+                fontFamily: "Roboto-Light",
+                backgroundColor: "white",
                 color: "black",
               }}
               renderTag={({
@@ -349,10 +343,12 @@ const CreateProjectScreen = ({ route }) => {
                       paddingVertical: 5,
                       paddingHorizontal: 7.5,
                       borderRadius: 10,
-                      fontFamily: "Raleway-Medium",
+                      fontFamily: "Roboto-Light",
+                      backgroundColor: theme.colors.inputField,
+                      color: theme.colors.primary,
                     }}
                   >
-                    {`\u25CF ${tag}`}
+                    {tag}
                   </Text>
                 </TouchableOpacity>
               )}
@@ -468,11 +464,11 @@ const CreateProjectScreen = ({ route }) => {
                   prefix="₱"
                   delimiter=","
                   separator="."
-                  precision={2}
+                  precision={0}
                   minValue={0}
                   onChangeText={(formattedValue) => {
                     if (!formattedValue || parseFloat(formattedValue) === 0) {
-                      setJobBudgetFrom("0.00");
+                      setJobBudgetFrom("0");
                     }
                   }}
                 />
@@ -487,12 +483,11 @@ const CreateProjectScreen = ({ route }) => {
                   prefix="₱"
                   delimiter=","
                   separator="."
-                  precision={2}
-                  minValue={0}
+                  precision={0}
                   onChangeText={(formattedValue) => {
                     if (!formattedValue || parseFloat(formattedValue) === 0) {
                       // Reset the input value to the default state
-                      setJobBudgetTo("0.00");
+                      setJobBudgetTo("0");
                     }
                   }}
                 />
@@ -667,11 +662,12 @@ const styles = StyleSheet.create({
   inputRow: {
     borderRadius: 10,
     flexDirection: "row",
-    backgroundColor: theme.colors.inputField,
     justifyContent: "space-between",
     alignItems: "center",
-    fontSize: 18,
-    fontFamily: "ProximaNova-Bold",
+    fontSize: 16,
+    fontFamily: "Roboto-Light",
+    borderWidth: 1,
+    borderColor: theme.colors.primary,
   },
   inputColumn: {
     flex: 1,

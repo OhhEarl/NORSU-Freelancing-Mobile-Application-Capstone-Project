@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import React from "react";
 import {
   View,
@@ -8,6 +8,7 @@ import {
   TextInput,
   Modal,
   Alert,
+  ScrollView,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as theme from "../assets/constants/theme";
@@ -17,13 +18,54 @@ import DateTimePicker from "react-native-ui-datepicker";
 import relativeTime from "dayjs/plugin/relativeTime";
 import CurrencyInput from "react-native-currency-input";
 import Button from "../components/Button";
+import LoadingComponent from "../components/LoadingComponent";
+import axios from "axios";
+import useGetProjectList from "../hooks/dataHooks/useGetProjectList";
+
 const ProposalScreen = ({ route, navigation }) => {
   const project = route?.params?.project;
+  const { token } = route?.params;
+  const { item, isEditing } = route?.params || {};
+  const { items, projectError, listLoading, isStudent, fetchJobs } =
+    useGetProjectList();
+
+  // --------------------------------------------- //
+
+  const [jobTitle, setJobTitle] = useState(project?.job_title);
+  const [createdAt, setCreatedAt] = useState(project?.created_at);
+  const [jobDescription, setJobDescription] = useState(
+    project?.job_description
+  );
+  const [projectID, setProjectID] = useState(project?.id);
+  const [studentUserID, setStudentUserID] = useState(project?.student_user_id);
+  const [freelancerID, setFreelancerID] = useState(route?.params.id);
+  const [proposalID, setProposalID] = useState(null);
+  const [jobStartDate, setJobStartDate] = useState(project?.job_start_date);
+  const [jobEndDate, setJobEndDate] = useState(project?.job_end_date);
   const [expertiseExplain, SetExpertiseExplain] = useState("");
   const [startDate, setStartDate] = useState(dayjs());
   const [showStartDatePicker, setShowStartDatePicker] = useState(false);
-  const [proposalBudget, SetProposalBudget] = useState("0.00");
+  const [proposalBudget, SetProposalBudget] = useState("");
   const [isDetailsVisible, setIsDetailsVisible] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (isEditing && item) {
+      setProposalID(item?.id); //! Proposal ID
+      setProjectID(item?.project_id); //! project ID
+      setStudentUserID(item?.user_id); //! Student User ID
+      setFreelancerID(item?.freelancer_id); //! Freelancer ID
+      SetProposalBudget(item?.job_amount_bid); //! Proposal Budget
+      SetExpertiseExplain(item.expertise_explain || ""); //! Expertise LongText
+      setJobTitle(item?.job_proposal?.job_title); //! jobTitle
+      setCreatedAt(item?.job_proposal?.created_at); //! jobCreatedAt
+      setJobDescription(item?.job_proposal?.job_description); //! jobDescription
+      setJobStartDate(item?.job_proposal?.job_start_date); //! job Start Date
+      setJobEndDate(item?.job_proposal?.job_end_date); //! job End Date
+      setStartDate(dayjs(item?.due_date)); //! Due Date
+    }
+  }, [item, isEditing]);
+
   dayjs.extend(relativeTime);
 
   const toggleDetails = () => {
@@ -44,185 +86,263 @@ const ProposalScreen = ({ route, navigation }) => {
     }
   };
 
-  const submitProposal = async () => {
+  const submitProposal = async (proposalID) => {
     if (!startDate || !proposalBudget || !expertiseExplain || !startDate) {
       Alert.alert("Error", "Please fill in all required fields.");
       return;
     }
-
+    setLoading(true);
     const formData = new FormData();
+    formData.append("project_id", projectID),
+      formData.append("freelancer_id", freelancerID),
+      formData.append("user_id", studentUserID),
+      formData.append("job_title", jobTitle);
+    formData.append("expertise_explain", expertiseExplain),
+      formData.append("due_date", startDate.toISOString().split("T")[0]); // Fixed date format
+    formData.append("job_amount_bid", proposalBudget);
 
-    formData.append("student_user_id", project?.student_user_id),
-      formData.append("freelencer_id", route?.params.user_id),
-      formData.append("expertiseExplain", expertiseExplain),
-      formData.append("proposalBudget", proposalBudget),
-      formData.append("startDate", startDate);
-
-    console.log(formData);
+    try {
+      let url = proposalID
+        ? `http://10.0.2.2:8000/api/project/proposals/update/${proposalID}`
+        : "http://10.0.2.2:8000/api/project/proposals";
+      const response = await axios({
+        method: "post",
+        url: url,
+        data: formData,
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${isStudent?.token}`,
+        },
+      });
+      if (response) {
+        proposalID
+          ? Alert.alert("Proposal updated successfully.")
+          : Alert.alert("Proposal submitted successfully.");
+        navigation.navigate("HomeScreen", { projectUpdate: true });
+        fetchJobs();
+        SetExpertiseExplain("");
+        setStartDate(dayjs());
+        SetProposalBudget("");
+      }
+    } catch (error) {
+      alert(error.message, "Please Try Again Later.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <SafeAreaView style={styles.mainContainer}>
-      <View
-        style={{
-          flexDirection: "row",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <Feather
-          name="arrow-left"
-          size={24}
-          color={theme.colors.BLACKS}
-          onPress={() => {
-            navigation.goBack();
-          }}
-        />
-        <Text
-          style={{
-            marginRight: 25,
-            fontFamily: "Roboto-Medium",
-            color: theme.colors.BLACKS,
-            fontSize: 18,
-          }}
-        >
-          Submit Proposal
-        </Text>
-        <Text></Text>
-      </View>
-
-      <View style={styles.innerContainer}>
-        <Text style={styles.title}>Apply To</Text>
-        <View style={styles.projectContainer}>
-          <Text style={styles.projectTitle}>{project?.job_title}</Text>
-          <Text style={styles.jobTime}>
-            • Posted {dayjs(project?.created_at).fromNow()}
-          </Text>
-          <TouchableOpacity style={styles.showDetails} onPress={toggleDetails}>
+      {loading ? (
+        <LoadingComponent />
+      ) : (
+        <ScrollView showsVerticalScrollIndicator={false}>
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <Feather
+              name="arrow-left"
+              size={24}
+              color={theme.colors.BLACKS}
+              onPress={() => {
+                navigation.goBack();
+              }}
+            />
             <Text
               style={{
-                color: "blue",
-                fontFamily: "Roboto-Regular",
-                fontSize: theme.sizes.h2,
-                marginRight: 2,
-                marginLeft: 8,
+                marginRight: 25,
+                fontFamily: "Roboto-Medium",
+                color: theme.colors.BLACKS,
+                fontSize: 18,
               }}
             >
-              Show Details
+              Submit Proposal
             </Text>
-            <Feather name="arrow-right" size={13} color={"blue"} />
-          </TouchableOpacity>
-          {isDetailsVisible && (
-            <View style={{ padding: 5, flexDirection: "column" }}>
-              <Text style={styles.descriptionTitle}>Description</Text>
-              <Text style={styles.description}>
-                {"     "}
-                {project?.job_description}
+            <Text></Text>
+          </View>
+
+          <View style={styles.innerContainer}>
+            <Text style={styles.title}>Apply To</Text>
+            <View style={styles.projectContainer}>
+              <Text style={styles.projectTitle}>{jobTitle}</Text>
+              <Text style={styles.jobTime}>
+                • Posted {dayjs(createdAt).fromNow()}
               </Text>
-            </View>
-          )}
-        </View>
-
-        <View style={styles.container}>
-          <Text style={styles.title}>Explain your expertise:</Text>
-          <TextInput
-            style={styles.expertiseExplain}
-            type="text"
-            value={expertiseExplain}
-            onChangeText={(text) => {
-              // Limit input to 250 characters
-              if (text.length <= 250) {
-                SetExpertiseExplain(text);
-              }
-            }}
-            multiline
-            autoCorrect={false}
-            numberOfLines={4}
-            maxHeight={150}
-            maxLength={250}
-            textAlignVertical="top"
-          />
-
-          <View style={{ flexDirection: "row", marginTop: 20 }}>
-            <View style={{ width: "50%" }}>
-              <View style={{ width: "85%" }}>
+              <TouchableOpacity
+                style={styles.showDetails}
+                onPress={toggleDetails}
+              >
                 <Text
                   style={{
-                    fontFamily: "Roboto-Medium",
-                    marginBottom: 7,
-                    color: "black",
+                    color: "blue",
+                    fontFamily: "Roboto-Regular",
+                    fontSize: theme.sizes.h2,
+                    marginRight: 2,
+                    marginLeft: 8,
                   }}
                 >
-                  Due Date
+                  Show Details
                 </Text>
-                <TouchableOpacity onPress={() => togglePicker("start")}>
-                  <Text style={styles.date}>
-                    {dayjs(startDate).format("MM/DD/YYYY")}
+                <Feather name="arrow-right" size={13} color={"blue"} />
+              </TouchableOpacity>
+              {isDetailsVisible && (
+                <View style={{ padding: 5, flexDirection: "column" }}>
+                  <Text style={styles.descriptionTitle}>Description</Text>
+                  <Text style={styles.description}>
+                    {"     "}
+                    {jobDescription}
                   </Text>
-                </TouchableOpacity>
-              </View>
-              <Modal
-                visible={showStartDatePicker}
-                transparent={true}
-                animationType="slide"
-                onRequestClose={() => setShowStartDatePicker(false)}
-              >
-                <View style={styles.modalContainer}>
-                  <View style={styles.pickerContainer}>
-                    <DateTimePicker
-                      date={startDate}
-                      onChange={(params) => onStartDateChange(params.date)}
-                    />
-                    <Button
-                      title="Close"
-                      onPress={() => setShowStartDatePicker(false)}
-                    />
+
+                  <View style={{ flexDirection: "row", marginTop: 10 }}>
+                    <View style={{ width: "50%" }}>
+                      <View style={{ width: "85%" }}>
+                        <Text
+                          style={{
+                            fontFamily: "Roboto-Medium",
+                            marginBottom: 7,
+                            color: "black",
+                          }}
+                        >
+                          Project Start Date
+                        </Text>
+
+                        <Text style={styles.date}>
+                          {dayjs(jobStartDate).format("MM/DD/YYYY")}
+                        </Text>
+                      </View>
+                    </View>
+                    <View style={{ width: "50%" }}>
+                      <Text
+                        style={{
+                          fontFamily: "Roboto-Medium",
+                          color: "black",
+                          marginBottom: 7,
+                        }}
+                      >
+                        Project End Date
+                      </Text>
+                      <Text style={styles.date}>
+                        {dayjs(jobEndDate).format("MM/DD/YYYY")}
+                      </Text>
+                    </View>
                   </View>
                 </View>
-              </Modal>
+              )}
             </View>
-            <View style={{ width: "50%" }}>
-              <Text
-                style={{
-                  fontFamily: "Roboto-Medium",
-                  color: "black",
-                  marginBottom: 7,
-                }}
-              >
-                Amount
-              </Text>
-              <CurrencyInput
-                style={{
-                  paddingVertical: 6,
-                  borderWidth: 1,
-                  borderColor: theme.colors.GRAY_LIGHT,
-                  borderRadius: 10,
-                  color: theme.colors.gray,
-                  fontFamily: "Roboto-Regular",
-                  paddingStart: 15,
-                  fontSize: 13,
-                }}
-                value={proposalBudget}
-                onChangeValue={SetProposalBudget}
-                prefix="₱"
-                delimiter=","
-                separator="."
-                precision={2}
-                minValue={0}
-                onChangeText={(formattedValue) => {
-                  if (!formattedValue || parseFloat(formattedValue) === 0) {
-                    // Reset the input value to the default state
-                    SetProposalBudget("0.00");
+
+            <View style={styles.container}>
+              <Text style={styles.title}>Explain your expertise:</Text>
+              <TextInput
+                style={styles.expertiseExplain}
+                value={expertiseExplain}
+                onChangeText={(text) => {
+                  // Limit input to 250 characters
+                  if (text.length <= 300) {
+                    SetExpertiseExplain(text);
                   }
                 }}
+                multiline
+                autoCorrect={false}
+                numberOfLines={4}
+                maxHeight={150}
+                maxLength={300}
+                textAlignVertical="top"
               />
+              <View style={{ alignItems: "flex-end", marginRight: 5 }}>
+                <Text>{expertiseExplain.length} / 300</Text>
+              </View>
+
+              <View style={{ flexDirection: "row", marginTop: 20 }}>
+                <View style={{ width: "50%" }}>
+                  <View style={{ width: "85%" }}>
+                    <Text
+                      style={{
+                        fontFamily: "Roboto-Medium",
+                        marginBottom: 7,
+                        color: "black",
+                      }}
+                    >
+                      Due Date
+                    </Text>
+                    <TouchableOpacity onPress={() => togglePicker("start")}>
+                      <Text style={styles.date}>
+                        {dayjs(startDate).format("MM/DD/YYYY")}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                  <Modal
+                    visible={showStartDatePicker}
+                    transparent={true}
+                    animationType="slide"
+                    onRequestClose={() => setShowStartDatePicker(false)}
+                  >
+                    <View style={styles.modalContainer}>
+                      <View style={styles.pickerContainer}>
+                        <DateTimePicker
+                          date={startDate}
+                          onChange={(params) => onStartDateChange(params.date)}
+                        />
+                        <Button
+                          title="Close"
+                          onPress={() => setShowStartDatePicker(false)}
+                        />
+                      </View>
+                    </View>
+                  </Modal>
+                </View>
+                <View style={{ width: "50%" }}>
+                  <Text
+                    style={{
+                      fontFamily: "Roboto-Medium",
+                      color: "black",
+                      marginBottom: 7,
+                    }}
+                  >
+                    Amount
+                  </Text>
+                  <CurrencyInput
+                    style={{
+                      paddingVertical: 6,
+                      borderWidth: 1,
+                      borderColor: theme.colors.GRAY_LIGHT,
+                      borderRadius: 10,
+                      color: theme.colors.gray,
+                      fontFamily: "Roboto-Regular",
+                      paddingStart: 15,
+                      fontSize: 13,
+                    }}
+                    value={proposalBudget}
+                    onChangeValue={SetProposalBudget}
+                    prefix="₱"
+                    delimiter=","
+                    separator="."
+                    precision={0} // Set precision to 0 to prevent decimal values
+                    minValue={0}
+                    onChangeText={(formattedValue) => {
+                      if (!formattedValue || parseFloat(formattedValue) === 0) {
+                        // Reset the input value to the default state
+                        SetProposalBudget("0"); // Set the value to "0" instead of "0.00"
+                      }
+                    }}
+                  />
+                </View>
+              </View>
+              <View style={styles.applyNow}>
+                <Button
+                  title="Apply Now"
+                  filled
+                  onPress={() => submitProposal(proposalID)}
+                />
+              </View>
             </View>
           </View>
-          <View style={styles.applyNow}>
-            <Button title="Apply Now" filled onPress={submitProposal} />
-          </View>
-        </View>
-      </View>
+        </ScrollView>
+      )}
     </SafeAreaView>
   );
 };
@@ -251,7 +371,7 @@ const styles = StyleSheet.create({
   projectTitle: {
     fontFamily: "Roboto-Medium",
     color: "black",
-    fontSize: theme.sizes.h3 + 3,
+    fontSize: theme.sizes.h3,
   },
 
   showDetails: {
@@ -281,6 +401,7 @@ const styles = StyleSheet.create({
   },
   expertiseExplain: {
     padding: 10,
+
     borderWidth: 1,
     borderColor: theme.colors.GRAY_LIGHT,
     marginTop: 10,

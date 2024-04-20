@@ -21,7 +21,6 @@ const ProjectCreated = ({ route, navigation }) => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  console.log(JSON.stringify(data, null, 2));
   const fetchProposalSubmitted = async (userId) => {
     try {
       setLoading(true);
@@ -106,7 +105,7 @@ const ProjectCreated = ({ route, navigation }) => {
             fontSize: 18,
           }}
         >
-          Project Created
+          Projects Created
         </Text>
         <Text></Text>
       </View>
@@ -116,6 +115,7 @@ const ProjectCreated = ({ route, navigation }) => {
       ) : (
         <View style={styles.container}>
           <FlatList
+            showsVerticalScrollIndicator={false}
             data={data}
             renderItem={renderItem}
             keyExtractor={(item) => item.id.toString()}

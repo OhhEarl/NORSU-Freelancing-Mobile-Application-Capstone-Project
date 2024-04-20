@@ -19,6 +19,7 @@ import ProjectDetailsScreen from '../screens/ProjectDetailsScreen';
 import ProposalScreen from '../screens/ProposalScreen';
 import ProposalSubmitted from '../screens/ProposalSubmitted';
 import ProjectCreated from '../screens/ProjectCreated';
+import ProjectsCompleted from '../screens/ProjectsCompleted';
 const Stack = createNativeStackNavigator();
 
 const AuthenticatedApp = () => {
@@ -137,7 +138,13 @@ const AuthenticatedApp = () => {
             component={ProjectCreated}
             options={{ headerShown: false }}
           />
+          <Stack.Screen
+            name="ProjectsCompleted"
+            component={ProjectsCompleted}
+            options={{ headerShown: false }}
+          />
         </Stack.Navigator>
+
       )}
     </NavigationContainer>
   );

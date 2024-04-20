@@ -95,7 +95,14 @@ const ProfileScreen = ({ navigation, route }) => {
           </View>
 
           <View style={styles.anotherContainer}>
-            <TouchableOpacity>
+            <TouchableOpacity
+              onPress={() =>
+                navigation.navigate("ProjectsCompleted", {
+                  user: isStudent?.studentInfo,
+                  token: isStudent?.token,
+                })
+              }
+            >
               <View style={styles.seperateContainer}>
                 <Text style={styles.seperateText}>Projects Completed</Text>
                 <AntDesign name="arrowright" size={20} color="black" />

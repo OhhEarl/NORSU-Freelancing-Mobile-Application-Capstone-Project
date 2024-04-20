@@ -14,9 +14,19 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import RNFS from "react-native-fs";
 import Button from "../components/Button";
+
+import { useEffect } from "react";
 const ProjectDetailsScreen = ({ route, navigation }) => {
   const { project } = route.params;
   const { id } = route.params;
+  const { token } = route?.params;
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener("focus", () => {
+      project;
+    });
+    return unsubscribe;
+  }, [navigation, project]);
 
   const handleDownload = async (filePath) => {
     try {
@@ -99,7 +109,7 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
             }
           />
         </View>
-        <ScrollView style={{ flex: 1 }}>
+        <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
           <View style={styles.overviewContainer}>
             <Text style={styles.projectTitle}>{project?.job_title}</Text>
             <View
@@ -134,7 +144,9 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
 
               <View style={styles.priceContainer}>
                 <View style={styles.jobPriceRow}>
-                  <Text style={styles.jobPrice}>0</Text>
+                  <Text style={styles.jobPrice}>
+                    {project?.proposals_count}
+                  </Text>
                 </View>
                 <Text style={styles.jobRangePrice}>Proposal</Text>
               </View>
@@ -237,6 +249,8 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
                   navigation.navigate("ProposalScreen", {
                     project: project,
                     user_id: route.params.user_id,
+                    token: token,
+                    id: id,
                   })
                 }
               />

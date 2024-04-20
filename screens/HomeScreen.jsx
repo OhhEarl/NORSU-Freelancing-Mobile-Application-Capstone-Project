@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   StyleSheet,
   View,
@@ -17,13 +17,35 @@ import ProjectComponent from "../components/ProjectComponent";
 import useGetProjectList from "../hooks/dataHooks/useGetProjectList";
 import LoadingComponent from "../components/LoadingComponent";
 
-const HomeScreen = ({ navigation }) => {
+const HomeScreen = ({ navigation, route }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredItems, setFilteredItems] = useState([]);
+  const [update, setUpdate] = useState(false);
+  const { items, projectError, listLoading, isStudent, fetchJobs } =
+    useGetProjectList();
+  const projectUpdateRef = useRef(route?.params?.projectUpdate); // Using useRef
 
-  const { items, projectError, listLoading, isStudent } = useGetProjectList();
   useEffect(() => {
-    console.log(isStudent);
+    if (route?.params?.projectUpdate !== projectUpdateRef.current) {
+      projectUpdateRef.current = route?.params?.projectUpdate;
+      setUpdate(route?.params?.projectUpdate);
+    }
+
+    const unsubscribe = navigation.addListener("focus", () => {
+      if (update) {
+        fetchJobs();
+        setUpdate(false); // Reset the update state
+      }
+    });
+
+    return () => {
+      unsubscribe(); // Cleanup the listener
+    };
+  }, [navigation, route]); // Removed update from the dependency array
+
+
+
+  useEffect(() => {
     if (searchQuery.trim() === "") {
       setFilteredItems(items);
     } else {
@@ -42,6 +64,7 @@ const HomeScreen = ({ navigation }) => {
       user_avatar: isStudent?.studentInfo?.user_avatar,
       user_id: isStudent?.studentInfo?.user_id,
       id: isStudent?.studentInfo?.id,
+      token: isStudent?.token,
     });
   };
 

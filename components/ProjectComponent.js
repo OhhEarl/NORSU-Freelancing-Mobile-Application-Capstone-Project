@@ -8,8 +8,6 @@ import locale from 'dayjs/locale/en'
 
 const ProjectComponent = ({ item }) => {
 
-    dayjs.locale('en'); // Set the locale to English
-
     dayjs.extend(relativeTime);
     const formattedStartDate = dayjs(item?.job_start_date).format('MMMM D, YYYY');
     const formattedEndDate = dayjs(item?.job_end_date).format('MMMM D, YYYY');
@@ -55,7 +53,7 @@ const ProjectComponent = ({ item }) => {
 
                 <View style={styles.priceContainer}>
                     <View style={styles.jobPriceRow}>
-                        <Text style={styles.jobPrice}>0</Text>
+                        <Text style={styles.jobPrice}>{item?.proposals_count}</Text>
                     </View>
                     <Text style={styles.jobRangePrice}>Proposal</Text>
                 </View>
@@ -107,7 +105,7 @@ const styles = StyleSheet.create({
     },
     jobTime: {
         color: theme.colors.gray,
-        fontFamily: 'Roboto-Regular',
+        fontFamily: 'Roboto-Medium',
         fontSize: theme.sizes.h2,
     },
     rowContainer: {
@@ -134,7 +132,7 @@ const styles = StyleSheet.create({
         color: theme.colors.BLACKS,
     },
     jobRangePrice: {
-        fontFamily: 'Roboto-Regular',
+        fontFamily: 'Roboto-Medium',
         fontSize: theme.sizes.h1 + 2,
         color: theme.colors.gray,
         marginTop: 1,
@@ -157,7 +155,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 15,
         fontSize: theme.sizes.h2 - 1,
         color: theme.colors.primary,
-        fontFamily: 'Roboto-Medium'
+        fontFamily: 'Roboto-Light'
     }
 })
 
