@@ -150,11 +150,11 @@ const styles = StyleSheet.create({
     jobTag: {
         marginEnd: 10,
         borderRadius: 10,
-        backgroundColor: theme.colors.inputField,
+        backgroundColor: theme.colors.primary,
         paddingVertical: 6,
         paddingHorizontal: 15,
         fontSize: theme.sizes.h2 - 1,
-        color: theme.colors.primary,
+        color: theme.colors.WHITE,
         fontFamily: 'Roboto-Light'
     }
 })

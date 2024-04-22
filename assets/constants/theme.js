@@ -11,9 +11,9 @@ const colors = {
     PLACEHOLDER_COLOR: '#8B8B8B',
     GRAY_LIGHT: 'lightgray',
     ORANGE: 'orange',
-    primary: "#1B6B93",
-    secondary: "#164B60",
-    tertiary: "A2FF86",
+    primary: "#008DDA",
+    secondary: "#5356FF",
+    tertiary: "#6AD4DD",
     grey: "#CCCCCC",
     inputField: "#EAEAEA"
 }
@@ -29,7 +29,7 @@ const sizes = {
 
 const utilities = {
     inputField: {
-        height: 50,
+        height: 45,
         borderRadius: 10,
         paddingHorizontal: 10,
         width: '100%',
@@ -46,7 +46,7 @@ const utilities = {
         marginStart: 4,
         fontFamily: 'Roboto-Medium',
         color: "#000000",
-        fontSize: 16
+        fontSize: 15
     },
 
     header: {

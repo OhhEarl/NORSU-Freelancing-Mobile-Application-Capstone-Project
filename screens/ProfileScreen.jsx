@@ -59,17 +59,7 @@ const ProfileScreen = ({ navigation, route }) => {
 
   return (
     <SafeAreaView style={styles.mainContainer}>
-      <View>
-        <Feather
-          name="arrow-left"
-          size={24}
-          color={COLORS.black}
-          onPress={() => {
-            navigation.goBack();
-          }}
-        />
-      </View>
-      {loading ? (
+      {loading || !isStudent ? (
         <LoadingComponent />
       ) : (
         <>
@@ -113,6 +103,7 @@ const ProfileScreen = ({ navigation, route }) => {
                 navigation.navigate("ProjectCreated", {
                   user: isStudent?.studentInfo,
                   token: isStudent?.token,
+                  id: isStudent?.studentInfo?.id,
                 })
               }
             >

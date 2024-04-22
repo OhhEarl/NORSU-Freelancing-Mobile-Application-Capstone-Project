@@ -27,16 +27,19 @@ import DocumentPicker from "react-native-document-picker";
 import CurrencyInput from "react-native-currency-input";
 import axios from "axios";
 import Tags from "react-native-tags";
+import Feather from "react-native-vector-icons/Feather";
 
-const CreateProjectScreen = ({ route }) => {
-  const { project, isEditing } = route?.params || {};
+const CreateProjectScreen = ({ route, navigation }) => {
+  const { project, isEditing, token, id } = route?.params || {};
   const isFocused = useIsFocused();
   const [projectID, setProjectID] = useState(null);
   const [selectedFile, setSelectedFile] = useState([]);
   const [isloading, setIsLoading] = useState(false);
   const [jobTitle, setJobTitle] = useState(""); //! Project Name
   const [jobCategory, setJobCategory] = useState(null); //! Project Category
-  const [jobTags, setJobTags] = useState([]);
+  const [jobTags, setJobTags] = useState(
+    project ? project.job_tags.map((tag) => tag.job_tags) : []
+  );
   const [jobDescription, setJobDescription] = useState(""); //! Project Description
   const [jobBudgetFrom, setJobBudgetFrom] = useState("0"); //! Project Budget Range From
   const [jobBudgetTo, setJobBudgetTo] = useState("0"); //! Project Budget Range To
@@ -48,10 +51,10 @@ const CreateProjectScreen = ({ route }) => {
   const [error, loading, isStudent] = useGetIsStudent();
   const [defaultCategory, setDefaultCategory] = useState(null);
   //! --------------------PROJECT CATEGORY ------------------------- //
-
+  console.log("create project id", id);
   const initializeDefaultTags = () => {
     if (jobTags.length === 0) {
-      setJobTags(["Tags"]); // Set default tags if jobTags is empty
+      setJobTags([]); // Set default tags if jobTags is empty
     }
   };
 
@@ -73,8 +76,10 @@ const CreateProjectScreen = ({ route }) => {
       setJobBudgetTo(project.job_budget_to.toString() || "0");
       setStartDate(dayjs(project.job_start_date) || dayjs());
       setEndDate(dayjs(project.job_end_date) || dayjs());
-      setJobTags(project.job_tags || []);
+
       setSelectedFile(project.attachments || "");
+      const extractedJobTags = project.job_tags.map((tag) => tag.job_tags);
+      setJobTags(extractedJobTags);
     } else {
       initializeDefaultTags();
     }
@@ -100,7 +105,7 @@ const CreateProjectScreen = ({ route }) => {
       setJobBudgetTo("");
       setStartDate(dayjs());
       setEndDate(dayjs());
-      setJobTags(["Tags"]);
+      setJobTags([]);
       setSelectedFile([]);
       setProjectID(null);
       setDefaultCategory(null);
@@ -267,20 +272,51 @@ const CreateProjectScreen = ({ route }) => {
 
   return (
     <SafeAreaView style={styles.container}>
+      {project ? (
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <Feather
+            name="arrow-left"
+            size={24}
+            color={theme.colors.BLACKS}
+            onPress={() => {
+              navigation.navigate("ProjectCreated", {
+                token: token,
+                user: project,
+                id: id,
+              });
+            }}
+          />
+          <Text
+            style={{
+              marginRight: 25,
+              fontFamily: "Roboto-Medium",
+              color: theme.colors.BLACKS,
+              fontSize: 18,
+            }}
+          >
+            Edit Project Created
+          </Text>
+          <Text></Text>
+        </View>
+      ) : (
+        ""
+      )}
       {isloading ? (
         <LoadingComponent />
       ) : (
         <ScrollView
-          style={{ marginTop: 30, paddingHorizontal: 20 }}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ flexGrow: 1 }}
         >
-          <View>
-            <Text style={theme.utilities.header}>
-              Let's Get Your Project Listed!
-            </Text>
-          </View>
-
+          <Text style={theme.utilities.header}>
+            {!project ? "Let's Get Your Project Listed" : ""}
+          </Text>
           <View style={theme.utilities.inputContainer}>
             <Text style={theme.utilities.title}>Project Name</Text>
             <TextInput
@@ -300,7 +336,7 @@ const CreateProjectScreen = ({ route }) => {
               data={JobCategory}
               placeholder={"Select Category"}
               dropdownItemStyles={{ marginVertical: 5 }}
-              boxStyles={theme.colors.inputField}
+              boxStyles={{ borderColor: theme.colors.primary }}
               fontFamily="Roboto-Light"
               notFoundText={placeholder}
             />
@@ -310,7 +346,6 @@ const CreateProjectScreen = ({ route }) => {
             <Text style={theme.utilities.title}>Project Tags</Text>
             <Tags
               style={{
-                paddingVertical: 5,
                 borderRadius: 10,
                 width: "100%",
                 borderWidth: 1,
@@ -342,6 +377,7 @@ const CreateProjectScreen = ({ route }) => {
                       backgroundColor: "white",
                       paddingVertical: 5,
                       paddingHorizontal: 7.5,
+                      marginVertical: 5,
                       borderRadius: 10,
                       fontFamily: "Roboto-Light",
                       backgroundColor: theme.colors.inputField,
@@ -363,7 +399,6 @@ const CreateProjectScreen = ({ route }) => {
               type="text"
               value={jobDescription}
               onChangeText={(text) => {
-                // Limit input to 250 characters
                 if (text.length <= 300) {
                   setJobDescription(text);
                 }
@@ -372,7 +407,7 @@ const CreateProjectScreen = ({ route }) => {
               autoCorrect={false}
               numberOfLines={4}
               maxHeight={100}
-              maxLength={250}
+              maxLength={300}
               textAlignVertical="top"
             />
             <View style={{ alignItems: "flex-end", marginRight: 5 }}>
@@ -509,7 +544,7 @@ const CreateProjectScreen = ({ route }) => {
                   color="black"
                   style={styles.uploadLogo}
                 />
-                <Text style={styles.uploadText}>Upload Your Files</Text>
+                <Text style={styles.uploadText}>Upload Files</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -566,7 +601,7 @@ const CreateProjectScreen = ({ route }) => {
           </View>
 
           <TouchableOpacity
-            style={{ marginBottom: 30 }}
+            style={{ position: "relative" }}
             onPress={() => handleSubmit(projectID)}
           >
             <LinearGradient
@@ -590,11 +625,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.WHITE,
-    position: "relative",
+    padding: 24,
   },
 
   uploadText: {
-    fontSize: 18,
+    fontSize: theme.sizes.h3,
     color: theme.colors.BLACKS,
     fontFamily: "Roboto-Medium",
   },
@@ -668,17 +703,18 @@ const styles = StyleSheet.create({
     fontFamily: "Roboto-Light",
     borderWidth: 1,
     borderColor: theme.colors.primary,
+    padding: 5,
   },
   inputColumn: {
     flex: 1,
-    padding: 10,
   },
 
   textInput: {
-    padding: 5,
     fontSize: 16,
     textAlign: "center",
-    fontFamily: "Roboto-Light",
+    fontFamily: "Roboto-Medium",
+    marginBottom: 0,
+    paddingBottom: 0,
   },
   label: {
     textAlign: "center",

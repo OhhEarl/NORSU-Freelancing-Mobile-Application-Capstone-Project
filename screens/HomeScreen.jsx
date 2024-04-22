@@ -43,8 +43,6 @@ const HomeScreen = ({ navigation, route }) => {
     };
   }, [navigation, route]); // Removed update from the dependency array
 
-
-
   useEffect(() => {
     if (searchQuery.trim() === "") {
       setFilteredItems(items);
@@ -119,9 +117,10 @@ const HomeScreen = ({ navigation, route }) => {
 
           <View style={{ flex: 1, paddingHorizontal: 20, marginTop: 20 }}>
             <Text style={styles.popularText}>Recent Projects</Text>
+
             {listLoading ? (
               <LoadingComponent />
-            ) : filteredItems?.length ? (
+            ) : filteredItems && filteredItems.length > 0 ? (
               <FlatList
                 data={filteredItems}
                 keyExtractor={(item) => item.id.toString()}
@@ -141,17 +140,11 @@ const HomeScreen = ({ navigation, route }) => {
                 }}
               >
                 <View
-                  style={{
-                    justifyContent: "center",
-                    alignItems: "center",
-                  }}
+                  style={{ justifyContent: "center", alignItems: "center" }}
                 >
                   <Image
                     source={require("../assets/no-data-found.jpg")}
-                    style={{
-                      height: 100,
-                      width: 100,
-                    }}
+                    style={{ height: 100, width: 100 }}
                   />
                   <Text
                     style={{

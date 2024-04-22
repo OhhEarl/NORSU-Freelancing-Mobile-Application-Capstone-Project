@@ -15,110 +15,111 @@ import AntDesign from "react-native-vector-icons/AntDesign";
 import { TabView, SceneMap, TabBar } from "react-native-tab-view";
 import { COLORS, UTILITIES } from "../assets/constants/index";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useAuthContext } from "../hooks/AuthContext";
-import { GoogleSignin } from "@react-native-google-signin/google-signin";
-import { useGetIsStudent } from "../hooks/dataHooks/useGetIsStudent";
-import auth from "@react-native-firebase/auth";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import axios from "axios";
+
 import * as theme from "../assets/constants/theme";
 
-const PortfolioScreen = () => (
-  <View>
-    <Text>Portfolio Screen</Text>
+const PortfolioScreen = ({ user }) => (
+  <View style={styles.containerPortfolio}>
+    <View style={styles.portfolioContainer}>
+      {user?.portfolio?.map((image, index) => (
+        <View key={index} style={styles.portfolioImageContainer}>
+          <Image
+            source={{ uri: image.student_portfolio_path }}
+            style={styles.portfolioImage}
+          />
+        </View>
+      ))}
+    </View>
   </View>
 );
 
-const ResumeScreen = ({ isStudent }) => (
-  <View>
-    <Text>{isStudent.studentInfo?.first_name}</Text>
-  </View>
+const ResumeScreen = ({ user }) => (
+  <ScrollView showsVerticalScrollIndicator={false}>
+    <View style={styles.inputFieldContainer}>
+      <View style={{ marginVertical: 6 }}>
+        <Text style={styles.title}>Year Level</Text>
+        <Text style={styles.content}>{user?.year_level}</Text>
+      </View>
+      <View style={{ marginVertical: 6 }}>
+        <Text style={styles.title}>About Me</Text>
+        <Text style={styles.content}>{user?.about_me}</Text>
+      </View>
+      <View style={{ marginVertical: 6 }}>
+        <Text style={styles.title}>Skill Tags</Text>
+        <View style={styles.tagsContainer}>
+          {user?.student_tags?.map((tags, index) => (
+            <Text key={index} style={styles.tags}>
+              {tags?.student_skills}
+            </Text>
+          ))}
+        </View>
+      </View>
+    </View>
+  </ScrollView>
 );
-
-const FreelancerProfileScreen = ({ navigation }) => {
+const FreelancerProfileScreen = ({ navigation, route }) => {
+  const { user } = route?.params;
   const layout = useWindowDimensions();
   const [index, setIndex] = useState(0);
   const [routes] = useState([
     { key: "portfolio", title: "Portfolio" },
     { key: "resume", title: "Resume" },
   ]);
-  const [error, loading, isStudent] = useGetIsStudent();
-  const { userData, setUserData, isLoading } = useAuthContext();
 
   const renderScene = ({ route }) => {
     switch (route.key) {
       case "portfolio":
-        return <PortfolioScreen />;
+        return <PortfolioScreen user={user.freelancer} />;
       case "resume":
-        return <ResumeScreen isStudent={isStudent} />;
+        return <ResumeScreen user={user.freelancer} />;
       default:
         return null;
-    }
-  };
-  const signOut = async () => {
-    try {
-      await GoogleSignin.signOut();
-      await auth().signOut();
-      let url = "http://10.0.2.2:8000/api/google-callback/auth/google-signout";
-      let response = await axios.post(url, isStudent?.token, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${isStudent?.token}`,
-        },
-      });
-
-      if ((response.status = 200)) {
-        await AsyncStorage.removeItem("userInformation");
-        await setUserData(null);
-      }
-    } catch (error) {
-      alert(error);
     }
   };
 
   return (
     <SafeAreaView style={styles.mainContainer}>
-      <View style={styles.logoutContainer}>
+      <View
+        style={{
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
         <Feather
           name="arrow-left"
           size={24}
-          color={COLORS.black}
+          color={theme.colors.BLACKS}
           onPress={() => {
             navigation.goBack();
           }}
         />
-
-        <TouchableOpacity onPress={signOut}>
-          <View style={styles.log}>
-            <Entypo
-              name="log-out"
-              size={20}
-              color="white"
-              style={{ alignSelf: "center", marginLeft: 5 }}
-            />
-            <Text style={styles.logout}>LOGOUT</Text>
-          </View>
-        </TouchableOpacity>
+        <Text
+          style={{
+            marginRight: 25,
+            fontFamily: "Roboto-Medium",
+            color: theme.colors.BLACKS,
+            fontSize: 18,
+          }}
+        >
+          Freelancer Profile
+        </Text>
+        <Text></Text>
       </View>
-
       <View style={styles.innerContainer}>
         <Image
           style={styles.image}
           source={
-            isStudent?.studentInfo?.user_avatar
-              ? { uri: isStudent?.studentInfo?.user_avatar }
+            user?.freelancer?.user_avatar
+              ? { uri: user?.freelancer?.user_avatar }
               : {
                   uri: "https://img.freepik.com/free-psd/3d-illustration-person-with-sunglasses_23-2149436188.jpg?w=740&t=st=1670148608~exp=1670149208~hmac=bc57b66d67d2b9f4929c8e592ff17e8c8660721608add2f18fc20d19c1aab7e4",
                 }
           }
         />
 
-        <Text style={styles.userText}>
-          {isStudent?.studentInfo?.first_name +
-            " " +
-            isStudent?.studentInfo?.last_name}
-        </Text>
-        <Text style={styles.course}>{isStudent?.course}</Text>
+        <Text style={styles.userText}>{user?.freelancer?.user_name}</Text>
+        <Text style={styles.course}>{user?.freelancer?.area_of_expertise}</Text>
       </View>
 
       <TabView
@@ -129,7 +130,11 @@ const FreelancerProfileScreen = ({ navigation }) => {
         renderTabBar={(props) => (
           <TabBar
             {...props}
-            style={{ backgroundColor: "white" }}
+            style={{
+              backgroundColor: "white",
+              fontFamily: "Roboto-Medium",
+              marginTop: 15,
+            }}
             inactiveColor={"black"}
             activeColor={"black"}
             indicatorStyle={{ backgroundColor: theme.colors.primary }}
@@ -151,14 +156,10 @@ const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 24,
   },
-  backgroundImage: {
-    flex: 1,
-    resizeMode: "cover", // or 'stretch' or 'contain'
-    justifyContent: "center",
-  },
+
   image: {
-    height: 80,
-    width: 80,
+    height: 120,
+    width: 120,
     borderRadius: 70,
     borderWidth: 1,
     marginBottom: 10,
@@ -166,68 +167,74 @@ const styles = StyleSheet.create({
   innerContainer: {
     marginHorizontal: 30,
     alignItems: "center",
-  },
-
-  course: {
-    textAlign: "center",
-    fontSize: 16,
-    fontFamily: "Roboto-Medium",
-    color: COLORS.primary,
-  },
-
-  textField: {
-    fontFamily: "Raleway-Medium",
-    fontSize: 16,
-    color: "black",
+    marginTop: 40,
   },
 
   userText: {
     marginHorizontal: 50,
     fontSize: 20,
-    fontWeight: "bold",
     color: "black",
+    fontFamily: "Roboto-Bold",
   },
 
-  logoutContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+  inputFieldContainer: {
+    marginVertical: 10,
+    width: "100%",
+    paddingHorizontal: 10,
+    marginTop: 10,
+  },
 
-    paddingBottom: 24,
+  containerPortfolio: {
+    marginVertical: 10,
+    width: "100%",
+  },
+
+  portfolioContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
     alignItems: "center",
   },
-  log: {
-    flexDirection: "row",
-    alignSelf: "center", // Center the button horizontally
-    borderRadius: 50,
-    borderColor: "#D6E6FF",
-    padding: 6,
-    backgroundColor: COLORS.primary,
+  portfolioImageContainer: {
+    position: "relative",
+    width: 110,
+    height: 110,
+    marginHorizontal: 2,
+    marginBottom: 5,
   },
-  logout: {
-    margin: 5,
-    color: COLORS.white,
-    fontWeight: "600",
-  },
-  seperateContainer: {
-    display: "flex",
-    flexDirection: "row",
-    backgroundColor: "#fff",
-    padding: 3,
-    paddingStart: 15,
+  portfolioImage: {
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
     borderRadius: 10,
-    elevation: 3,
-    marginTop: 15,
-    alignItems: "center",
-    shadowColor: "#171717",
-    shadowOffset: { width: -2, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
   },
 
-  seperateText: {
-    margin: 18,
-    fontSize: 18,
-    fontFamily: "ProximaNova-Bold",
-    color: "#212121",
+  title: {
+    fontFamily: "Roboto-Medium",
+    fontSize: theme.sizes.h3,
+    color: "black",
+    marginVertical: 5,
+  },
+
+  content: {
+    fontFamily: "Roboto-Regular",
+    fontSize: theme.sizes.h3,
+  },
+
+  tagsContainer: {
+    width: "100%",
+    position: "relative",
+    flexDirection: "row",
+    flexWrap: "wrap",
+  },
+
+  tags: {
+    padding: 5,
+    paddingHorizontal: 10,
+    backgroundColor: theme.colors.primary,
+    fontFamily: "Roboto-Light",
+    margin: 5,
+    color: "white",
+    borderRadius: 10,
   },
 });

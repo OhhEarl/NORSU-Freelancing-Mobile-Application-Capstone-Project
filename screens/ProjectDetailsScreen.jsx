@@ -28,6 +28,8 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
     return unsubscribe;
   }, [navigation, project]);
 
+  console.log(JSON.stringify(project, null, 2));
+
   const handleDownload = async (filePath) => {
     try {
       const url = filePath;
@@ -97,17 +99,24 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
           >
             Project Overview
           </Text>
-          <MaterialCommunityIcons
-            name="square-edit-outline"
-            size={24}
-            color={theme.colors.BLACKS}
-            onPress={() =>
-              navigation.navigate("CreateProjectScreen", {
-                project,
-                isEditing: true,
-              })
-            }
-          />
+
+          {project?.student_user_id == id && project?.job_finished != 1 ? (
+            <MaterialCommunityIcons
+              name="square-edit-outline"
+              size={24}
+              color={theme.colors.BLACKS}
+              onPress={() =>
+                navigation.navigate("CreateProjectScreen", {
+                  project,
+                  isEditing: true,
+                  token: token,
+                  id: id,
+                })
+              }
+            />
+          ) : (
+            <Text></Text>
+          )}
         </View>
         <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
           <View style={styles.overviewContainer}>
@@ -148,10 +157,17 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
                     {project?.proposals_count}
                   </Text>
                 </View>
-                <Text style={styles.jobRangePrice}>Proposal</Text>
+                <Text style={styles.jobRangePrice}>Proposals</Text>
               </View>
             </View>
-
+            <View style={styles.projectDescription}>
+              <Text style={styles.projectDescriptionTitle}>
+                Project Category
+              </Text>
+              <Text style={styles.jobDescription}>
+                {project?.category_name}
+              </Text>
+            </View>
             <View style={styles.projectDescription}>
               <Text style={styles.projectDescriptionTitle}>
                 Project Description
@@ -337,7 +353,7 @@ const styles = StyleSheet.create({
   },
   priceContainer: {
     paddingVertical: 10,
-    paddingHorizontal: 15,
+    paddingHorizontal: 10,
     flexDirection: "column",
     alignItems: "center",
     borderColor: theme.colors.grey,

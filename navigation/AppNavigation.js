@@ -20,6 +20,8 @@ import ProposalScreen from '../screens/ProposalScreen';
 import ProposalSubmitted from '../screens/ProposalSubmitted';
 import ProjectCreated from '../screens/ProjectCreated';
 import ProjectsCompleted from '../screens/ProjectsCompleted';
+import ProposalListScreen from '../screens/ProposalListScreen';
+import FreelancerProfileScreen from '../screens/FreelancerProfileScreen';
 const Stack = createNativeStackNavigator();
 
 const AuthenticatedApp = () => {
@@ -143,6 +145,17 @@ const AuthenticatedApp = () => {
             component={ProjectsCompleted}
             options={{ headerShown: false }}
           />
+          <Stack.Screen
+            name="ProposalListScreen"
+            component={ProposalListScreen}
+            options={{ headerShown: false }}
+          />
+
+          <Stack.Screen
+            name="FreelancerProfileScreen"
+            component={FreelancerProfileScreen}
+            options={{ headerShown: false }}
+          />
         </Stack.Navigator>
 
       )}
@@ -160,15 +173,4 @@ const AppNavigation = () => {
 
 export default AppNavigation;
 
-const styles = StyleSheet.create({
-  indicator: {
-    flex: 1,
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    bottom: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+
