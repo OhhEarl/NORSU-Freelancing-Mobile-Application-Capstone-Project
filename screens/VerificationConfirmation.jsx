@@ -1,17 +1,19 @@
-import React from 'react';
-import {
-  StyleSheet,
-  View,
-  Text,
-  SafeAreaView,
+import React from "react";
+import { StyleSheet, View, Text, Image, SafeAreaView } from "react-native";
 
-} from 'react-native';
-
-
-const VerificationConfirmation = ({navigation}) => {
+const VerificationConfirmation = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
+        <View style={{ alignItems: "center", marginBottom: 20 }}>
+          <Image
+            source={require("../assets/images/norsu-logo.png")}
+            style={{
+              height: 140,
+              width: 140,
+            }}
+          />
+        </View>
         <View>
           <Text style={styles.header}>
             We need to verify your identification
@@ -24,13 +26,11 @@ const VerificationConfirmation = ({navigation}) => {
             of Negros Oriental State University (NORSU) Dumaguete City.
           </Text>
           <Text style={styles.secondParagraphHeader}>
-            You just need to fill up some information which will help us to
-            build a secure system together
+            Your information has been submitted, and it is currently being
+            reviewed.
           </Text>
         </View>
       </View>
-
- 
     </SafeAreaView>
   );
 };
@@ -40,30 +40,32 @@ export default VerificationConfirmation;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'white',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "white",
   },
   content: {
     paddingHorizontal: 30,
   },
   header: {
-    textAlign: 'center',
-    fontWeight: '500',
+    textAlign: "center",
+    fontFamily: "Roboto-Bold",
     fontSize: 20,
-    color: '#0d0a0b',
+    color: "black",
   },
   firstParagraphHeader: {
     marginVertical: 24,
   },
   firstParagraph: {
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 24,
-    fontSize: 16,
+    fontSize: 18,
+    fontFamily: "Roboto-Regular",
   },
   secondParagraphHeader: {
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 24,
-    fontSize: 16,
+    fontSize: 18,
+    fontFamily: "Roboto-Regular",
   },
 });

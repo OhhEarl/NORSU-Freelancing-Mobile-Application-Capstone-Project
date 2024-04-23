@@ -74,14 +74,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 30,
-    marginTop: -130,
   },
   header: {
     textAlign: "center",
-    fontWeight: "500",
-    fontSize: 20,
-    color: "#0d0a0b",
     fontFamily: "Roboto-Bold",
+    fontSize: 20,
+    color: "black",
   },
   firstParagraphHeader: {
     marginVertical: 24,
@@ -89,14 +87,13 @@ const styles = StyleSheet.create({
   firstParagraph: {
     textAlign: "center",
     marginBottom: 24,
-    fontSize: 16,
-    fontFamily: "Roboto-Medium",
-    color: "black",
+    fontSize: 18,
+    fontFamily: "Roboto-Regular",
   },
   secondParagraphHeader: {
     textAlign: "center",
-    fontSize: 16,
-    fontFamily: "Roboto-Medium",
-    color: "black",
+    marginBottom: 24,
+    fontSize: 18,
+    fontFamily: "Roboto-Regular",
   },
 });

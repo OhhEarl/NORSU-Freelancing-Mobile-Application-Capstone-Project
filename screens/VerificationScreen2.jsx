@@ -67,18 +67,31 @@ const VerificationScreen2 = ({
   }, [onPrev]);
 
   const yearLevelOptions = [
-    { key: "1", value: "1st Year" },
-    { key: "2", value: "2nd Year" },
-    { key: "3", value: "3rd Year" },
-    { key: "4", value: "4th Year" },
-    { key: "5", value: "5th Year" },
+    {
+      id: 1,
+      yearLevel: "1st Year Level",
+    },
+    {
+      id: 2,
+      yearLevel: "2nd Year Level",
+    },
+    {
+      id: 3,
+      yearLevel: "3rd Year Level",
+    },
+    {
+      id: 4,
+      yearLevel: "4th Year Level",
+    },
+    {
+      id: 5,
+      yearLevel: "5th Year Level",
+    },
+    {
+      id: 6,
+      yearLevel: "Irregular",
+    },
   ];
-  const handleYearLevelChange = (selectedValue) => {
-    setValues((prevValues) => ({ ...prevValues, yearLevel: selectedValue }));
-  };
-  const selectedYearLevel = yearLevelOptions.find(
-    (option) => option.key === values.yearLeveL
-  );
 
   useEffect(() => {
     if (userData && userData.user && userData.user.id) {
@@ -142,7 +155,23 @@ const VerificationScreen2 = ({
       alert(error);
     }
   };
+  const handleYearLevelChange = (selectedValue) => {
+    const selectedYearLevel = yearLevelOptions.find(
+      (option) => option.yearLevel === selectedValue
+    );
+    if (selectedYearLevel) {
+      setValues((prevValues) => ({
+        ...prevValues,
+        yearLevel: selectedYearLevel.id,
+      }));
+    }
+  };
 
+  const selectedYearLevel = yearLevelOptions.find(
+    (option) => option.id === values.yearLevel
+  );
+
+  console.log(values.yearLeveL);
   const studentValidation = async () => {
     if (
       !selectedImageUriFront ||
@@ -153,7 +182,6 @@ const VerificationScreen2 = ({
       !values.course ||
       !values.areaOfExpertise ||
       !values.norsuIDnumber ||
-      !values.yearLeveL ||
       !values.skillTags
     ) {
       alert("Please fill all fields and select both front and back ID's.");
@@ -179,11 +207,11 @@ const VerificationScreen2 = ({
     formData.append("firstName", values.firstName);
     formData.append("lastName", values.lastName);
     formData.append("areaOfExpertise", values.areaOfExpertise);
-    formValues.skillTags.forEach((tag) => {
+    values.skillTags.forEach((tag) => {
       formData.append("student_skills[]", tag);
     });
     formData.append("course", values.course);
-    formData.append("yearLevel", values.yearLevel);
+    formData.append("yearLevel", 4);
     formData.append("norsuIDnumber", values.norsuIDnumber);
     formData.append("user_id", id);
 
@@ -264,17 +292,13 @@ const VerificationScreen2 = ({
             onChangeText={(text) => setValues({ ...values, course: text })}
           />
         </View>
-
-        <View style={styles.inputFieldContainer}>
+        <View style={{ marginVertical: 20 }}>
           <Text style={styles.inputLabel}>Year Level</Text>
           <SelectList
             key={`yearLevel-${values.yearLevel}`} // Ensure a unique key for each SelectList instance
             setSelected={handleYearLevelChange}
             style={styles.inputField}
-            data={yearLevelOptions.map((item) => ({
-              ...item,
-              value: item.value,
-            }))}
+            data={yearLevelOptions.map((item) => item.yearLevel)} // Pass an array of strings
             placeholder="Select your year level"
             search={false}
             dropdownTextStyles={{
@@ -284,16 +308,13 @@ const VerificationScreen2 = ({
               paddingVertical: 15,
               borderColor: theme.colors.primary,
             }}
-            selectedValue={selectedYearLevel ? selectedYearLevel.value : ""}
+            selectedValue={selectedYearLevel ? selectedYearLevel.yearLevel : ""}
             defaultOption={{
-              key: values.yearLevel,
-              value:
-                yearLevelOptions.find((item) => item.key === values.yearLevel)
-                  ?.value || "",
+              key: values.yearLevel.toString(), // Keep it as a string
+              value: selectedYearLevel ? selectedYearLevel.yearLevel : "",
             }}
           />
         </View>
-
         <View style={styles.idContainer}>
           <View style={styles.eachIDContainer}>
             {selectedImageUriFront && (

@@ -19,7 +19,7 @@ const VerificationScreen = ({ navigation }) => {
   const [lastName, setLastName] = useState("");
   const [course, setCourse] = useState("");
   const [IDnumber, setIDnumber] = useState("");
-  const [yearLevel, setYearLevel] = useState("");
+  const [yearLevel, setYearLevel] = useState(null);
   const [selectedImageUriFront, setSelectedImageUriFront] = useState(null);
   const [selectedImageUriBack, setSelectedImageUriBack] = useState(null);
   const [inputText, setInputText] = useState("");

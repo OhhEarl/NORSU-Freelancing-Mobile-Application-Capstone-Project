@@ -1,11 +1,11 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { AuthProvider, useAuthContext } from '../hooks/AuthContext';
 import { useGetIsStudent } from '../hooks/dataHooks/useGetIsStudent';
 import { BottomTabNavigator } from './BottomTabNavigator';
-
+import NoConnection from '../components/NoConnection';
 // Screens
 import Login from '../screens/Login';
 import Signup from '../screens/Signup';
@@ -23,10 +23,38 @@ import ProjectsCompleted from '../screens/ProjectsCompleted';
 import ProposalListScreen from '../screens/ProposalListScreen';
 import FreelancerProfileScreen from '../screens/FreelancerProfileScreen';
 const Stack = createNativeStackNavigator();
-
+import NetInfo from "@react-native-community/netinfo";
 const AuthenticatedApp = () => {
   const { user, isLoading, isEmailVerified } = useAuthContext();
   const [error, loading, isStudent, fetchIsStudent] = useGetIsStudent();
+
+
+  const [isConnected, setIsConnected] = useState(false); // Initial state set to true
+
+  useEffect(() => {
+    const unsubscribe = NetInfo.addEventListener((state) => {
+      console.log("Event triggered with state:", state);
+      setIsConnected(state.isConnected);
+    });
+
+    // Fetch current connection state
+    NetInfo.fetch().then((state) => {
+      console.log("Initial connection state:", state.isConnected);
+      setIsConnected(state.isConnected);
+    });
+
+    // Cleanup subscription on unmount
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
+  if (!isConnected) {
+    return (
+      <NoConnection />
+    );
+  }
+
 
   return (
     <NavigationContainer>

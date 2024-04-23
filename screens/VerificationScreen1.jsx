@@ -13,17 +13,18 @@ import {
 } from "react-native";
 
 import { SafeAreaView } from "react-native-safe-area-context";
-
 import * as theme from "../assets/constants/theme";
 import Button from "../components/Button";
-import areasOfExpertise from "../hooks/AreaOfExpertise";
+
 import Feather from "react-native-vector-icons/Feather";
+import axios from "axios";
 import Tags from "react-native-tags";
+import LoadingComponent from "../components/LoadingComponent";
 const VerificationScreen1 = ({ onNext, values, setValues, navigation }) => {
   const [inputText, setInputText] = useState("");
   const [suggestions, setSuggestions] = useState([]);
-
-  const [errorMessage, setErrorMessage] = useState(false);
+  const [areasOfExpertise, setAreasOfExpertise] = useState({});
+  const [loading, setLoading] = useState(false);
   const onChangeSkills = (newSkills) => {
     setValues((prev) => ({ ...prev, skillTags: newSkills }));
   };
@@ -63,192 +64,233 @@ const VerificationScreen1 = ({ onNext, values, setValues, navigation }) => {
       values.lastName &&
       values.areaOfExpertise
     ) {
-      // All fields are filled, proceed to next screen
       onNext();
     } else {
       alert("All fields are required");
     }
   };
+
+  useEffect(() => {
+    fetchExpertiseCategories();
+  }, []);
+  const fetchExpertiseCategories = async () => {
+    try {
+      const response = await axios.get(
+        "http://10.0.2.2:8000/api/student-validations/expertise",
+        {
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      const data = await response.data;
+
+      const transformedData = {
+        areasOfExpertise: {},
+      };
+
+      data.forEach((item) => {
+        transformedData.areasOfExpertise[item.id.toString()] = item.expertise;
+      });
+
+      setAreasOfExpertise(transformedData);
+      setLoading(false);
+    } catch (error) {
+      alert(error);
+      setLoading(false);
+    }
+  };
   return (
-    <ScrollView style={{ paddingVertical: 10 }}>
+    <ScrollView>
       <TouchableWithoutFeedback
         onPress={(handlePressOutside, Keyboard.dismiss)}
       >
-        <View
-          style={{ flex: 1, backgroundColor: "white", paddingHorizontal: 30 }}
-        >
+        {loading ? (
+          <LoadingComponent />
+        ) : (
           <View
             style={{
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginTop: 20,
+              flex: 1,
+              backgroundColor: "white",
+              paddingHorizontal: 30,
+              paddingVertical: 10,
             }}
           >
-            <Feather
-              name="arrow-left"
-              size={24}
-              color={theme.colors.BLACKS}
-              onPress={() => {
-                navigation.goBack();
-              }}
-            />
-            <Text
+            <View
               style={{
-                marginRight: 25,
-                fontFamily: "Roboto-Bold",
-                color: theme.colors.BLACKS,
-                fontSize: 18,
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginTop: 20,
               }}
             >
-              STEP 1
-            </Text>
-            <Text></Text>
-          </View>
-          <View>
-            <View style={{ marginVertical: 18, marginTop: 30 }}>
+              <Feather
+                name="arrow-left"
+                size={24}
+                color={theme.colors.BLACKS}
+                onPress={() => {
+                  navigation.goBack();
+                }}
+              />
               <Text
                 style={{
-                  fontSize: 18,
+                  marginRight: 25,
                   fontFamily: "Roboto-Bold",
                   color: theme.colors.BLACKS,
-                  textAlign: "center",
+                  fontSize: 18,
                 }}
               >
-                Please fill up the following to proceed!
+                Step 1
               </Text>
+              <Text></Text>
             </View>
-            <View style={styles.inputFieldContainer}>
-              <Text style={styles.inputLabel}>Username</Text>
-              <TextInput
-                placeholderTextColor="#000"
-                style={styles.inputField}
-                placeholder="Enter your username"
-                value={values.userName}
-                onChangeText={(text) =>
-                  setValues({ ...values, userName: text })
-                }
-              />
-            </View>
-            <View style={styles.inputFieldContainer}>
-              <Text style={styles.inputLabel}>First Name</Text>
-              <TextInput
-                placeholderTextColor="#000"
-                style={styles.inputField}
-                placeholder="Enter your first name"
-                value={values.firstName}
-                onChangeText={(text) =>
-                  setValues({ ...values, firstName: text })
-                }
-              />
-            </View>
-
-            <View style={styles.inputFieldContainer}>
-              <Text style={styles.inputLabel}>Last Name</Text>
-              <TextInput
-                placeholderTextColor="#000"
-                style={styles.inputField}
-                placeholder="Enter your last name"
-                value={values.lastName}
-                onChangeText={(text) =>
-                  setValues({ ...values, lastName: text })
-                }
-              />
-            </View>
-
-            <View style={theme.utilities.inputFieldContainer}>
-              <Text style={styles.inputLabel}>Skills</Text>
-              <Tags
-                style={[
-                  styles.inputField,
-                  { paddingVertical: 5, paddingStart: 0 },
-                ]}
-                initialText="Enter Skill Tags"
-                onChangeTags={onChangeSkills}
-                inputStyle={{
-                  fontFamily: "Raleway-Medium",
-                  backgroundColor: "white",
-                  color: "black",
-                }}
-                renderTag={({
-                  tag,
-                  index,
-                  onPress,
-                  deleteTagOnPress,
-                  readonly,
-                }) => {
-                  return (
-                    <TouchableOpacity
-                      key={`${tag}-${index}`}
-                      onPress={onPress}
-                      style={{ marginStart: 12 }}
-                    >
-                      <Text
-                        style={{
-                          padding: 5,
-                          paddingHorizontal: 10,
-                          backgroundColor: theme.colors.primary,
-                          color: "white",
-                          borderRadius: 10,
-                        }}
-                      >
-                        {tag}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                }}
-              />
-            </View>
-            <TouchableWithoutFeedback onPress={handlePressOutside}>
+            <View>
+              <View style={{ marginVertical: 9, marginTop: 30 }}>
+                <Text
+                  style={{
+                    fontSize: 18,
+                    fontFamily: "Roboto-Bold",
+                    color: theme.colors.BLACKS,
+                    textAlign: "center",
+                  }}
+                >
+                  Please fill up the following to proceed!
+                </Text>
+              </View>
               <View style={styles.inputFieldContainer}>
-                <Text style={styles.inputLabel}>Area of Expertise</Text>
+                <Text style={styles.inputLabel}>Username</Text>
                 <TextInput
-                  style={styles.inputField}
-                  label="Area of Expertise"
                   placeholderTextColor="#000"
-                  placeholder="Choose or input your area of expertise"
-                  value={inputText}
-                  onChangeText={handleInputChange}
-                />
-                <FlatList
-                  style={{ maxHeight: 150, backgroundColor: "white" }}
-                  data={suggestions}
-                  scrollEnabled={false}
-                  renderItem={({ item }) => (
-                    <TouchableOpacity
-                      onPress={() => handleSuggestionPress(item)}
-                    >
-                      <View>
-                        <Text
-                          style={{
-                            marginTop: 12,
-                            marginStart: 12,
-                            fontWeight: 600,
-                            fontSize: 14,
-                            marginBottom: 5,
-                          }}
-                        >
-                          {item}
-                        </Text>
-                      </View>
-                    </TouchableOpacity>
-                  )}
-                  keyExtractor={(item, index) => index.toString()}
+                  style={styles.inputField}
+                  placeholder="Enter your username"
+                  value={values.userName}
+                  onChangeText={(text) =>
+                    setValues({ ...values, userName: text })
+                  }
                 />
               </View>
-            </TouchableWithoutFeedback>
-          </View>
+              <View style={styles.inputFieldContainer}>
+                <Text style={styles.inputLabel}>First Name</Text>
+                <TextInput
+                  placeholderTextColor="#000"
+                  style={styles.inputField}
+                  placeholder="Enter your first name"
+                  value={values.firstName}
+                  onChangeText={(text) =>
+                    setValues({ ...values, firstName: text })
+                  }
+                />
+              </View>
 
-          <View
-            style={{
-              position: "relative",
-              marginTop: 60,
-              width: "100%",
-            }}
-          >
-            <Button title="Next" onPress={handleNextPress} filled />
+              <View style={styles.inputFieldContainer}>
+                <Text style={styles.inputLabel}>Last Name</Text>
+                <TextInput
+                  placeholderTextColor="#000"
+                  style={styles.inputField}
+                  placeholder="Enter your last name"
+                  value={values.lastName}
+                  onChangeText={(text) =>
+                    setValues({ ...values, lastName: text })
+                  }
+                />
+              </View>
+
+              <TouchableWithoutFeedback onPress={handlePressOutside}>
+                <View style={styles.inputFieldContainer}>
+                  <Text style={styles.inputLabel}>Area of Expertise</Text>
+                  <TextInput
+                    style={styles.inputField}
+                    label="Area of Expertise"
+                    placeholderTextColor="#000"
+                    placeholder="Choose or input your area of expertise"
+                    value={inputText}
+                    onChangeText={handleInputChange}
+                  />
+                  <FlatList
+                    style={{ maxHeight: 150, backgroundColor: "white" }}
+                    data={suggestions}
+                    scrollEnabled={false}
+                    renderItem={({ item }) => (
+                      <TouchableOpacity
+                        onPress={() => handleSuggestionPress(item)}
+                      >
+                        <View>
+                          <Text
+                            style={{
+                              marginTop: 12,
+                              marginStart: 12,
+                              fontWeight: 600,
+                              fontSize: 14,
+                              marginBottom: 5,
+                            }}
+                          >
+                            {item}
+                          </Text>
+                        </View>
+                      </TouchableOpacity>
+                    )}
+                    keyExtractor={(item, index) => index.toString()}
+                  />
+                </View>
+              </TouchableWithoutFeedback>
+              <View style={styles.inputFieldContainer}>
+                <Text style={styles.inputLabel}>Skills</Text>
+                <Tags
+                  style={[
+                    styles.inputField,
+                    { paddingVertical: 5, paddingStart: 0 },
+                  ]}
+                  initialText="Tags"
+                  onChangeTags={onChangeSkills}
+                  inputStyle={{
+                    fontFamily: "Raleway-Medium",
+                    backgroundColor: "white",
+                    color: "black",
+                    paddingVertical: 5,
+                  }}
+                  renderTag={({
+                    tag,
+                    index,
+                    onPress,
+                    deleteTagOnPress,
+                    readonly,
+                  }) => {
+                    return (
+                      <TouchableOpacity
+                        key={`${tag}-${index}`}
+                        onPress={onPress}
+                        style={{ marginStart: 12 }}
+                      >
+                        <Text
+                          style={{
+                            padding: 5,
+                            paddingHorizontal: 10,
+                            backgroundColor: theme.colors.primary,
+                            color: "white",
+                            borderRadius: 10,
+                          }}
+                        >
+                          {tag}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  }}
+                />
+              </View>
+            </View>
+
+            <View
+              style={{
+                position: "relative",
+                marginTop: 50,
+                width: "100%",
+              }}
+            >
+              <Button title="Next" onPress={handleNextPress} filled />
+            </View>
           </View>
-        </View>
+        )}
       </TouchableWithoutFeedback>
     </ScrollView>
   );

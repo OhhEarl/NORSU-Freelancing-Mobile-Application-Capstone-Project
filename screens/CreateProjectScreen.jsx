@@ -28,7 +28,7 @@ import CurrencyInput from "react-native-currency-input";
 import axios from "axios";
 
 import Feather from "react-native-vector-icons/Feather";
-import TagInput from "../hooks/TagInput";
+import TagInput from "../components/TagInput";
 const CreateProjectScreen = ({ route, navigation }) => {
   const { project, isEditing, token, id } = route?.params || {};
   const isFocused = useIsFocused();
