@@ -116,47 +116,52 @@ const HomeScreen = ({ navigation, route }) => {
           </View>
 
           <View style={{ flex: 1, paddingHorizontal: 20, marginTop: 20 }}>
-            <Text style={styles.popularText}>Recent Projects</Text>
-
-            {listLoading ? (
-              <LoadingComponent />
-            ) : filteredItems && filteredItems.length > 0 ? (
-              <FlatList
-                data={filteredItems}
-                keyExtractor={(item) => item.id.toString()}
-                renderItem={({ item }) => (
-                  <TouchableOpacity onPress={() => handleItemPress(item)}>
-                    <ProjectComponent item={item} />
-                  </TouchableOpacity>
-                )}
-                showsVerticalScrollIndicator={false}
-              />
+            {projectError ? ( // Check if there is an error
+              Alert.alert(projectError)
             ) : (
-              <View
-                style={{
-                  flex: 1,
-                  justifyContent: "center",
-                  alignItems: "center",
-                }}
-              >
-                <View
-                  style={{ justifyContent: "center", alignItems: "center" }}
-                >
-                  <Image
-                    source={require("../assets/no-data-found.jpg")}
-                    style={{ height: 100, width: 100 }}
+              <>
+                <Text style={styles.popularText}>Recent Projects</Text>
+                {listLoading ? (
+                  <LoadingComponent />
+                ) : filteredItems && filteredItems.length > 0 ? (
+                  <FlatList
+                    data={filteredItems}
+                    keyExtractor={(item) => item.id.toString()}
+                    renderItem={({ item }) => (
+                      <TouchableOpacity onPress={() => handleItemPress(item)}>
+                        <ProjectComponent item={item} />
+                      </TouchableOpacity>
+                    )}
+                    showsVerticalScrollIndicator={false}
                   />
-                  <Text
+                ) : (
+                  <View
                     style={{
-                      fontFamily: "Roboto-Bold",
-                      fontSize: 18,
-                      color: "black",
+                      flex: 1,
+                      justifyContent: "center",
+                      alignItems: "center",
                     }}
                   >
-                    NO PROJECTS FOUND
-                  </Text>
-                </View>
-              </View>
+                    <View
+                      style={{ justifyContent: "center", alignItems: "center" }}
+                    >
+                      <Image
+                        source={require("../assets/no-data-found.jpg")}
+                        style={{ height: 100, width: 100 }}
+                      />
+                      <Text
+                        style={{
+                          fontFamily: "Roboto-Bold",
+                          fontSize: 18,
+                          color: "black",
+                        }}
+                      >
+                        NO PROJECTS FOUND
+                      </Text>
+                    </View>
+                  </View>
+                )}
+              </>
             )}
           </View>
         </View>

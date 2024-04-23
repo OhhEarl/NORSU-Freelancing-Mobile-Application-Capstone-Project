@@ -29,7 +29,6 @@ const useGetProjectList = () => {
     };
 
     useEffect(() => {
-        // Check if loading is false before fetching
         if (!loading && isStudent?.token) {
             fetchJobs();
         }

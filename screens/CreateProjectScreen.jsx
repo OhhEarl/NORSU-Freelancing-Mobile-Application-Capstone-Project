@@ -22,13 +22,13 @@ import Ionicons from "react-native-vector-icons/Ionicons";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import DateTimePicker from "react-native-ui-datepicker";
 import dayjs from "dayjs";
-import JobCategory from "../hooks/JobCategory";
+import useJobCategory from "../hooks/dataHooks/useJobCategory";
 import DocumentPicker from "react-native-document-picker";
 import CurrencyInput from "react-native-currency-input";
 import axios from "axios";
-import Tags from "react-native-tags";
-import Feather from "react-native-vector-icons/Feather";
 
+import Feather from "react-native-vector-icons/Feather";
+import TagInput from "../hooks/TagInput";
 const CreateProjectScreen = ({ route, navigation }) => {
   const { project, isEditing, token, id } = route?.params || {};
   const isFocused = useIsFocused();
@@ -36,7 +36,7 @@ const CreateProjectScreen = ({ route, navigation }) => {
   const [selectedFile, setSelectedFile] = useState([]);
   const [isloading, setIsLoading] = useState(false);
   const [jobTitle, setJobTitle] = useState(""); //! Project Name
-  const [jobCategory, setJobCategory] = useState(null); //! Project Category
+
   const [jobTags, setJobTags] = useState(
     project ? project.job_tags.map((tag) => tag.job_tags) : []
   );
@@ -49,64 +49,54 @@ const CreateProjectScreen = ({ route, navigation }) => {
   const [showEndDatePicker, setShowEndDatePicker] = useState(false); //! SHOW SCHEDULE PICKED FROM
   const [placeholder, setPlaceholder] = useState("No Data Found"); //! PLACEHOLDER FOR PROJECT CATEGORY IF NO DATA FOUND
   const [error, loading, isStudent] = useGetIsStudent();
+
   const [defaultCategory, setDefaultCategory] = useState(null);
+  const [categoryJob, setCategoryJob] = useState(null); //! Project Category
+  const [jobCategories, categoryLoading] = useJobCategory();
+  const [key, setKey] = useState(0);
+
   //! --------------------PROJECT CATEGORY ------------------------- //
-  console.log("create project id", id);
-  const initializeDefaultTags = () => {
-    if (jobTags.length === 0) {
-      setJobTags([]); // Set default tags if jobTags is empty
-    }
-  };
-
-  useEffect(() => {
-    initializeDefaultTags();
-  }, []); // Empty dependency array ensures this effect runs only once when component mounts
-
   const onChangeTags = (tags) => {
     setJobTags(tags);
   };
 
   useEffect(() => {
     if (isEditing && project) {
-      setProjectID(project?.id);
+      setProjectID(project?.id || null);
       setJobTitle(project.job_title || "");
-      setJobCategory(project.job_category_id || "");
       setJobDescription(project.job_description || "");
       setJobBudgetFrom(project.job_budget_from.toString() || "0");
       setJobBudgetTo(project.job_budget_to.toString() || "0");
       setStartDate(dayjs(project.job_start_date) || dayjs());
       setEndDate(dayjs(project.job_end_date) || dayjs());
-
       setSelectedFile(project.attachments || "");
-      const extractedJobTags = project.job_tags.map((tag) => tag.job_tags);
-      setJobTags(extractedJobTags);
+      setCategoryJob(project.job_category_id || "");
+      if (project.job_tags && project.job_tags.length > 0) {
+        const extractedJobTags = project.job_tags.map((tag) => tag.job_tags);
+        setJobTags(extractedJobTags); // Update jobTags state with the tags from the project data
+        console.log("Updated jobTags:", extractedJobTags); // Debug log
+      } else {
+        setJobTags([]); // Set jobTags to empty array if project.job_tags is empty
+        console.log("jobTags set to empty array"); // Debug log
+      }
     } else {
-      initializeDefaultTags();
+      setJobTags([]);
     }
 
-    if (project) {
-      const category = JobCategory.find(
-        (cat) => cat.key === project.job_category_id.toString()
-      );
-      if (category) {
-        setDefaultCategory(category); // Set the value of the category
-      } else {
-        setDefaultCategory(null);
-      }
-    }
+    setKey((prevKey) => prevKey + 1);
   }, [project, isEditing]);
 
   useEffect(() => {
     if (!isFocused) {
       setJobTitle("");
-      setJobCategory("");
+      setCategoryJob("");
       setJobDescription("");
       setJobBudgetFrom("0");
       setJobBudgetTo("");
       setStartDate(dayjs());
       setEndDate(dayjs());
       setJobTags([]);
-      setSelectedFile([]);
+      setSelectedFile(null);
       setProjectID(null);
       setDefaultCategory(null);
     }
@@ -190,7 +180,7 @@ const CreateProjectScreen = ({ route, navigation }) => {
   const handleSubmit = async (projectID) => {
     if (
       !jobTitle ||
-      !jobCategory ||
+      !categoryJob ||
       !jobTags ||
       !jobDescription ||
       !startDate ||
@@ -210,24 +200,22 @@ const CreateProjectScreen = ({ route, navigation }) => {
     const formData = new FormData();
     formData.append("student_user_id", isStudent?.studentInfo?.id);
     formData.append("job_title", jobTitle);
-    formData.append("job_category_id", jobCategory);
+    formData.append("job_category_id", categoryJob);
     formData.append("job_description", jobDescription);
     formData.append("job_start_date", startDate.toISOString().split("T")[0]);
     formData.append("job_end_date", endDate.toISOString().split("T")[0]);
     formData.append("job_budget_from", jobBudgetFrom);
     formData.append("job_budget_to", jobBudgetTo);
-    jobTags.forEach((tag, index) => {
+    jobTags?.forEach((tag, index) => {
       formData.append(`job_tags[${index}]`, tag);
     });
-    selectedFile.forEach((file, index) => {
+    selectedFile?.forEach((file, index) => {
       formData.append(`attachments[${index}]`, {
         uri: file.uri,
         name: file.name,
         type: file.type,
       });
     });
-
-    console.log(JSON.stringify(formData, null, 2));
 
     try {
       let url = projectID
@@ -245,6 +233,7 @@ const CreateProjectScreen = ({ route, navigation }) => {
       });
 
       if (response.status === 201 || response.status === 200) {
+        await navigation.navigate("HomeScreen", { projectUpdate: true });
         alert(
           projectID
             ? "Job has been updated successfully."
@@ -264,7 +253,7 @@ const CreateProjectScreen = ({ route, navigation }) => {
       setStartDate(dayjs());
       setEndDate(dayjs());
       setIsLoading(false);
-      setJobCategory([]);
+      setCategoryJob([]);
     }
 
     setIsLoading(false);
@@ -285,12 +274,17 @@ const CreateProjectScreen = ({ route, navigation }) => {
             size={24}
             color={theme.colors.BLACKS}
             onPress={() => {
-              navigation.navigate("ProjectCreated", {
-                token: token,
-                user: project,
-                id: id,
-              });
+              navigation.navigate("ProfileScreen");
             }}
+
+            // onPress={() => {
+            //   navigation.navigate("ProjectCreated", {
+            //     token: token,
+            //     user: project,
+            //     id: id,
+            //     project: project,
+            //   });
+            // }}
           />
           <Text
             style={{
@@ -307,7 +301,7 @@ const CreateProjectScreen = ({ route, navigation }) => {
       ) : (
         ""
       )}
-      {isloading ? (
+      {isloading || categoryLoading ? (
         <LoadingComponent />
       ) : (
         <ScrollView
@@ -331,63 +325,22 @@ const CreateProjectScreen = ({ route, navigation }) => {
           <View style={theme.utilities.inputContainer}>
             <Text style={theme.utilities.title}>Project Category</Text>
             <SelectList
-              setSelected={setJobCategory}
+              setSelected={setCategoryJob}
               defaultOption={defaultCategory}
-              data={JobCategory}
+              data={jobCategories}
               placeholder={"Select Category"}
               dropdownItemStyles={{ marginVertical: 5 }}
               boxStyles={{ borderColor: theme.colors.primary }}
               fontFamily="Roboto-Light"
-              notFoundText={placeholder}
             />
           </View>
 
           <View style={theme.utilities.inputContainer}>
             <Text style={theme.utilities.title}>Project Tags</Text>
-            <Tags
-              style={{
-                borderRadius: 10,
-                width: "100%",
-                borderWidth: 1,
-                borderColor: theme.colors.primary,
-              }}
+            <TagInput
+              key={key}
               initialTags={jobTags}
               onChangeTags={onChangeTags}
-              inputStyle={{
-                paddingLeft: 12,
-                fontFamily: "Roboto-Light",
-                backgroundColor: "white",
-                color: "black",
-              }}
-              renderTag={({
-                tag,
-                index,
-                onPress,
-                deleteTagOnPress,
-                readonly,
-              }) => (
-                <TouchableOpacity
-                  key={`${tag}-${index}`}
-                  onPress={onPress}
-                  style={{ marginStart: 12 }}
-                >
-                  <Text
-                    style={{
-                      paddingVertical: 6,
-                      backgroundColor: "white",
-                      paddingVertical: 5,
-                      paddingHorizontal: 7.5,
-                      marginVertical: 5,
-                      borderRadius: 10,
-                      fontFamily: "Roboto-Light",
-                      backgroundColor: theme.colors.inputField,
-                      color: theme.colors.primary,
-                    }}
-                  >
-                    {tag}
-                  </Text>
-                </TouchableOpacity>
-              )}
             />
           </View>
 
@@ -399,7 +352,7 @@ const CreateProjectScreen = ({ route, navigation }) => {
               type="text"
               value={jobDescription}
               onChangeText={(text) => {
-                if (text.length <= 300) {
+                if (text?.length <= 300) {
                   setJobDescription(text);
                 }
               }}
@@ -411,7 +364,7 @@ const CreateProjectScreen = ({ route, navigation }) => {
               textAlignVertical="top"
             />
             <View style={{ alignItems: "flex-end", marginRight: 5 }}>
-              <Text>{jobDescription.length} / 300</Text>
+              <Text>{jobDescription?.length} / 300</Text>
             </View>
           </View>
 
@@ -550,7 +503,7 @@ const CreateProjectScreen = ({ route, navigation }) => {
           </View>
 
           <View>
-            {selectedFile.map((file, index) => (
+            {selectedFile?.map((file, index) => (
               <View key={index} style={styles.selectedFileContainer}>
                 <View style={{ flexDirection: "row", alignItems: "center" }}>
                   <Ionicons

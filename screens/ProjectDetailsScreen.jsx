@@ -28,8 +28,6 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
     return unsubscribe;
   }, [navigation, project]);
 
-  console.log(JSON.stringify(project, null, 2));
-
   const handleDownload = async (filePath) => {
     try {
       const url = filePath;
