@@ -11,20 +11,19 @@ import {
   Keyboard,
   ScrollView,
 } from "react-native";
-
-import { SafeAreaView } from "react-native-safe-area-context";
+import { URL } from "@env";
 import * as theme from "../assets/constants/theme";
 import Button from "../components/Button";
-
 import Feather from "react-native-vector-icons/Feather";
 import axios from "axios";
-import Tags from "react-native-tags";
+import TagInput from "../components/TagInput";
 import LoadingComponent from "../components/LoadingComponent";
 const VerificationScreen1 = ({ onNext, values, setValues, navigation }) => {
   const [inputText, setInputText] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [areasOfExpertise, setAreasOfExpertise] = useState({});
   const [loading, setLoading] = useState(false);
+  const [key, setKey] = useState(0);
   const onChangeSkills = (newSkills) => {
     setValues((prev) => ({ ...prev, skillTags: newSkills }));
   };
@@ -76,7 +75,7 @@ const VerificationScreen1 = ({ onNext, values, setValues, navigation }) => {
   const fetchExpertiseCategories = async () => {
     try {
       const response = await axios.get(
-        "http://10.0.2.2:8000/api/student-validations/expertise",
+        `${URL}/api/student-validations/expertise`,
         {
           headers: {
             Accept: "application/json",
@@ -223,6 +222,7 @@ const VerificationScreen1 = ({ onNext, values, setValues, navigation }) => {
                               fontWeight: 600,
                               fontSize: 14,
                               marginBottom: 5,
+                              color: "black",
                             }}
                           >
                             {item}
@@ -235,47 +235,14 @@ const VerificationScreen1 = ({ onNext, values, setValues, navigation }) => {
                 </View>
               </TouchableWithoutFeedback>
               <View style={styles.inputFieldContainer}>
-                <Text style={styles.inputLabel}>Skills</Text>
-                <Tags
-                  style={[
-                    styles.inputField,
-                    { paddingVertical: 5, paddingStart: 0 },
-                  ]}
-                  initialText="Tags"
+                <Text style={[styles.inputLabel, { marginBottom: -4 }]}>
+                  Skill Tags
+                </Text>
+                <TagInput
+                  key={key}
+                  initialTags={values.jobTags}
                   onChangeTags={onChangeSkills}
-                  inputStyle={{
-                    fontFamily: "Raleway-Medium",
-                    backgroundColor: "white",
-                    color: "black",
-                    paddingVertical: 5,
-                  }}
-                  renderTag={({
-                    tag,
-                    index,
-                    onPress,
-                    deleteTagOnPress,
-                    readonly,
-                  }) => {
-                    return (
-                      <TouchableOpacity
-                        key={`${tag}-${index}`}
-                        onPress={onPress}
-                        style={{ marginStart: 12 }}
-                      >
-                        <Text
-                          style={{
-                            padding: 5,
-                            paddingHorizontal: 10,
-                            backgroundColor: theme.colors.primary,
-                            color: "white",
-                            borderRadius: 10,
-                          }}
-                        >
-                          {tag}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  }}
+                  style={{ marginVertical: 0 }}
                 />
               </View>
             </View>
@@ -283,8 +250,8 @@ const VerificationScreen1 = ({ onNext, values, setValues, navigation }) => {
             <View
               style={{
                 position: "relative",
-                marginTop: 50,
                 width: "100%",
+                marginTop: 50,
               }}
             >
               <Button title="Next" onPress={handleNextPress} filled />

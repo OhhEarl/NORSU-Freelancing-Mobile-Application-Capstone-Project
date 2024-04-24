@@ -12,7 +12,7 @@ import {
   TouchableWithoutFeedback,
   Alert,
 } from "react-native";
-import areasOfExpertise from "../hooks/AreaOfExpertise";
+
 import { SafeAreaView } from "react-native-safe-area-context";
 import Feather from "react-native-vector-icons/Feather";
 import * as theme from "../assets/constants/theme";
@@ -22,18 +22,23 @@ import LoadingComponent from "../components/LoadingComponent";
 import { ActivityIndicator } from "react-native-paper";
 import Button from "../components/Button";
 import axios from "axios";
-import { useGetIsStudent } from "../hooks/dataHooks/useGetIsStudent";
+
+import { URL } from "@env";
 const EditProfileScreen = ({ navigation, route }) => {
-  const [user, setUser] = useState(route.params?.project);
-  const [token, setToken] = useState(route.params?.token);
-  const [error, loading, isStudent, fetchIsStudent] = useGetIsStudent();
-  const [userAvatar, setUserAvatar] = useState(user?.user_avatar);
-  const [userName, setUserName] = useState(user?.user_name);
-  const [inputText, setInputText] = useState("");
+  const { isStudent } = route.params;
+  const [userAvatar, setUserAvatar] = useState(
+    isStudent?.studentInfo?.user_avatar
+  );
+  const [userName, setUserName] = useState(isStudent?.studentInfo?.user_name);
+
   const [suggestions, setSuggestions] = useState([]);
-  const [areaExpertise, setAreaExpertise] = useState(user?.area_of_expertise);
+  const [areaExpertise, setAreaExpertise] = useState(
+    isStudent?.studentInfo?.area_of_expertise
+  );
   const [aboutMe, setAboutMe] = useState("");
-  const [studentSkills, setStudentSkills] = useState(user?.skill_tags || []);
+  const [studentSkills, setStudentSkills] = useState(
+    isStudent?.studentInfo?.skill_tags || []
+  );
   const [portfolioImages, setPortfolioImages] = useState([]);
   const [isLoading, setLoading] = useState(false);
 
@@ -63,55 +68,6 @@ const EditProfileScreen = ({ navigation, route }) => {
     } catch (error) {
       alert("Error:", error);
     }
-  };
-  const handleInputChange = (text) => {
-    setInputText(text); // Update the state
-    setAreaExpertise(text); // Update the area of expertise state
-
-    if (text === "") {
-      setSuggestions([]); // Clear suggestions when input is empty
-    } else {
-      const filteredSuggestions = Object.values(
-        areasOfExpertise.areasOfExpertise
-      )
-        .filter((category) =>
-          category.toLowerCase().includes(text.toLowerCase())
-        )
-        .filter((category) => category !== text); // Filter out the current input text from suggestions
-      setSuggestions(filteredSuggestions);
-    }
-  };
-
-  const handleSuggestionPress = (category) => {
-    const key = Object.keys(areasOfExpertise.areasOfExpertise).find(
-      (key) => areasOfExpertise.areasOfExpertise[key] === category
-    );
-
-    if (key) {
-      // If the category exists in the predefined list, set the category as areaExpertise
-      setAreaExpertise(category);
-    } else {
-      // If the category does not exist in the predefined list, create a new entry
-      // and store the category as the value
-      // Here, you would implement the logic to create a new entry in your database
-      // with the selected category as the value and store the generated ID as areaExpertise
-      // This part needs to be implemented on the backend
-      // For now, we'll just set areaExpertise to the inputText
-      setAreaExpertise(inputText);
-    }
-
-    setInputText("");
-    setSuggestions([]);
-  };
-  const handleInputBlur = () => {
-    if (inputText === "") {
-      // If input text is empty, reset areaExpertise to initial state
-      setAreaExpertise(user?.area_of_expertise); // Set area of expertise to initial state
-      setSuggestions([]); // Clear suggestions
-    }
-  };
-  const handlePressOutside = () => {
-    setSuggestions([]); // Clear suggestions when pressing outside the TextInput or FlatList
   };
 
   const initializeDefaultTags = () => {
@@ -213,13 +169,13 @@ const EditProfileScreen = ({ navigation, route }) => {
         });
       });
 
-      let url = "http://10.0.2.2:8000/api/student-validations/update";
+      let url = `${URL}/api/student-validations/update`;
       try {
         const response = await axios.post(url, formData, {
           headers: {
             Accept: "application/json",
             "Content-Type": "multipart/form-data",
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${isStudent.token}`,
           },
         });
 
@@ -243,12 +199,12 @@ const EditProfileScreen = ({ navigation, route }) => {
     try {
       setLoading(true);
       const response = await axios.get(
-        `http://10.0.2.2:8000/api/student-portfolio/${studentUserId}`,
+        `${URL}/api/student-portfolio/${studentUserId}`,
         {
           headers: {
             Accept: "application/json",
             "Content-Type": "multipart/form-data",
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${isStudent.token}`,
           },
         }
       );
@@ -264,11 +220,11 @@ const EditProfileScreen = ({ navigation, route }) => {
   };
 
   useEffect(() => {
-    fetchPortfolio(user?.user_id);
-  }, [user?.user_id]);
+    fetchPortfolio(isStudent.studentInfo.user_id);
+  }, [isStudent]);
   return (
     <SafeAreaView style={styles.mainContainer}>
-      {loading || isLoading ? (
+      {isLoading ? (
         <LoadingComponent />
       ) : (
         <ScrollView showsVerticalScrollIndicator={false}>
@@ -302,19 +258,15 @@ const EditProfileScreen = ({ navigation, route }) => {
 
           <View style={styles.innerContainer}>
             <View style={styles.imageContainer}>
-              {loading ? (
-                <ActivityIndicator size={5} />
-              ) : (
-                <Image
-                  objectFit="contain"
-                  style={styles.image}
-                  source={{
-                    uri:
-                      userAvatar ||
-                      "https://img.freepik.com/free-psd/3d-illustration-person-with-sunglasses_23-2149436188.jpg?w=740&t=st=1670148608~exp=1670149208~hmac=bc57b66d67d2b9f4929c8e592ff17e8c8660721608add2f18fc20d19c1aab7e4",
-                  }}
-                />
-              )}
+              <Image
+                objectFit="contain"
+                style={styles.image}
+                source={{
+                  uri:
+                    userAvatar ||
+                    "https://img.freepik.com/free-psd/3d-illustration-person-with-sunglasses_23-2149436188.jpg?w=740&t=st=1670148608~exp=1670149208~hmac=bc57b66d67d2b9f4929c8e592ff17e8c8660721608add2f18fc20d19c1aab7e4",
+                }}
+              />
 
               <TouchableOpacity
                 style={styles.editIconContainer}
@@ -334,88 +286,6 @@ const EditProfileScreen = ({ navigation, route }) => {
               />
             </View>
 
-            <TouchableWithoutFeedback onPress={handlePressOutside}>
-              <View style={styles.inputFieldContainer}>
-                <Text style={styles.inputLabel}>Area of Expertise</Text>
-                <TextInput
-                  placeholder="Enter area of expertise"
-                  value={areaExpertise}
-                  onChangeText={handleInputChange}
-                  style={styles.inputField}
-                  onBlur={handleInputBlur}
-                />
-                <FlatList
-                  style={{
-                    maxHeight: 150,
-                    backgroundColor: "white",
-                  }}
-                  data={suggestions.filter((item) => item !== areaExpertise)} // Filter out the initial value
-                  renderItem={({ item }) => (
-                    <TouchableOpacity
-                      onPress={() => handleSuggestionPress(item)}
-                    >
-                      <Text
-                        style={{
-                          marginTop: 12,
-                          marginStart: 12,
-                          fontWeight: 600,
-                          fontSize: 14,
-                          marginBottom: 5,
-                        }}
-                        key={item}
-                      >
-                        {item}
-                      </Text>
-                    </TouchableOpacity>
-                  )}
-                  keyExtractor={(item, index) => String(index)}
-                  scrollEnabled={false}
-                />
-              </View>
-            </TouchableWithoutFeedback>
-            <View style={theme.utilities.inputFieldContainer}>
-              <Text style={styles.inputLabel}>Skill Tags</Text>
-              <Tags
-                style={[
-                  styles.inputField,
-                  { paddingVertical: 5, paddingStart: 0 },
-                ]}
-                initialTags={studentSkills}
-                onChangeTags={onChangeSkills}
-                inputStyle={{
-                  fontFamily: "Raleway-Medium",
-                  backgroundColor: "white",
-                  color: "black",
-                }}
-                renderTag={({
-                  tag,
-                  index,
-                  onPress,
-                  deleteTagOnPress,
-                  readonly,
-                }) => {
-                  return (
-                    <TouchableOpacity
-                      key={`${tag}-${index}`}
-                      onPress={onPress}
-                      style={{ marginStart: 12 }}
-                    >
-                      <Text
-                        style={{
-                          padding: 5,
-                          paddingHorizontal: 10,
-                          backgroundColor: theme.colors.primary,
-                          color: "white",
-                          borderRadius: 10,
-                        }}
-                      >
-                        {tag}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                }}
-              />
-            </View>
             <View style={styles.inputFieldContainer}>
               <Text style={styles.inputLabel}>About Me</Text>
               <TextInput

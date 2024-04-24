@@ -17,7 +17,8 @@ import axios from "axios";
 import Feather from "react-native-vector-icons/Feather";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as theme from "../assets/constants/theme";
-
+import { URL } from "@env";
+import LoadingComponent from "../components/LoadingComponent";
 const VerificationScreen2 = ({
   values,
   setValues,
@@ -33,7 +34,7 @@ const VerificationScreen2 = ({
   const [id, setID] = useState(null);
   const [token, setToken] = useState(null);
   const [finalToken, setFinalToken] = useState(null);
-
+  const [loading, setIsLoading] = useState(false);
   useEffect(() => {
     const retrieveToken = async () => {
       try {
@@ -86,10 +87,6 @@ const VerificationScreen2 = ({
     {
       id: 5,
       yearLevel: "5th Year Level",
-    },
-    {
-      id: 6,
-      yearLevel: "Irregular",
     },
   ];
 
@@ -171,7 +168,6 @@ const VerificationScreen2 = ({
     (option) => option.id === values.yearLevel
   );
 
-  console.log(values.yearLeveL);
   const studentValidation = async () => {
     if (
       !selectedImageUriFront ||
@@ -214,9 +210,10 @@ const VerificationScreen2 = ({
     formData.append("yearLevel", 4);
     formData.append("norsuIDnumber", values.norsuIDnumber);
     formData.append("user_id", id);
-
+    console.log(JSON.stringify(formData, null, 2));
     try {
-      let url = "http://10.0.2.2:8000/api/student-validation";
+      setIsLoading(true);
+      let url = `${URL}/api/student-validation`;
       const response = await axios.post(url, formData, {
         headers: {
           Accept: "application/json",
@@ -226,6 +223,7 @@ const VerificationScreen2 = ({
       });
       const data = response.data;
       if (response.status === 200) {
+        await setIsLoading(false);
         navigation.navigate("VerificationConfirmation");
       } else {
         alert("Something went wrong. Please Try Again!");
@@ -238,130 +236,140 @@ const VerificationScreen2 = ({
     }
   };
   return (
-    <ScrollView style={{ paddingVertical: 10 }}>
-      <View
-        style={{ flex: 1, backgroundColor: "white", paddingHorizontal: 30 }}
-      >
-        <View
-          style={{
-            flexDirection: "row",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginTop: 20,
-            marginBottom: 20,
-          }}
-        >
-          <Feather
-            name="arrow-left"
-            size={24}
-            color={theme.colors.BLACKS}
-            onPress={onPrev}
-          />
-          <Text
-            style={{
-              marginRight: 25,
-              fontFamily: "Roboto-Bold",
-              color: theme.colors.BLACKS,
-              fontSize: 18,
-            }}
+    <>
+      {loading ? (
+        <LoadingComponent />
+      ) : (
+        <ScrollView style={{ paddingVertical: 10 }}>
+          <View
+            style={{ flex: 1, backgroundColor: "white", paddingHorizontal: 30 }}
           >
-            STEP 2
-          </Text>
-          <Text></Text>
-        </View>
-        <View style={styles.inputFieldContainer}>
-          <Text style={styles.inputLabel}>ID Number</Text>
-          <TextInput
-            style={styles.inputField}
-            placeholderTextColor="#000"
-            placeholder="Enter NORSU ID number"
-            value={values.norsuIDnumber}
-            onChangeText={(text) =>
-              setValues({ ...values, norsuIDnumber: text })
-            }
-          />
-        </View>
-
-        <View style={styles.inputFieldContainer}>
-          <Text style={styles.inputLabel}>Course</Text>
-          <TextInput
-            style={styles.inputField}
-            placeholderTextColor="#000"
-            placeholder="Enter your course"
-            value={values.course}
-            onChangeText={(text) => setValues({ ...values, course: text })}
-          />
-        </View>
-        <View style={{ marginVertical: 20 }}>
-          <Text style={styles.inputLabel}>Year Level</Text>
-          <SelectList
-            key={`yearLevel-${values.yearLevel}`} // Ensure a unique key for each SelectList instance
-            setSelected={handleYearLevelChange}
-            style={styles.inputField}
-            data={yearLevelOptions.map((item) => item.yearLevel)} // Pass an array of strings
-            placeholder="Select your year level"
-            search={false}
-            dropdownTextStyles={{
-              color: "black",
-            }}
-            boxStyles={{
-              paddingVertical: 15,
-              borderColor: theme.colors.primary,
-            }}
-            selectedValue={selectedYearLevel ? selectedYearLevel.yearLevel : ""}
-            defaultOption={{
-              key: values.yearLevel.toString(), // Keep it as a string
-              value: selectedYearLevel ? selectedYearLevel.yearLevel : "",
-            }}
-          />
-        </View>
-        <View style={styles.idContainer}>
-          <View style={styles.eachIDContainer}>
-            {selectedImageUriFront && (
-              <Image
-                source={{ uri: selectedImageUriFront }}
-                style={styles.image}
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginTop: 20,
+                marginBottom: 20,
+              }}
+            >
+              <Feather
+                name="arrow-left"
+                size={24}
+                color={theme.colors.BLACKS}
+                onPress={onPrev}
               />
-            )}
-          </View>
-          <View style={styles.eachIDContainer}>
-            {selectedImageUriBack && (
-              <Image
-                source={{ uri: selectedImageUriBack }}
-                style={styles.image}
+              <Text
+                style={{
+                  marginRight: 25,
+                  fontFamily: "Roboto-Bold",
+                  color: theme.colors.BLACKS,
+                  fontSize: 18,
+                }}
+              >
+                STEP 2
+              </Text>
+              <Text></Text>
+            </View>
+            <View style={styles.inputFieldContainer}>
+              <Text style={styles.inputLabel}>ID Number</Text>
+              <TextInput
+                style={styles.inputField}
+                placeholderTextColor="#000"
+                placeholder="Enter NORSU ID number"
+                value={values.norsuIDnumber}
+                onChangeText={(text) =>
+                  setValues({ ...values, norsuIDnumber: text })
+                }
               />
-            )}
-          </View>
-        </View>
-        <View style={styles.idContainerButton}>
-          <Button
-            title="Front ID"
-            onPress={frontID}
-            style={styles.button}
-            filled
-          />
-          <Button
-            title="Back ID"
-            onPress={backID}
-            style={styles.button}
-            filled
-          />
-        </View>
+            </View>
 
-        <View>
-          <Button
-            title="Submit"
-            style={{
-              position: "relative",
-              width: "100%",
-              marginTop: 20,
-            }}
-            onPress={studentValidation}
-            filled
-          />
-        </View>
-      </View>
-    </ScrollView>
+            <View style={styles.inputFieldContainer}>
+              <Text style={styles.inputLabel}>Course</Text>
+              <TextInput
+                style={styles.inputField}
+                placeholderTextColor="#000"
+                placeholder="Enter your course"
+                value={values.course}
+                onChangeText={(text) => setValues({ ...values, course: text })}
+              />
+            </View>
+            <View style={{ marginVertical: 20 }}>
+              <Text style={styles.inputLabel}>Year Level</Text>
+              <SelectList
+                key={`yearLevel-${values.yearLevel}`} // Ensure a unique key for each SelectList instance
+                setSelected={handleYearLevelChange}
+                style={styles.inputField}
+                data={yearLevelOptions.map((item) => item.yearLevel)} // Pass an array of strings
+                placeholder="Select your year level"
+                search={false}
+                dropdownTextStyles={{
+                  color: "black",
+                  fontFamily: "Roboto-Medium",
+                }}
+                inputStyles={{ color: "black", fontFamily: "Roboto-Regular" }}
+                boxStyles={{
+                  paddingVertical: 15,
+                  borderColor: theme.colors.primary,
+                }}
+                selectedValue={
+                  selectedYearLevel ? selectedYearLevel.yearLevel : ""
+                }
+                defaultOption={{
+                  key: values.yearLevel.toString(), // Keep it as a string
+                  value: selectedYearLevel ? selectedYearLevel.yearLevel : "",
+                }}
+              />
+            </View>
+            <View style={styles.idContainer}>
+              <View style={styles.eachIDContainer}>
+                {selectedImageUriFront && (
+                  <Image
+                    source={{ uri: selectedImageUriFront }}
+                    style={styles.image}
+                  />
+                )}
+              </View>
+              <View style={styles.eachIDContainer}>
+                {selectedImageUriBack && (
+                  <Image
+                    source={{ uri: selectedImageUriBack }}
+                    style={styles.image}
+                  />
+                )}
+              </View>
+            </View>
+            <View style={styles.idContainerButton}>
+              <Button
+                title="Front ID"
+                onPress={frontID}
+                style={styles.button}
+                filled
+              />
+              <Button
+                title="Back ID"
+                onPress={backID}
+                style={styles.button}
+                filled
+              />
+            </View>
+
+            <View>
+              <Button
+                title="Submit"
+                style={{
+                  position: "relative",
+                  width: "100%",
+                  marginTop: 20,
+                }}
+                onPress={studentValidation}
+                filled
+              />
+            </View>
+          </View>
+        </ScrollView>
+      )}
+    </>
   );
 };
 

@@ -12,15 +12,16 @@ import * as theme from "../assets/constants/theme";
 
 const Tab = createBottomTabNavigator();
 
-export const BottomTabNavigator = () => {
+export const BottomTabNavigator = ({ route }) => {
 
-  const [error, loading, isStudent] = useGetIsStudent();
+  const { isStudent } = route.params
 
   return (
     <Tab.Navigator>
       <Tab.Screen
         name={'HomeScreen'}
         component={HomeScreen}
+        initialParams={{ isStudent }}
         options={{
           title: 'Home',
           headerShown: false,
@@ -38,6 +39,7 @@ export const BottomTabNavigator = () => {
       <Tab.Screen
         name={'CreateProjectScreen'}
         component={CreateProjectScreen}
+        initialParams={{ isStudent }}
         options={{
           title: 'Create Project',
           headerShown: false,
@@ -56,6 +58,7 @@ export const BottomTabNavigator = () => {
       <Tab.Screen
         name={'ProfileScreen'}
         component={ProfileScreen}
+        initialParams={{ isStudent }}
         options={{
           title: 'Profile',
           headerShown: false,

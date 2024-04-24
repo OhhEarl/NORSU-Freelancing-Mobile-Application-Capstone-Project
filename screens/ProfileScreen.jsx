@@ -9,38 +9,30 @@ import {
   Modal,
 } from "react-native";
 
-import Feather from "react-native-vector-icons/Feather";
-
 import AntDesign from "react-native-vector-icons/AntDesign";
-import { TabView, SceneMap, TabBar } from "react-native-tab-view";
-import { COLORS, UTILITIES } from "../assets/constants/index";
+
+import { COLORS } from "../assets/constants/index";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuthContext } from "../hooks/AuthContext";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
-import { useGetIsStudent } from "../hooks/dataHooks/useGetIsStudent";
+import { URL } from "@env";
 import auth from "@react-native-firebase/auth";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import * as theme from "../assets/constants/theme";
-import LoadingComponent from "../components/LoadingComponent";
 
 const ProfileScreen = ({ navigation, route }) => {
-  const [error, loading, isStudent, fetchIsStudent] = useGetIsStudent();
+  const { isStudent } = route.params;
   const { setUserData } = useAuthContext();
   const [modalVisible, setModalVisible] = useState(false);
-
-  useEffect(() => {
-    const unsubscribe = navigation.addListener("focus", () => {
-      fetchIsStudent();
-    });
-    return unsubscribe;
-  }, [navigation, fetchIsStudent]);
 
   const signOut = async () => {
     try {
       await GoogleSignin.signOut();
       await auth().signOut();
-      let url = "http://10.0.2.2:8000/api/google-callback/auth/google-signout";
+
+      let url = `${URL}/api/google-callback/auth/google-signout`;
+
       let response = await axios.post(url, isStudent?.token, {
         headers: {
           "Content-Type": "application/json",
@@ -59,128 +51,122 @@ const ProfileScreen = ({ navigation, route }) => {
 
   return (
     <SafeAreaView style={styles.mainContainer}>
-      {loading || !isStudent ? (
-        <LoadingComponent />
-      ) : (
-        <>
-          <View style={styles.innerContainer}>
-            <Image
-              style={styles.image}
-              source={
-                isStudent?.studentInfo?.user_avatar
-                  ? { uri: isStudent?.studentInfo?.user_avatar }
-                  : {
-                      uri: "https://img.freepik.com/free-psd/3d-illustration-person-with-sunglasses_23-2149436188.jpg?w=740&t=st=1670148608~exp=1670149208~hmac=bc57b66d67d2b9f4929c8e592ff17e8c8660721608add2f18fc20d19c1aab7e4",
-                    }
-              }
-            />
-            <Text style={styles.userText}>
-              {isStudent?.studentInfo?.first_name +
-                " " +
-                isStudent?.studentInfo?.last_name}
-            </Text>
-            <Text style={styles.areaExpertise}>
-              {isStudent?.studentInfo?.area_of_expertise}
-            </Text>
+      <View style={styles.innerContainer}>
+        <Image
+          style={styles.image}
+          source={
+            isStudent?.studentInfo?.user_avatar
+              ? { uri: isStudent?.studentInfo?.user_avatar }
+              : {
+                  uri: "https://img.freepik.com/free-psd/3d-illustration-person-with-sunglasses_23-2149436188.jpg?w=740&t=st=1670148608~exp=1670149208~hmac=bc57b66d67d2b9f4929c8e592ff17e8c8660721608add2f18fc20d19c1aab7e4",
+                }
+          }
+        />
+        <Text style={styles.userText}>
+          {isStudent?.studentInfo?.first_name +
+            " " +
+            isStudent?.studentInfo?.last_name}
+        </Text>
+        <Text style={styles.areaExpertise}>
+          {isStudent?.studentInfo?.area_of_expertise}
+        </Text>
+      </View>
+
+      <View style={styles.anotherContainer}>
+        <TouchableOpacity
+          onPress={() =>
+            navigation.navigate("ProjectsCompleted", {
+              user: isStudent?.studentInfo,
+              token: isStudent?.token,
+            })
+          }
+        >
+          <View style={styles.seperateContainer}>
+            <Text style={styles.seperateText}>Projects Completed</Text>
+            <AntDesign name="arrowright" size={20} color="black" />
           </View>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() =>
+            navigation.navigate("ProjectCreated", {
+              user: isStudent?.studentInfo,
+              token: isStudent?.token,
+              id: isStudent?.studentInfo?.id,
+            })
+          }
+        >
+          <View style={styles.seperateContainer}>
+            <Text style={styles.seperateText}>Projects Created</Text>
+            <AntDesign name="arrowright" size={20} color="black" />
+          </View>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() =>
+            navigation.navigate("ProposalSubmitted", {
+              user: isStudent?.studentInfo,
+              token: isStudent?.token,
+            })
+          }
+        >
+          <View style={styles.seperateContainer}>
+            <Text style={styles.seperateText}>Proposals Submitted</Text>
+            <AntDesign name="arrowright" size={20} color="black" />
+          </View>
+        </TouchableOpacity>
 
-          <View style={styles.anotherContainer}>
-            <TouchableOpacity
-              onPress={() =>
-                navigation.navigate("ProjectsCompleted", {
-                  user: isStudent?.studentInfo,
-                  token: isStudent?.token,
-                })
-              }
-            >
-              <View style={styles.seperateContainer}>
-                <Text style={styles.seperateText}>Projects Completed</Text>
-                <AntDesign name="arrowright" size={20} color="black" />
-              </View>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() =>
-                navigation.navigate("ProjectCreated", {
-                  user: isStudent?.studentInfo,
-                  token: isStudent?.token,
-                  id: isStudent?.studentInfo?.id,
-                })
-              }
-            >
-              <View style={styles.seperateContainer}>
-                <Text style={styles.seperateText}>Projects Created</Text>
-                <AntDesign name="arrowright" size={20} color="black" />
-              </View>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() =>
-                navigation.navigate("ProposalSubmitted", {
-                  user: isStudent?.studentInfo,
-                  token: isStudent?.token,
-                })
-              }
-            >
-              <View style={styles.seperateContainer}>
-                <Text style={styles.seperateText}>Proposals Submitted</Text>
-                <AntDesign name="arrowright" size={20} color="black" />
-              </View>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={() =>
-                navigation.navigate("EditProfileScreen", {
-                  project: isStudent?.studentInfo,
-                  token: isStudent?.token,
-                })
-              }
-            >
-              <View style={styles.seperateContainer}>
-                <Text style={styles.seperateText}>Edit Profile</Text>
-                <AntDesign name="arrowright" size={20} color="black" />
-              </View>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => setModalVisible(true)}>
-              <View
-                style={[
-                  styles.seperateContainer,
-                  { backgroundColor: theme.colors.primary, borderWidth: 0 },
-                ]}
+        <TouchableOpacity
+          onPress={() =>
+            navigation.navigate("EditProfileScreen", {
+              project: isStudent?.studentInfo,
+              token: isStudent?.token,
+            })
+          }
+        >
+          <View style={styles.seperateContainer}>
+            <Text style={styles.seperateText}>Edit Profile</Text>
+            <AntDesign name="arrowright" size={20} color="black" />
+          </View>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => setModalVisible(true)}>
+          <View
+            style={[
+              styles.seperateContainer,
+              { backgroundColor: theme.colors.primary, borderWidth: 0 },
+            ]}
+          >
+            <Text style={[styles.seperateText, { color: "white" }]}>
+              Logout
+            </Text>
+            <AntDesign name="arrowright" size={20} color="white" />
+          </View>
+        </TouchableOpacity>
+        <Modal
+          animationType="fade "
+          transparent={true}
+          visible={modalVisible}
+          onRequestClose={() => {
+            Alert.alert("Modal has been closed.");
+            setModalVisible(!modalVisible);
+          }}
+        >
+          <View style={styles.centeredView}>
+            <View style={styles.modalView}>
+              <TouchableOpacity
+                style={[styles.button, styles.buttonClose]}
+                onPress={() => setModalVisible(!modalVisible)}
               >
-                <Text style={[styles.seperateText, { color: "white" }]}>
-                  Logout
-                </Text>
-                <AntDesign name="arrowright" size={20} color="white" />
-              </View>
-            </TouchableOpacity>
-            <Modal
-              animationType="fade "
-              transparent={true}
-              visible={modalVisible}
-              onRequestClose={() => {
-                Alert.alert("Modal has been closed.");
-                setModalVisible(!modalVisible);
-              }}
-            >
-              <View style={styles.centeredView}>
-                <View style={styles.modalView}>
-                  <TouchableOpacity
-                    style={[styles.button, styles.buttonClose]}
-                    onPress={() => setModalVisible(!modalVisible)}
-                  >
-                    <AntDesign name={"closecircle"} size={30} />
-                  </TouchableOpacity>
-                  <Text style={styles.modalText}>
-                    Are you Sure You Want To Logout?
-                  </Text>
-                  <TouchableOpacity onPress={signOut} style={styles.logout}>
-                    <Text style={styles.logoutText}>Yes</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </Modal>
+                <AntDesign name={"closecircle"} size={30} />
+              </TouchableOpacity>
+              <Text style={styles.modalText}>
+                Are you Sure You Want To Logout?
+              </Text>
+              <TouchableOpacity onPress={signOut} style={styles.logout}>
+                <Text style={styles.logoutText}>Yes</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </>
-      )}
+        </Modal>
+      </View>
     </SafeAreaView>
   );
 };

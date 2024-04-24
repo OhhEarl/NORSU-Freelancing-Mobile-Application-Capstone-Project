@@ -6,12 +6,14 @@ import {
 } from '@react-native-google-signin/google-signin';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
-import { AxiosError } from 'axios';
+import { URL } from '@env'
+
+
 GoogleSignin.configure({
   webClientId:
     '1070570385371-6p351s3v9d1tr5mvrqfqhbe4vnn59mhb.apps.googleusercontent.com',
 });
-import DeviceInfo from 'react-native-device-info';
+
 
 const AuthContext = createContext();
 
@@ -34,8 +36,7 @@ export const AuthProvider = ({ children, navigation }) => {
       await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
       const { idToken } = await GoogleSignin.signIn();
       const googleCredential = auth.GoogleAuthProvider.credential(idToken);
-
-      let url = 'http://10.0.2.2:8000/api/google-callback/auth/google-login';
+      let url = `${URL}/api/google-callback/auth/google-login`
       let payload = { idToken: idToken };
       let response = await axios.post(url, payload, {
         headers: {
@@ -82,8 +83,10 @@ export const AuthProvider = ({ children, navigation }) => {
 
       } else {
         setIsLoading(true);
+
+        let url = `${URL}/api/email-password/auth/register`
         const response = await axios.post(
-          'http://10.0.2.2:8000/api/email-password/auth/register',
+          url,
           {
             email: userAuth.email,
             password: password,

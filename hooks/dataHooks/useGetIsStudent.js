@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
+import { URL } from '@env'
 
 export const useGetIsStudent = () => {
   const [token, setToken] = useState(null);
@@ -31,13 +31,12 @@ export const useGetIsStudent = () => {
           },
         };
         const response = await axios.get(
-          'http://10.0.2.2:8000/api/fetch-user-data',
+          `${URL}/api/fetch-user-data`,
           config,
         );
         const data = response.data;
         if (data) {
           setIsStudent(data);
-
         } else {
           setIsStudent(null);
         }

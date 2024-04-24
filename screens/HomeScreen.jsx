@@ -8,40 +8,23 @@ import {
   TouchableOpacity,
   FlatList,
   Image,
+  Alert,
 } from "react-native";
 import * as theme from "../assets/constants/theme";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import { SafeAreaView } from "react-native-safe-area-context";
-
+import { URL } from "@env";
 import ProjectComponent from "../components/ProjectComponent";
 import useGetProjectList from "../hooks/dataHooks/useGetProjectList";
 import LoadingComponent from "../components/LoadingComponent";
-
+import axios from "axios";
 const HomeScreen = ({ navigation, route }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredItems, setFilteredItems] = useState([]);
-  const [update, setUpdate] = useState(false);
-  const { items, projectError, listLoading, isStudent, fetchJobs } =
-    useGetProjectList();
-  const projectUpdateRef = useRef(route?.params?.projectUpdate); // Using useRef
-
-  useEffect(() => {
-    if (route?.params?.projectUpdate !== projectUpdateRef.current) {
-      projectUpdateRef.current = route?.params?.projectUpdate;
-      setUpdate(route?.params?.projectUpdate);
-    }
-
-    const unsubscribe = navigation.addListener("focus", () => {
-      if (update) {
-        fetchJobs();
-        setUpdate(false); // Reset the update state
-      }
-    });
-
-    return () => {
-      unsubscribe(); // Cleanup the listener
-    };
-  }, [navigation, route]); // Removed update from the dependency array
+  const [items, setItems] = useState([]);
+  const [projectError, setProjectError] = useState("");
+  const [listLoading, setListLoading] = useState(false);
+  const { isStudent } = route.params;
 
   useEffect(() => {
     if (searchQuery.trim() === "") {
@@ -65,6 +48,37 @@ const HomeScreen = ({ navigation, route }) => {
       token: isStudent?.token,
     });
   };
+
+  const fetchJobs = async () => {
+    try {
+      setListLoading(true);
+      const config = {
+        headers: {
+          Authorization: `Bearer ${isStudent.token}`,
+        },
+      };
+      const response = await axios.get(`${URL}/api/fetch-job-lists`, config);
+      setItems(response.data.jobs);
+    } catch (error) {
+      Alert.alert(
+        "Error",
+        "Something went wrong. Please try again.",
+        [
+          {
+            text: "Try Again",
+            onPress: () => fetchJobs(),
+          },
+        ],
+        { cancelable: false }
+      );
+    } finally {
+      setListLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchJobs();
+  }, [isStudent]);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.WHITE }}>

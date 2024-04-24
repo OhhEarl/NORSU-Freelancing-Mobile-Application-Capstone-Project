@@ -13,7 +13,6 @@ import {
 import * as theme from "../assets/constants/theme";
 import { SelectList } from "react-native-dropdown-select-list";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useGetIsStudent } from "../hooks/dataHooks/useGetIsStudent";
 import { useIsFocused } from "@react-navigation/native";
 import LoadingComponent from "../components/LoadingComponent";
 import LinearGradient from "react-native-linear-gradient";
@@ -22,7 +21,7 @@ import Ionicons from "react-native-vector-icons/Ionicons";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import DateTimePicker from "react-native-ui-datepicker";
 import dayjs from "dayjs";
-import useJobCategory from "../hooks/dataHooks/useJobCategory";
+
 import DocumentPicker from "react-native-document-picker";
 import CurrencyInput from "react-native-currency-input";
 import axios from "axios";
@@ -30,31 +29,25 @@ import axios from "axios";
 import Feather from "react-native-vector-icons/Feather";
 import TagInput from "../components/TagInput";
 const CreateProjectScreen = ({ route, navigation }) => {
-  const { project, isEditing, token, id } = route?.params || {};
-  const isFocused = useIsFocused();
+  const { project, isEditing, isStudent } = route?.params || {};
   const [projectID, setProjectID] = useState(null);
-  const [selectedFile, setSelectedFile] = useState([]);
-  const [isloading, setIsLoading] = useState(false);
-  const [jobTitle, setJobTitle] = useState(""); //! Project Name
-
+  const [jobTitle, setJobTitle] = useState("");
+  const [jobCategory, setJobCategory] = useState("");
   const [jobTags, setJobTags] = useState(
     project ? project.job_tags.map((tag) => tag.job_tags) : []
   );
-  const [jobDescription, setJobDescription] = useState(""); //! Project Description
-  const [jobBudgetFrom, setJobBudgetFrom] = useState("0"); //! Project Budget Range From
-  const [jobBudgetTo, setJobBudgetTo] = useState("0"); //! Project Budget Range To
-  const [startDate, setStartDate] = useState(dayjs()); //! Project Schedule From
-  const [endDate, setEndDate] = useState(dayjs()); //! Project Schedule To
-  const [showStartDatePicker, setShowStartDatePicker] = useState(false); //! SHOW SCHEDULE PICKED FROM
-  const [showEndDatePicker, setShowEndDatePicker] = useState(false); //! SHOW SCHEDULE PICKED FROM
-  const [placeholder, setPlaceholder] = useState("No Data Found"); //! PLACEHOLDER FOR PROJECT CATEGORY IF NO DATA FOUND
-  const [error, loading, isStudent] = useGetIsStudent();
-
-  const [defaultCategory, setDefaultCategory] = useState(null);
-  const [categoryJob, setCategoryJob] = useState(null); //! Project Category
-  const [jobCategories, categoryLoading] = useJobCategory();
+  const [jobDescription, setJobDescription] = useState("");
+  const [jobBudgetFrom, setJobBudgetFrom] = useState("0");
+  const [jobBudgetTo, setJobBudgetTo] = useState("0");
+  const [startDate, setStartDate] = useState(dayjs());
+  const [endDate, setEndDate] = useState(dayjs());
+  const [showStartDatePicker, setShowStartDatePicker] = useState(false);
+  const [showEndDatePicker, setShowEndDatePicker] = useState(false);
   const [key, setKey] = useState(0);
 
+  const [selectedFile, setSelectedFile] = useState([]);
+  const [isloading, setIsLoading] = useState(false);
+  const isFocused = useIsFocused();
   //! --------------------PROJECT CATEGORY ------------------------- //
   const onChangeTags = (tags) => {
     setJobTags(tags);
@@ -70,14 +63,12 @@ const CreateProjectScreen = ({ route, navigation }) => {
       setStartDate(dayjs(project.job_start_date) || dayjs());
       setEndDate(dayjs(project.job_end_date) || dayjs());
       setSelectedFile(project.attachments || "");
-      setCategoryJob(project.job_category_id || "");
+
       if (project.job_tags && project.job_tags.length > 0) {
         const extractedJobTags = project.job_tags.map((tag) => tag.job_tags);
         setJobTags(extractedJobTags); // Update jobTags state with the tags from the project data
-        console.log("Updated jobTags:", extractedJobTags); // Debug log
       } else {
         setJobTags([]); // Set jobTags to empty array if project.job_tags is empty
-        console.log("jobTags set to empty array"); // Debug log
       }
     } else {
       setJobTags([]);
@@ -89,7 +80,7 @@ const CreateProjectScreen = ({ route, navigation }) => {
   useEffect(() => {
     if (!isFocused) {
       setJobTitle("");
-      setCategoryJob("");
+
       setJobDescription("");
       setJobBudgetFrom("0");
       setJobBudgetTo("");
@@ -98,7 +89,6 @@ const CreateProjectScreen = ({ route, navigation }) => {
       setJobTags([]);
       setSelectedFile(null);
       setProjectID(null);
-      setDefaultCategory(null);
     }
   }, [isFocused]);
 
@@ -180,7 +170,6 @@ const CreateProjectScreen = ({ route, navigation }) => {
   const handleSubmit = async (projectID) => {
     if (
       !jobTitle ||
-      !categoryJob ||
       !jobTags ||
       !jobDescription ||
       !startDate ||
@@ -200,7 +189,6 @@ const CreateProjectScreen = ({ route, navigation }) => {
     const formData = new FormData();
     formData.append("student_user_id", isStudent?.studentInfo?.id);
     formData.append("job_title", jobTitle);
-    formData.append("job_category_id", categoryJob);
     formData.append("job_description", jobDescription);
     formData.append("job_start_date", startDate.toISOString().split("T")[0]);
     formData.append("job_end_date", endDate.toISOString().split("T")[0]);
@@ -219,8 +207,8 @@ const CreateProjectScreen = ({ route, navigation }) => {
 
     try {
       let url = projectID
-        ? `http://10.0.2.2:8000/api/project/created/update/${projectID}`
-        : "http://10.0.2.2:8000/api/project/create-project";
+        ? `${URL}/api/project/created/update/${projectID}`
+        : `${URL}/api/project/created/update`;
       const response = await axios({
         method: "post",
         url: url,
@@ -253,7 +241,6 @@ const CreateProjectScreen = ({ route, navigation }) => {
       setStartDate(dayjs());
       setEndDate(dayjs());
       setIsLoading(false);
-      setCategoryJob([]);
     }
 
     setIsLoading(false);
@@ -301,7 +288,7 @@ const CreateProjectScreen = ({ route, navigation }) => {
       ) : (
         ""
       )}
-      {isloading || categoryLoading ? (
+      {isloading ? (
         <LoadingComponent />
       ) : (
         <ScrollView
@@ -312,26 +299,26 @@ const CreateProjectScreen = ({ route, navigation }) => {
             {!project ? "Let's Get Your Project Listed" : ""}
           </Text>
           <View style={theme.utilities.inputContainer}>
-            <Text style={theme.utilities.title}>Project Name</Text>
+            <Text style={theme.utilities.title}>Project Title</Text>
             <TextInput
               style={theme.utilities.inputField}
               placeholder="App Design and Development"
               type="text"
               value={jobTitle}
               onChange={(e) => setJobTitle(e.nativeEvent.text)}
+              placeholderTextColor="#a9a9a9"
             />
           </View>
 
           <View style={theme.utilities.inputContainer}>
             <Text style={theme.utilities.title}>Project Category</Text>
-            <SelectList
-              setSelected={setCategoryJob}
-              defaultOption={defaultCategory}
-              data={jobCategories}
-              placeholder={"Select Category"}
-              dropdownItemStyles={{ marginVertical: 5 }}
-              boxStyles={{ borderColor: theme.colors.primary }}
-              fontFamily="Roboto-Light"
+            <TextInput
+              style={theme.utilities.inputField}
+              placeholder="Logo Design"
+              type="text"
+              value={jobCategory}
+              onChange={(e) => setJobCategory(e.nativeEvent.text)}
+              placeholderTextColor="#a9a9a9"
             />
           </View>
 
@@ -348,6 +335,7 @@ const CreateProjectScreen = ({ route, navigation }) => {
             <Text style={theme.utilities.title}>Project Description</Text>
             <TextInput
               style={[theme.utilities.inputField, { height: 100 }]}
+              placeholderTextColor="#a9a9a9"
               placeholder="Enter some brief about project "
               type="text"
               value={jobDescription}
@@ -377,7 +365,13 @@ const CreateProjectScreen = ({ route, navigation }) => {
               ]}
             >
               <View>
-                <Text style={{ fontFamily: "Roboto-Light", marginBottom: 3 }}>
+                <Text
+                  style={{
+                    fontFamily: "Roboto-Light",
+                    marginBottom: 3,
+                    color: "#a9a9a9",
+                  }}
+                >
                   Start Date:
                 </Text>
                 <TouchableOpacity onPress={() => togglePicker("start")}>
@@ -389,7 +383,15 @@ const CreateProjectScreen = ({ route, navigation }) => {
               <View style={styles.verticalLine} />
 
               <View>
-                <Text style={{ fontFamily: "Roboto-Light" }}>End Date:</Text>
+                <Text
+                  style={{
+                    fontFamily: "Roboto-Light",
+                    color: "#a9a9a9",
+                    marginBottom: 3,
+                  }}
+                >
+                  End Date:
+                </Text>
                 <TouchableOpacity onPress={() => togglePicker("end")}>
                   <Text style={styles.date}>
                     {dayjs(endDate).format("MM/DD/YYYY")}
@@ -461,7 +463,11 @@ const CreateProjectScreen = ({ route, navigation }) => {
                   }}
                 />
               </View>
-              <MaterialIcons name={"horizontal-rule"} size={20} />
+              <MaterialIcons
+                name={"horizontal-rule"}
+                size={20}
+                color={"black"}
+              />
               <View style={styles.inputColumn}>
                 <Text style={styles.label}>End Budget:</Text>
                 <CurrencyInput
@@ -672,5 +678,6 @@ const styles = StyleSheet.create({
   label: {
     textAlign: "center",
     fontFamily: "Roboto-Light",
+    color: "#a9a9a9",
   },
 });

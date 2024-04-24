@@ -24,30 +24,42 @@ import ProposalListScreen from '../screens/ProposalListScreen';
 import FreelancerProfileScreen from '../screens/FreelancerProfileScreen';
 const Stack = createNativeStackNavigator();
 import NetInfo from "@react-native-community/netinfo";
+import OpeningScreen from '../components/OpeningScreen';
 const AuthenticatedApp = () => {
   const { user, isLoading, isEmailVerified } = useAuthContext();
   const [error, loading, isStudent, fetchIsStudent] = useGetIsStudent();
+  const [isConnected, setIsConnected] = useState(true);
+  const [isCheckingConnection, setIsCheckingConnection] = useState(true);
 
-
-  const [isConnected, setIsConnected] = useState(false); // Initial state set to true
 
   useEffect(() => {
+    const checkConnection = async () => {
+      const state = await NetInfo.fetch();
+      setIsConnected(state.isConnected);
+      setIsCheckingConnection(false); // Set to false once checked
+    };
+
     const unsubscribe = NetInfo.addEventListener((state) => {
-      console.log("Event triggered with state:", state);
       setIsConnected(state.isConnected);
     });
 
-    // Fetch current connection state
-    NetInfo.fetch().then((state) => {
-      console.log("Initial connection state:", state.isConnected);
-      setIsConnected(state.isConnected);
-    });
+    checkConnection(); // Call the function to check connection
 
-    // Cleanup subscription on unmount
+
     return () => {
       unsubscribe();
     };
   }, []);
+
+  useEffect(() => {
+    if (error) {
+      Alert.alert('Error', error, [{ text: 'Try Again', onPress: () => fetchIsStudent() }]);
+    }
+  }, [error]);
+
+  if (isCheckingConnection) {
+    return <OpeningScreen />; // Return a loading component while checking connection
+  }
 
   if (!isConnected) {
     return (
@@ -62,20 +74,21 @@ const AuthenticatedApp = () => {
         <LoadingComponent />
       ) : (
         <Stack.Navigator>
-          {user && isEmailVerified && !isLoading ? (
+          {user && isEmailVerified ? (
             <>
-              {isStudent !== null && !loading ? (
+              {isStudent !== null ? (
                 isStudent.studentInfo?.is_student === 0 ? (
                   <Stack.Screen
                     name="VerificationConfirmation"
                     component={VerificationConfirmation}
                     options={{ headerShown: false }}
                   />
-                ) : isStudent.studentInfo?.is_student === 1 && !loading ? (
+                ) : isStudent.studentInfo?.is_student === 1 ? (
                   <Stack.Screen
                     name="BottomTabNavigator"
                     component={BottomTabNavigator} // Render BottomTabNavigator within a Screen component
                     options={{ headerShown: false }}
+                    initialParams={{ isStudent }}
                   />
                 ) : (
                   <>
@@ -150,6 +163,7 @@ const AuthenticatedApp = () => {
           />
           <Stack.Screen
             name="EditProfileScreen"
+            initialParams={{ isStudent }}
             component={EditProfileScreen}
             options={{ headerShown: false }}
           />

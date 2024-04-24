@@ -89,11 +89,13 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     fontSize: 18,
     fontFamily: "Roboto-Regular",
+    color: "#696969",
   },
   secondParagraphHeader: {
     textAlign: "center",
     marginBottom: 24,
     fontSize: 18,
     fontFamily: "Roboto-Regular",
+    color: "#696969",
   },
 });

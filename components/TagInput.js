@@ -34,6 +34,7 @@ const TagInput = ({ initialTags, onChangeTags }) => {
                     placeholder="Add a tag"
                     style={styles.input}
                     onSubmitEditing={handleAddTag}
+                    placeholderTextColor="#a9a9a9"
                 />
                 <TouchableOpacity onPress={handleAddTag} style={styles.addButton}>
                     <Feather style={styles.addButtonText}
@@ -93,7 +94,10 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         paddingHorizontal: 10,
         paddingVertical: 10,
-        paddingStart: 18
+        paddingStart: 18,
+        fontFamily: 'Roboto-Light',
+
+
     },
     addButton: {
         marginLeft: 10,
