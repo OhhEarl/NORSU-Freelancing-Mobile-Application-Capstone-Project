@@ -48,6 +48,7 @@
     "react-native-tags": "^2.2.1",
     "react-native-ui-datepicker": "^2.0.2",
     "react-native-vector-icons": "^10.0.3",
+    "react-redux": "^9.1.1",
     "redux": "^5.0.1"
   },
   "devDependencies": {

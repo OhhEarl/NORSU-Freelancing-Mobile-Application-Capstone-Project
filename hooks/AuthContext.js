@@ -29,9 +29,63 @@ export const AuthProvider = ({ children, navigation }) => {
   const [email, setEmailLogin] = useState('');
   const [password, setPasswordLogin] = useState('');
   const [isEmailVerified, setIsEmailVerified] = useState(false);
+  const [token, setToken] = useState(null);
+  const [isStudent, setIsStudent] = useState(null);
+
+  const updateIsStudent = async (updatedStudentData) => {
+    setIsStudent(updatedStudentData);
+    fetchIsStudent();
+  };
+
+  const getToken = async () => {
+    try {
+      const userInfo = await AsyncStorage.getItem('userInformation');
+      const parsedUserInfo = JSON.parse(userInfo);
+      const token = parsedUserInfo?.token;
+      if (token) {
+        await setToken(token);
+      }
+    } catch (error) {
+      console.error("Error fetching token:", error);
+    }
+  };
+  getToken();
+
+  const fetchIsStudent = async () => {
+    if (token) {
+      try {
+        setIsLoading(true);
+        const config = {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        };
+
+        const response = await axios.get(`${URL}/api/fetch-user-data`, config);
+        const data = response.data;
+ 
+
+        setIsStudent(data || []);
+      } catch (error) {
+        console.error("Fetch Error:", error.message); // Debug log
+        setError(error.message);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  };
+
+  useEffect(() => {
+    fetchIsStudent();
+  }, [token]); // Added token as a dependency
+
 
   const onGoogleButtonPress = async () => {
     try {
+
+
+
+
       setIsLoading(true);
       await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
       const { idToken } = await GoogleSignin.signIn();
@@ -157,7 +211,9 @@ export const AuthProvider = ({ children, navigation }) => {
         setPasswordLogin,
         isEmailVerified,
         setUserData,
-        setIsLoading
+        setIsLoading,
+        isStudent,
+        updateIsStudent
       }}>
       {children}
     </AuthContext.Provider>

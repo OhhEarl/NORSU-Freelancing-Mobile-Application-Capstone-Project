@@ -8,7 +8,6 @@ const VerificationNotification = ({ navigation }) => {
   const removeData = async () => {
     try {
       const data = await AsyncStorage.getItem("userInformation");
-      console.log("the data is ", data);
     } catch (error) {
       console.error("Error removing datas:", error);
     }

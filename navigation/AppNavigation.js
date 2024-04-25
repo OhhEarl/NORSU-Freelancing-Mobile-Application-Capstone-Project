@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet } from 'react-native';
+import { Alert, } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { AuthProvider, useAuthContext } from '../hooks/AuthContext';
-import { useGetIsStudent } from '../hooks/dataHooks/useGetIsStudent';
 import { BottomTabNavigator } from './BottomTabNavigator';
 import NoConnection from '../components/NoConnection';
 // Screens
@@ -25,9 +24,10 @@ import FreelancerProfileScreen from '../screens/FreelancerProfileScreen';
 const Stack = createNativeStackNavigator();
 import NetInfo from "@react-native-community/netinfo";
 import OpeningScreen from '../components/OpeningScreen';
+
+
 const AuthenticatedApp = () => {
-  const { user, isLoading, isEmailVerified } = useAuthContext();
-  const [error, loading, isStudent, fetchIsStudent] = useGetIsStudent();
+  const { user, error, isLoading, isEmailVerified, isStudent } = useAuthContext();
   const [isConnected, setIsConnected] = useState(true);
   const [isCheckingConnection, setIsCheckingConnection] = useState(true);
 
@@ -51,11 +51,8 @@ const AuthenticatedApp = () => {
     };
   }, []);
 
-  useEffect(() => {
-    if (error) {
-      Alert.alert('Error', error, [{ text: 'Try Again', onPress: () => fetchIsStudent() }]);
-    }
-  }, [error]);
+
+
 
   if (isCheckingConnection) {
     return <OpeningScreen />; // Return a loading component while checking connection
@@ -67,10 +64,9 @@ const AuthenticatedApp = () => {
     );
   }
 
-
   return (
     <NavigationContainer>
-      {loading || isLoading ? (
+      {isLoading ? (
         <LoadingComponent />
       ) : (
         <Stack.Navigator>
@@ -155,7 +151,7 @@ const AuthenticatedApp = () => {
               />
             </>
           )}
-
+          <></>
           <Stack.Screen
             name="ProjectDetailsScreen"
             component={ProjectDetailsScreen}

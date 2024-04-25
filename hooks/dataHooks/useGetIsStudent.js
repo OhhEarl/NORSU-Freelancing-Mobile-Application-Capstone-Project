@@ -11,6 +11,7 @@ export const useGetIsStudent = () => {
   const [prevIsStudent, setPrevIsStudent] = useState(null);
   const [intervalId, setIntervalId] = useState(null);
 
+
   const getToken = async () => {
     try {
       const userInfo = await AsyncStorage.getItem('userInformation');
@@ -36,9 +37,7 @@ export const useGetIsStudent = () => {
         );
         const data = response.data;
         if (data) {
-          setIsStudent(data);
-        } else {
-          setIsStudent(null);
+          setIsStudent(data || [])
         }
       } catch (error) {
         setError(error);

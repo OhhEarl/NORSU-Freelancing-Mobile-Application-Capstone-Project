@@ -12,35 +12,108 @@ import {
   TouchableWithoutFeedback,
   Alert,
 } from "react-native";
-
+import { AuthProvider, useAuthContext } from "../hooks/AuthContext";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Feather from "react-native-vector-icons/Feather";
 import * as theme from "../assets/constants/theme";
 import Tags from "react-native-tags";
 import { launchImageLibrary } from "react-native-image-picker";
 import LoadingComponent from "../components/LoadingComponent";
-import { ActivityIndicator } from "react-native-paper";
 import Button from "../components/Button";
 import axios from "axios";
-
+import TagInput from "../components/TagInput";
 import { URL } from "@env";
-const EditProfileScreen = ({ navigation, route }) => {
-  const { isStudent } = route.params;
+const EditProfileScreen = ({ navigation }) => {
+  const { isStudent, updateIsStudent } = useAuthContext();
+
   const [userAvatar, setUserAvatar] = useState(
     isStudent?.studentInfo?.user_avatar
   );
   const [userName, setUserName] = useState(isStudent?.studentInfo?.user_name);
 
-  const [suggestions, setSuggestions] = useState([]);
-  const [areaExpertise, setAreaExpertise] = useState(
-    isStudent?.studentInfo?.area_of_expertise
-  );
   const [aboutMe, setAboutMe] = useState("");
   const [studentSkills, setStudentSkills] = useState(
     isStudent?.studentInfo?.skill_tags || []
   );
   const [portfolioImages, setPortfolioImages] = useState([]);
   const [isLoading, setLoading] = useState(false);
+
+  const [inputText, setInputText] = useState("");
+  const [suggestions, setSuggestions] = useState([]);
+  const [areasOfExpertise, setAreasOfExpertise] = useState({});
+  const [areaExpertise, setAreaExpertise] = useState(
+    isStudent?.studentInfo?.area_of_expertise || ""
+  );
+  const [key, setKey] = useState(0);
+
+  const onChangeSkills = (newSkills) => {
+    setStudentSkills((prev) => ({ ...prev, skillTags: newSkills }));
+  };
+
+  useEffect(() => {
+    setInputText(areaExpertise); // Set initial input text to current area of expertise
+  }, []);
+
+  const handleInputChange = (text) => {
+    setInputText(text); // Update the state
+    setAreaExpertise(text); // Update the areaExpertise state
+    if (text === "") {
+      setSuggestions([]); // Clear suggestions when input is empty
+    } else {
+      const filteredSuggestions = Object.values(
+        areasOfExpertise.areasOfExpertise
+      ).filter((category) =>
+        category.toLowerCase().includes(text.toLowerCase())
+      );
+      setSuggestions(filteredSuggestions);
+    }
+  };
+  const handleSuggestionPress = (category) => {
+    const key = Object.keys(areasOfExpertise.areasOfExpertise).find(
+      (key) => areasOfExpertise.areasOfExpertise[key] === category
+    );
+
+    setInputText(category); // Set the category as the input text
+    setAreaExpertise(key); // Set the key as the value for areaExpertise
+    setSuggestions([]); // Clear suggestions
+  };
+
+  const handlePressOutside = () => {
+    setSuggestions([]); // Clear suggestions when pressing outside the TextInput or FlatList
+  };
+
+  useEffect(() => {
+    fetchExpertiseCategories();
+  }, []);
+
+  const fetchExpertiseCategories = async () => {
+    try {
+      const response = await axios.get(
+        `${URL}/api/student-validations/expertise`,
+        {
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      const data = await response.data;
+
+      const transformedData = {
+        areasOfExpertise: {},
+      };
+
+      data.forEach((item) => {
+        transformedData.areasOfExpertise[item.id.toString()] = item.expertise;
+      });
+
+      setAreasOfExpertise(transformedData);
+      setLoading(false);
+    } catch (error) {
+      alert(error);
+      setLoading(false);
+    }
+  };
 
   const imageAvatar = async () => {
     try {
@@ -80,9 +153,6 @@ const EditProfileScreen = ({ navigation, route }) => {
     initializeDefaultTags();
   }, []); // Empty dependency array ensures this effect runs only once when component mounts
 
-  const onChangeSkills = (tag) => {
-    setStudentSkills(tag);
-  };
   const selectImage = async () => {
     try {
       const result = await launchImageLibrary();
@@ -140,58 +210,47 @@ const EditProfileScreen = ({ navigation, route }) => {
   };
 
   const updateProfile = async () => {
-    if (!userName || !areaExpertise || !studentSkills) {
-      Alert.alert("Error", "Please fill in all required fields.");
-      return;
-    } else {
-      setLoading(true);
+    setLoading(true);
+    const formData = new FormData();
+    formData.append("user_id", isStudent.studentInfo.user_id);
+    formData.append("user_name", userName);
+    studentSkills.forEach((skill, index) => {
+      formData.append(`student_skills[${index}]`, skill);
+    });
+    formData.append("area_of_expertise", areaExpertise);
 
-      const formData = new FormData();
-
-      formData.append("student_user_id", user?.user_id);
-      formData.append("user_name", userName);
-      formData.append("area_of_expertise", areaExpertise);
-      formData.append("about_me", aboutMe);
-      studentSkills.forEach((skill, index) => {
-        formData.append(`student_skills[${index}]`, skill);
+    formData.append("user_avatar", {
+      uri: userAvatar,
+      name: `${userAvatar.split("/").pop()}`,
+      type: `image/${userAvatar.split(".").pop()}`,
+    });
+    -portfolioImages.forEach((image, index) => {
+      formData.append(`portfolio[${index}]`, {
+        uri: image,
+        name: `${image.split("/").pop()}`,
+        type: `image/${image.split(".").pop()}`,
       });
-      formData.append("user_avatar", {
-        uri: userAvatar,
-        name: `${userAvatar.split("/").pop()}`,
-        type: `image/${userAvatar.split(".").pop()}`,
+    });
+
+    let url = `${URL}/api/student-validations/update`;
+    try {
+      const response = await axios.post(url, formData, {
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${isStudent.token}`,
+        },
       });
 
-      portfolioImages.forEach((image, index) => {
-        formData.append(`portfolio[${index}]`, {
-          uri: image,
-          name: `${image.split("/").pop()}`,
-          type: `image/${image.split(".").pop()}`,
-        });
-      });
-
-      let url = `${URL}/api/student-validations/update`;
-      try {
-        const response = await axios.post(url, formData, {
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "multipart/form-data",
-            Authorization: `Bearer ${isStudent.token}`,
-          },
-        });
-
-        if (response.status === 200) {
-          await fetchIsStudent();
-        }
-      } catch (error) {
-        Alert.alert(
-          "Error:",
-          error.response ? error.response.data : error.message
-        );
-      } finally {
-        setLoading(false);
+      if (response.status === 200 && response.data) {
+        updateIsStudent(response.data); // Use passed prop
         navigation.navigate("EditProfileScreen");
         Alert.alert("User updated Successfully.");
       }
+    } catch (error) {
+      Alert.alert(error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -203,25 +262,32 @@ const EditProfileScreen = ({ navigation, route }) => {
         {
           headers: {
             Accept: "application/json",
-            "Content-Type": "multipart/form-data",
-            Authorization: `Bearer ${isStudent.token}`,
+            Authorization: `Bearer ${isStudent.token}`, // Include only the authorization header
           },
         }
       );
 
-      if (response.data && response.data.portfolio) {
+      if (response.status === 200 && response.data && response.data.portfolio) {
         setPortfolioImages(response.data.portfolio);
+      } else {
+        console.error("Error fetching portfolio:", response.data); // Log detailed error information
+        // Handle errors gracefully, e.g., display an error message or retry logic
       }
     } catch (error) {
-      alert(error, "Please close the application and open again.");
+      console.error("Error fetching portfolio:", error); // Log detailed error information
+      // Handle network errors or other exceptions gracefully
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchPortfolio(isStudent.studentInfo.user_id);
+    // Fetch portfolio only after isStudent data is available (assuming it contains studentUserId)
+    if (isStudent && isStudent.studentInfo && isStudent.studentInfo.user_id) {
+      fetchPortfolio(isStudent.studentInfo.user_id);
+    }
   }, [isStudent]);
+
   return (
     <SafeAreaView style={styles.mainContainer}>
       {isLoading ? (
@@ -283,6 +349,58 @@ const EditProfileScreen = ({ navigation, route }) => {
                 value={userName}
                 onChange={(e) => setUserName(e.nativeEvent.text)}
                 style={styles.inputField}
+              />
+            </View>
+
+            <TouchableWithoutFeedback onPress={handlePressOutside}>
+              <View style={styles.inputFieldContainer}>
+                <Text style={styles.inputLabel}>Area of Expertise</Text>
+                <TextInput
+                  style={styles.inputField}
+                  label="Area of Expertise"
+                  placeholderTextColor="#000"
+                  placeholder="Choose or input your area of expertise"
+                  value={inputText}
+                  onChangeText={handleInputChange}
+                />
+                <FlatList
+                  style={{ maxHeight: 150, backgroundColor: "white" }}
+                  data={suggestions}
+                  scrollEnabled={false}
+                  renderItem={({ item }) => (
+                    <TouchableOpacity
+                      onPress={() => handleSuggestionPress(item)}
+                    >
+                      <View>
+                        <Text
+                          style={{
+                            marginTop: 12,
+                            marginStart: 12,
+                            fontWeight: 600,
+                            fontSize: 14,
+                            marginBottom: 5,
+                            color: "black",
+                          }}
+                        >
+                          {item}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                  )}
+                  keyExtractor={(item, index) => index.toString()}
+                />
+              </View>
+            </TouchableWithoutFeedback>
+
+            <View style={styles.inputFieldContainer}>
+              <Text style={[styles.inputLabel, { marginBottom: -4 }]}>
+                Skill Tags
+              </Text>
+              <TagInput
+                key={key}
+                initialTags={studentSkills}
+                onChangeTags={onChangeSkills}
+                style={{ marginVertical: 0 }}
               />
             </View>
 

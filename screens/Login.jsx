@@ -42,7 +42,7 @@ const Login = ({ navigation }) => {
 
   useEffect(() => {
     if (error) {
-      setErrorMessage(error);
+      setErrorMessage(error.message);
     } else {
       setErrorMessage(null);
     }
