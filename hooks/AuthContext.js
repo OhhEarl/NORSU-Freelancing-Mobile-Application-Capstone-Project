@@ -46,10 +46,14 @@ export const AuthProvider = ({ children, navigation }) => {
         await setToken(token);
       }
     } catch (error) {
-      console.error("Error fetching token:", error);
+      setError(error.message)
     }
   };
-  getToken();
+  useEffect(() => {
+    getToken();
+  }, [])
+
+
 
   const fetchIsStudent = async () => {
     if (token) {
@@ -63,14 +67,12 @@ export const AuthProvider = ({ children, navigation }) => {
 
         const response = await axios.get(`${URL}/api/fetch-user-data`, config);
         const data = response.data;
- 
-
-        setIsStudent(data || []);
+        await setIsStudent(data || []);
       } catch (error) {
-        console.error("Fetch Error:", error.message); // Debug log
         setError(error.message);
       } finally {
-        setIsLoading(false);
+        setIsLoading(false)
+
       }
     }
   };
@@ -80,12 +82,10 @@ export const AuthProvider = ({ children, navigation }) => {
   }, [token]); // Added token as a dependency
 
 
+
+
   const onGoogleButtonPress = async () => {
     try {
-
-
-
-
       setIsLoading(true);
       await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
       const { idToken } = await GoogleSignin.signIn();
@@ -186,10 +186,10 @@ export const AuthProvider = ({ children, navigation }) => {
     const unsubscribe = auth().onAuthStateChanged(async (user) => {
       setIsLoading(true);
       if (user) {
-        setUser(user);
-        setIsEmailVerified(user.emailVerified);
+        await setUser(user);
+        await setIsEmailVerified(user.emailVerified);
       } else {
-        setUser(null);
+        await setUser(null);
       }
       setIsLoading(false);
     });
@@ -200,6 +200,7 @@ export const AuthProvider = ({ children, navigation }) => {
   return (
     <AuthContext.Provider
       value={{
+        token,
         user,
         setUser,
         isLoading,

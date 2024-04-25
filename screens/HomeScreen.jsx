@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import {
   StyleSheet,
   View,
@@ -9,77 +9,48 @@ import {
   FlatList,
   Image,
   Alert,
+  useFocusEffect,
 } from "react-native";
+
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useProjectContext } from "../hooks/ProjectContext";
+import { URL } from "@env";
 import * as theme from "../assets/constants/theme";
 import Icon from "react-native-vector-icons/MaterialIcons";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { URL } from "@env";
 import ProjectComponent from "../components/ProjectComponent";
-import useGetProjectList from "../hooks/dataHooks/useGetProjectList";
 import LoadingComponent from "../components/LoadingComponent";
-import axios from "axios";
+
 const HomeScreen = ({ navigation, route }) => {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filteredItems, setFilteredItems] = useState([]);
-  const [items, setItems] = useState([]);
-  const [projectError, setProjectError] = useState("");
-  const [listLoading, setListLoading] = useState(false);
+  const { projectError, loading, projects, fetchData } = useProjectContext();
   const { isStudent } = route.params;
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filteredProjects, setFilteredProjects] = useState([]);
+
+  const unsubscribe = navigation.addListener("focus", () => {
+    fetchData();
+  });
 
   useEffect(() => {
+    return unsubscribe;
+  }, [fetchData]);
+  useEffect(() => {
     if (searchQuery.trim() === "") {
-      setFilteredItems(items);
+      setFilteredProjects(projects);
     } else {
-      const filtered = items.filter(
-        (item) =>
-          item.job_title &&
-          item.job_title.toLowerCase().includes(searchQuery.toLowerCase())
+      const filtered = projects.filter(
+        (project) =>
+          project.job_title &&
+          project.job_title.toLowerCase().includes(searchQuery.toLowerCase())
       );
-      setFilteredItems(filtered);
+      setFilteredProjects(filtered);
     }
-  }, [searchQuery, items]);
-
+  }, [searchQuery, projects]);
   const handleItemPress = (item) => {
     navigation.navigate("ProjectDetailsScreen", {
       project: item,
-      user_avatar: isStudent?.studentInfo?.user_avatar,
-      user_id: isStudent?.studentInfo?.user_id,
-      id: isStudent?.studentInfo?.id,
-      token: isStudent?.token,
+      studentId: isStudent.studentInfo.id,
     });
   };
-
-  const fetchJobs = async () => {
-    try {
-      setListLoading(true);
-      const config = {
-        headers: {
-          Authorization: `Bearer ${isStudent.token}`,
-        },
-      };
-      const response = await axios.get(`${URL}/api/fetch-job-lists`, config);
-      setItems(response.data.jobs);
-    } catch (error) {
-      Alert.alert(
-        "Error",
-        "Something went wrong. Please try again.",
-        [
-          {
-            text: "Try Again",
-            onPress: () => fetchJobs(),
-          },
-        ],
-        { cancelable: false }
-      );
-    } finally {
-      setListLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchJobs();
-  }, [isStudent]);
-
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.WHITE }}>
       <View style={{ flex: 1 }}>
@@ -130,52 +101,46 @@ const HomeScreen = ({ navigation, route }) => {
           </View>
 
           <View style={{ flex: 1, paddingHorizontal: 20, marginTop: 20 }}>
-            {projectError ? ( // Check if there is an error
-              Alert.alert(projectError)
+            <Text style={styles.popularText}>Recent Projects</Text>
+            {loading || !filteredProjects || !isStudent ? (
+              <LoadingComponent />
+            ) : filteredProjects && filteredProjects.length > 0 ? (
+              <FlatList
+                data={filteredProjects}
+                keyExtractor={(item) => item.id.toString()}
+                renderItem={({ item }) => (
+                  <TouchableOpacity onPress={() => handleItemPress(item)}>
+                    <ProjectComponent item={item} />
+                  </TouchableOpacity>
+                )}
+                showsVerticalScrollIndicator={false}
+              />
             ) : (
-              <>
-                <Text style={styles.popularText}>Recent Projects</Text>
-                {listLoading ? (
-                  <LoadingComponent />
-                ) : filteredItems && filteredItems.length > 0 ? (
-                  <FlatList
-                    data={filteredItems}
-                    keyExtractor={(item) => item.id.toString()}
-                    renderItem={({ item }) => (
-                      <TouchableOpacity onPress={() => handleItemPress(item)}>
-                        <ProjectComponent item={item} />
-                      </TouchableOpacity>
-                    )}
-                    showsVerticalScrollIndicator={false}
+              <View
+                style={{
+                  flex: 1,
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              >
+                <View
+                  style={{ justifyContent: "center", alignItems: "center" }}
+                >
+                  <Image
+                    source={require("../assets/no-data-found.jpg")}
+                    style={{ height: 100, width: 100 }}
                   />
-                ) : (
-                  <View
+                  <Text
                     style={{
-                      flex: 1,
-                      justifyContent: "center",
-                      alignItems: "center",
+                      fontFamily: "Roboto-Bold",
+                      fontSize: 18,
+                      color: "black",
                     }}
                   >
-                    <View
-                      style={{ justifyContent: "center", alignItems: "center" }}
-                    >
-                      <Image
-                        source={require("../assets/no-data-found.jpg")}
-                        style={{ height: 100, width: 100 }}
-                      />
-                      <Text
-                        style={{
-                          fontFamily: "Roboto-Bold",
-                          fontSize: 18,
-                          color: "black",
-                        }}
-                      >
-                        NO PROJECTS FOUND
-                      </Text>
-                    </View>
-                  </View>
-                )}
-              </>
+                    NO PROJECTS FOUND
+                  </Text>
+                </View>
+              </View>
             )}
           </View>
         </View>

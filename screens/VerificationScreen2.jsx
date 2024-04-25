@@ -210,7 +210,7 @@ const VerificationScreen2 = ({
     formData.append("yearLevel", 4);
     formData.append("norsuIDnumber", values.norsuIDnumber);
     formData.append("user_id", id);
-    console.log(JSON.stringify(formData, null, 2));
+
     try {
       setIsLoading(true);
       let url = `${URL}/api/student-validation`;

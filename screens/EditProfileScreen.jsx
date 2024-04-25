@@ -244,7 +244,6 @@ const EditProfileScreen = ({ navigation }) => {
 
       if (response.status === 200 && response.data) {
         updateIsStudent(response.data); // Use passed prop
-        navigation.navigate("EditProfileScreen");
         Alert.alert("User updated Successfully.");
       }
     } catch (error) {
@@ -319,7 +318,12 @@ const EditProfileScreen = ({ navigation }) => {
             >
               Edit Profile
             </Text>
-            <Text></Text>
+            <Feather
+              name="check"
+              size={24}
+              color={theme.colors.BLACKS}
+              onPress={updateProfile}
+            />
           </View>
 
           <View style={styles.innerContainer}>
@@ -459,16 +463,6 @@ const EditProfileScreen = ({ navigation }) => {
                 </View>
               </View>
             )}
-
-            <View
-              style={{
-                position: "relative",
-                width: "100%",
-                marginTop: 20,
-              }}
-            >
-              <Button title="Update" onPress={updateProfile} filled />
-            </View>
           </View>
         </ScrollView>
       )}

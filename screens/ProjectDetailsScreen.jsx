@@ -17,16 +17,11 @@ import Button from "../components/Button";
 
 import { useEffect } from "react";
 const ProjectDetailsScreen = ({ route, navigation }) => {
-  const { project } = route.params;
-  const { id } = route.params;
-  const { token } = route?.params;
+  const { project, studentId } = route.params;
 
   useEffect(() => {
-    const unsubscribe = navigation.addListener("focus", () => {
-      project;
-    });
-    return unsubscribe;
-  }, [navigation, project]);
+    project;
+  }, [route]);
 
   const handleDownload = async (filePath) => {
     try {
@@ -89,7 +84,6 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
           </TouchableOpacity>
           <Text
             style={{
-              marginRight: 25,
               fontFamily: "Roboto-Medium",
               color: theme.colors.BLACKS,
               fontSize: 18,
@@ -98,17 +92,15 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
             Project Overview
           </Text>
 
-          {project?.student_user_id == id && project?.job_finished != 1 ? (
+          {project.student_user_id === studentId ? (
             <MaterialCommunityIcons
               name="square-edit-outline"
               size={24}
               color={theme.colors.BLACKS}
               onPress={() =>
                 navigation.navigate("CreateProjectScreen", {
-                  project,
-                  isEditing: true,
-                  token: token,
-                  id: id,
+                  projects: project,
+                  studentId: studentId,
                 })
               }
             />
@@ -162,9 +154,7 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
               <Text style={styles.projectDescriptionTitle}>
                 Project Category
               </Text>
-              <Text style={styles.jobDescription}>
-                {project?.category_name}
-              </Text>
+              <Text style={styles.jobDescription}>{project?.job_category}</Text>
             </View>
             <View style={styles.projectDescription}>
               <Text style={styles.projectDescriptionTitle}>
@@ -251,7 +241,7 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
             </View>
           </View>
 
-          {id == project.student_user_id ? (
+          {project.student_user_id === studentId ? (
             ""
           ) : (
             <View style={styles.applyNow}>

@@ -18,27 +18,24 @@ import LoadingComponent from "../components/LoadingComponent";
 import LinearGradient from "react-native-linear-gradient";
 import FontAwesome from "react-native-vector-icons/FontAwesome";
 import Ionicons from "react-native-vector-icons/Ionicons";
-import MaterialIcons from "react-native-vector-icons/MaterialIcons";
+
 import DateTimePicker from "react-native-ui-datepicker";
 import dayjs from "dayjs";
-
 import DocumentPicker from "react-native-document-picker";
 import CurrencyInput from "react-native-currency-input";
 import axios from "axios";
-
 import Feather from "react-native-vector-icons/Feather";
 import TagInput from "../components/TagInput";
+import { URL } from "@env";
+import { useProjectContext } from "../hooks/ProjectContext";
+
 const CreateProjectScreen = ({ route, navigation }) => {
-  const { project, isEditing, isStudent } = route?.params || {};
-  const [projectID, setProjectID] = useState(null);
+  const { isStudent, projects, studentId } = route?.params;
   const [jobTitle, setJobTitle] = useState("");
   const [jobCategory, setJobCategory] = useState("");
-  const [jobTags, setJobTags] = useState(
-    project ? project.job_tags.map((tag) => tag.job_tags) : []
-  );
+  const [jobTags, setJobTags] = useState([]);
   const [jobDescription, setJobDescription] = useState("");
-  const [jobBudgetFrom, setJobBudgetFrom] = useState("0");
-  const [jobBudgetTo, setJobBudgetTo] = useState("0");
+  const [jobBudgetFrom, setJobBudgetFrom] = useState("");
   const [startDate, setStartDate] = useState(dayjs());
   const [endDate, setEndDate] = useState(dayjs());
   const [showStartDatePicker, setShowStartDatePicker] = useState(false);
@@ -48,81 +45,50 @@ const CreateProjectScreen = ({ route, navigation }) => {
   const [selectedFile, setSelectedFile] = useState([]);
   const [isloading, setIsLoading] = useState(false);
   const isFocused = useIsFocused();
-  //! --------------------PROJECT CATEGORY ------------------------- //
+
   const onChangeTags = (tags) => {
     setJobTags(tags);
   };
 
   useEffect(() => {
-    if (isEditing && project) {
-      setProjectID(project?.id || null);
-      setJobTitle(project.job_title || "");
-      setJobDescription(project.job_description || "");
-      setJobBudgetFrom(project.job_budget_from.toString() || "0");
-      setJobBudgetTo(project.job_budget_to.toString() || "0");
-      setStartDate(dayjs(project.job_start_date) || dayjs());
-      setEndDate(dayjs(project.job_end_date) || dayjs());
-      setSelectedFile(project.attachments || "");
-
-      if (project.job_tags && project.job_tags.length > 0) {
-        const extractedJobTags = project.job_tags.map((tag) => tag.job_tags);
-        setJobTags(extractedJobTags); // Update jobTags state with the tags from the project data
-      } else {
-        setJobTags([]); // Set jobTags to empty array if project.job_tags is empty
-      }
-    } else {
-      setJobTags([]);
+    if (projects) {
+      setJobTitle(projects.job_title);
+      setJobCategory(projects.job_category);
+      setJobTags(
+        projects ? projects?.job_tags?.map((tag) => tag.job_tags) : []
+      );
+      setJobDescription(projects.job_description);
+      setStartDate(dayjs(projects?.job_start_date) || dayjs());
+      setJobBudgetFrom(projects.job_budget_from.toString() || "0");
+      setEndDate(dayjs(projects?.job_end_date) || dayjs());
+      setSelectedFile(projects.attachments || "");
     }
-
-    setKey((prevKey) => prevKey + 1);
-  }, [project, isEditing]);
+  }, [projects]);
 
   useEffect(() => {
     if (!isFocused) {
       setJobTitle("");
-
       setJobDescription("");
+      setJobCategory("");
       setJobBudgetFrom("0");
-      setJobBudgetTo("");
       setStartDate(dayjs());
       setEndDate(dayjs());
       setJobTags([]);
       setSelectedFile(null);
-      setProjectID(null);
     }
-  }, [isFocused]);
-
-  //! --------------------PROJECT CATEGORY ------------------------- //
-
-  //* --------------------------------------------------------------- *//
-
-  //! --------------------DATE PICKER ------------------------- //
-  const togglePicker = (picker) => {
-    if (picker === "start") {
-      setShowStartDatePicker(!showStartDatePicker);
-    } else if (picker === "end") {
-      setShowEndDatePicker(!showEndDatePicker);
-    }
-  };
+    setKey((prevKey) => prevKey + 1);
+  }, [isFocused, route]);
 
   const onStartDateChange = (selectedDate) => {
     if (selectedDate) {
       setStartDate(selectedDate);
-      setShowStartDatePicker(false); // Close the picker
+      const newEndDate = dayjs(selectedDate)
+        .add(15, "days")
+        .format("MM/DD/YYYY"); // Calculate end date dynamically
+      setEndDate(newEndDate);
     }
+    setShowStartDatePicker(true);
   };
-
-  const onEndDateChange = (selectedDate) => {
-    if (selectedDate) {
-      setEndDate(selectedDate);
-      setShowEndDatePicker(false); // Close the picker
-    }
-  };
-  //! --------------------DATE PICKER ------------------------- //
-
-  //* --------------------------------------------------------------- *//
-
-  //! --------------------DOCUMENT PICKER ------------------------- !//
 
   const pickDocument = async () => {
     try {
@@ -163,19 +129,15 @@ const CreateProjectScreen = ({ route, navigation }) => {
     });
   };
 
-  //! --------------------DOCUMENT PICKER ------------------------- !//
-
-  //! --------------------HANDLE SUBMIT BUTTON ------------------------- !//
-
-  const handleSubmit = async (projectID) => {
+  const handleSubmit = async (projectsID) => {
     if (
       !jobTitle ||
-      !jobTags ||
+      !jobCategory ||
+      (Array.isArray(jobTags) && jobTags.length === 0) ||
       !jobDescription ||
       !startDate ||
       !endDate ||
-      !jobBudgetFrom ||
-      !jobBudgetTo
+      !jobBudgetFrom
     ) {
       Alert.alert(
         "Error",
@@ -184,16 +146,15 @@ const CreateProjectScreen = ({ route, navigation }) => {
       return;
     }
 
-    setIsLoading(true);
-
     const formData = new FormData();
-    formData.append("student_user_id", isStudent?.studentInfo?.id);
+    formData.append("student_user_id", studentId);
     formData.append("job_title", jobTitle);
+    formData.append("job_category", jobCategory);
     formData.append("job_description", jobDescription);
     formData.append("job_start_date", startDate.toISOString().split("T")[0]);
     formData.append("job_end_date", endDate.toISOString().split("T")[0]);
     formData.append("job_budget_from", jobBudgetFrom);
-    formData.append("job_budget_to", jobBudgetTo);
+
     jobTags?.forEach((tag, index) => {
       formData.append(`job_tags[${index}]`, tag);
     });
@@ -206,9 +167,10 @@ const CreateProjectScreen = ({ route, navigation }) => {
     });
 
     try {
-      let url = projectID
-        ? `${URL}/api/project/created/update/${projectID}`
-        : `${URL}/api/project/created/update`;
+      setIsLoading(true);
+      let url = projectsID
+        ? `${URL}/api/project/created/update/${projectsID}`
+        : `${URL}/api/project/create-project`;
       const response = await axios({
         method: "post",
         url: url,
@@ -221,74 +183,59 @@ const CreateProjectScreen = ({ route, navigation }) => {
       });
 
       if (response.status === 201 || response.status === 200) {
-        await navigation.navigate("HomeScreen", { projectUpdate: true });
-        alert(
-          projectID
-            ? "Job has been updated successfully."
-            : "Job has been posted successfully."
-        );
+        await navigation.navigate("HomeScreen");
+        studentId
+          ? Alert.alert("Job has been updated successfully.")
+          : Alert.alert("Job has been posted successfully.");
       } else {
-        alert("Something went wrong. Please Try Again!");
+        Alert.alert(response.message);
       }
     } catch (err) {
-      alert(err);
+      Alert.alert(err);
     } finally {
       setJobTitle("");
       setJobDescription("");
       setJobBudgetFrom("0");
-      setJobBudgetTo("0");
       setSelectedFile([]);
+      setJobCategory("");
       setStartDate(dayjs());
       setEndDate(dayjs());
+      setKey((prevKey) => prevKey + 1);
       setIsLoading(false);
     }
-
-    setIsLoading(false);
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      {project ? (
-        <View
+      <View
+        style={{
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <Feather
+          name="arrow-left"
+          size={24}
+          color={theme.colors.BLACKS}
+          onPress={() => {
+            navigation.goBack();
+          }}
+        />
+        <Text
           style={{
-            flexDirection: "row",
-            justifyContent: "space-between",
-            alignItems: "center",
+            marginRight: 25,
+            fontFamily: "Roboto-Medium",
+            color: theme.colors.BLACKS,
+            fontSize: 18,
           }}
         >
-          <Feather
-            name="arrow-left"
-            size={24}
-            color={theme.colors.BLACKS}
-            onPress={() => {
-              navigation.navigate("ProfileScreen");
-            }}
+          Edit Project Created
+        </Text>
+        <Text></Text>
+      </View>
 
-            // onPress={() => {
-            //   navigation.navigate("ProjectCreated", {
-            //     token: token,
-            //     user: project,
-            //     id: id,
-            //     project: project,
-            //   });
-            // }}
-          />
-          <Text
-            style={{
-              marginRight: 25,
-              fontFamily: "Roboto-Medium",
-              color: theme.colors.BLACKS,
-              fontSize: 18,
-            }}
-          >
-            Edit Project Created
-          </Text>
-          <Text></Text>
-        </View>
-      ) : (
-        ""
-      )}
-      {isloading ? (
+      {(projects && projects.length > 0) || isloading ? (
         <LoadingComponent />
       ) : (
         <ScrollView
@@ -296,7 +243,7 @@ const CreateProjectScreen = ({ route, navigation }) => {
           contentContainerStyle={{ flexGrow: 1 }}
         >
           <Text style={theme.utilities.header}>
-            {!project ? "Let's Get Your Project Listed" : ""}
+            {/* {!project ? "Let's Get Your Project Listed" : ""} */}
           </Text>
           <View style={theme.utilities.inputContainer}>
             <Text style={theme.utilities.title}>Project Title</Text>
@@ -374,9 +321,9 @@ const CreateProjectScreen = ({ route, navigation }) => {
                 >
                   Start Date:
                 </Text>
-                <TouchableOpacity onPress={() => togglePicker("start")}>
+                <TouchableOpacity onPress={() => setShowStartDatePicker(true)}>
                   <Text style={styles.date}>
-                    {dayjs(startDate).format("MM/DD/YYYY")}
+                    {startDate ? dayjs(startDate).format("MM/DD/YYYY") : "-"}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -392,101 +339,52 @@ const CreateProjectScreen = ({ route, navigation }) => {
                 >
                   End Date:
                 </Text>
-                <TouchableOpacity onPress={() => togglePicker("end")}>
-                  <Text style={styles.date}>
-                    {dayjs(endDate).format("MM/DD/YYYY")}
-                  </Text>
-                </TouchableOpacity>
+                <Text style={styles.date}>
+                  {startDate
+                    ? dayjs(startDate).add(15, "days").format("MM/DD/YYYY")
+                    : "-"}
+                </Text>
               </View>
-
-              <Modal
-                visible={showStartDatePicker}
-                transparent={true}
-                animationType="slide"
-                onRequestClose={() => setShowStartDatePicker(false)}
-              >
-                <View style={styles.modalContainer}>
-                  <View style={styles.pickerContainer}>
-                    <DateTimePicker
-                      date={startDate}
-                      onChange={(params) => onStartDateChange(params.date)}
-                    />
-                    <Button
-                      title="Close"
-                      onPress={() => setShowStartDatePicker(false)}
-                    />
-                  </View>
-                </View>
-              </Modal>
-
-              <Modal
-                visible={showEndDatePicker}
-                transparent={true}
-                animationType="slide"
-                onRequestClose={() => setShowEndDatePicker(false)}
-              >
-                <View style={styles.modalContainer}>
-                  <View style={styles.pickerContainer}>
-                    <DateTimePicker
-                      date={endDate}
-                      onChange={(params) => onEndDateChange(params.date)}
-                    />
-                    <Button
-                      title="Close"
-                      onPress={() => setShowEndDatePicker(false)}
-                    />
-                  </View>
-                </View>
-              </Modal>
             </View>
+
+            <Modal
+              visible={showStartDatePicker}
+              transparent={true}
+              animationType="slide"
+              onRequestClose={() => setShowStartDatePicker(false)}
+            >
+              <View style={styles.modalContainer}>
+                <View style={styles.pickerContainer}>
+                  <DateTimePicker
+                    date={startDate} // Pass current startDate
+                    onChange={(params) => onStartDateChange(params.date)}
+                  />
+                  <Button
+                    title="Close"
+                    onPress={() => setShowStartDatePicker(false)}
+                  />
+                </View>
+              </View>
+            </Modal>
           </View>
 
           <View style={theme.utilities.inputContainer}>
             <Text style={theme.utilities.title}>Budget</Text>
-            <View style={styles.inputRow}>
-              <View style={styles.inputColumn}>
-                <Text style={styles.label}>Start Budget:</Text>
-
-                <CurrencyInput
-                  style={styles.textInput}
-                  value={jobBudgetFrom}
-                  onChangeValue={setJobBudgetFrom}
-                  prefix="₱"
-                  delimiter=","
-                  separator="."
-                  precision={0}
-                  minValue={0}
-                  onChangeText={(formattedValue) => {
-                    if (!formattedValue || parseFloat(formattedValue) === 0) {
-                      setJobBudgetFrom("0");
-                    }
-                  }}
-                />
-              </View>
-              <MaterialIcons
-                name={"horizontal-rule"}
-                size={20}
-                color={"black"}
-              />
-              <View style={styles.inputColumn}>
-                <Text style={styles.label}>End Budget:</Text>
-                <CurrencyInput
-                  style={styles.textInput}
-                  value={jobBudgetTo}
-                  onChangeValue={setJobBudgetTo}
-                  prefix="₱"
-                  delimiter=","
-                  separator="."
-                  precision={0}
-                  onChangeText={(formattedValue) => {
-                    if (!formattedValue || parseFloat(formattedValue) === 0) {
-                      // Reset the input value to the default state
-                      setJobBudgetTo("0");
-                    }
-                  }}
-                />
-              </View>
-            </View>
+            <CurrencyInput
+              style={theme.utilities.inputField}
+              value={jobBudgetFrom}
+              onChangeValue={setJobBudgetFrom}
+              prefix="₱"
+              delimiter=","
+              separator="."
+              precision={0}
+              minValue={0}
+              onChangeText={(formattedValue) => {
+                if (!formattedValue || parseFloat(formattedValue) === 0) {
+                  setJobBudgetFrom("0");
+                }
+              }}
+            />
           </View>
 
           <View style={[theme.utilities.inputContainer, { marginBottom: 25 }]}>
@@ -560,17 +458,15 @@ const CreateProjectScreen = ({ route, navigation }) => {
           </View>
 
           <TouchableOpacity
-            style={{ position: "relative" }}
-            onPress={() => handleSubmit(projectID)}
+            style={{
+              position: "relative",
+              backgroundColor: theme.colors.primary,
+              borderRadius: 10,
+              marginTop: 13,
+            }}
+            onPress={() => handleSubmit(projects.id)}
           >
-            <LinearGradient
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              colors={[theme.colors.primary, theme.colors.secondary]}
-              style={styles.linearGradientText}
-            >
-              <Text style={styles.postText}>SUBMIT</Text>
-            </LinearGradient>
+            <Text style={styles.postText}>SUBMIT</Text>
           </TouchableOpacity>
         </ScrollView>
       )}
@@ -638,7 +534,7 @@ const styles = StyleSheet.create({
 
   uploadLogo: {
     alignSelf: "center", // Center the icon horiz
-    color: theme.colors.secondary,
+    color: theme.colors.primary,
   },
 
   selectedFileContainer: {

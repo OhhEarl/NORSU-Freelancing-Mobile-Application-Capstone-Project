@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Alert, } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -24,14 +24,12 @@ import FreelancerProfileScreen from '../screens/FreelancerProfileScreen';
 const Stack = createNativeStackNavigator();
 import NetInfo from "@react-native-community/netinfo";
 import OpeningScreen from '../components/OpeningScreen';
-
+import { useProjectContext, ProjectProvider } from '../hooks/ProjectContext';
 
 const AuthenticatedApp = () => {
   const { user, error, isLoading, isEmailVerified, isStudent } = useAuthContext();
   const [isConnected, setIsConnected] = useState(true);
   const [isCheckingConnection, setIsCheckingConnection] = useState(true);
-
-
   useEffect(() => {
     const checkConnection = async () => {
       const state = await NetInfo.fetch();
@@ -80,12 +78,57 @@ const AuthenticatedApp = () => {
                     options={{ headerShown: false }}
                   />
                 ) : isStudent.studentInfo?.is_student === 1 ? (
-                  <Stack.Screen
-                    name="BottomTabNavigator"
-                    component={BottomTabNavigator} // Render BottomTabNavigator within a Screen component
-                    options={{ headerShown: false }}
-                    initialParams={{ isStudent }}
-                  />
+                  <>
+                    <Stack.Screen
+                      name="BottomTabNavigator"
+                      component={BottomTabNavigator} // Render BottomTabNavigator within a Screen component
+                      options={{ headerShown: false }}
+                      initialParams={{ isStudent }}
+                    />
+                    <Stack.Screen
+                      name="ProjectDetailsScreen"
+                      component={ProjectDetailsScreen}
+                      options={{ headerShown: false }}
+             
+                    />
+                    <Stack.Screen
+                      name="EditProfileScreen"
+                      initialParams={{ isStudent }}
+                      component={EditProfileScreen}
+                      options={{ headerShown: false }}
+                    />
+                    <Stack.Screen
+                      name="ProposalScreen"
+                      component={ProposalScreen}
+                      options={{ headerShown: false }}
+                    />
+                    <Stack.Screen
+                      name="ProposalSubmitted"
+                      component={ProposalSubmitted}
+                      options={{ headerShown: false }}
+                    />
+                    <Stack.Screen
+                      name="ProjectCreated"
+                      component={ProjectCreated}
+                      options={{ headerShown: false }}
+                    />
+                    <Stack.Screen
+                      name="ProjectsCompleted"
+                      component={ProjectsCompleted}
+                      options={{ headerShown: false }}
+                    />
+                    <Stack.Screen
+                      name="ProposalListScreen"
+                      component={ProposalListScreen}
+                      options={{ headerShown: false }}
+                    />
+
+                    <Stack.Screen
+                      name="FreelancerProfileScreen"
+                      component={FreelancerProfileScreen}
+                      options={{ headerShown: false }}
+                    />
+                  </>
                 ) : (
                   <>
                     <Stack.Screen
@@ -151,49 +194,8 @@ const AuthenticatedApp = () => {
               />
             </>
           )}
-          <></>
-          <Stack.Screen
-            name="ProjectDetailsScreen"
-            component={ProjectDetailsScreen}
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name="EditProfileScreen"
-            initialParams={{ isStudent }}
-            component={EditProfileScreen}
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name="ProposalScreen"
-            component={ProposalScreen}
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name="ProposalSubmitted"
-            component={ProposalSubmitted}
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name="ProjectCreated"
-            component={ProjectCreated}
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name="ProjectsCompleted"
-            component={ProjectsCompleted}
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name="ProposalListScreen"
-            component={ProposalListScreen}
-            options={{ headerShown: false }}
-          />
 
-          <Stack.Screen
-            name="FreelancerProfileScreen"
-            component={FreelancerProfileScreen}
-            options={{ headerShown: false }}
-          />
+
         </Stack.Navigator>
 
       )}
@@ -204,7 +206,9 @@ const AuthenticatedApp = () => {
 const AppNavigation = () => {
   return (
     <AuthProvider>
-      <AuthenticatedApp />
+      <ProjectProvider>
+        <AuthenticatedApp />
+      </ProjectProvider>
     </AuthProvider>
   );
 };

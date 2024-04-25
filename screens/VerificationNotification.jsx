@@ -3,16 +3,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Button from "../components/Button";
 import { React } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
+import { useAuthContext } from "../hooks/AuthContext";
+import LoadingComponent from "../components/LoadingComponent";
 const VerificationNotification = ({ navigation }) => {
-  const removeData = async () => {
-    try {
-      const data = await AsyncStorage.getItem("userInformation");
-    } catch (error) {
-      console.error("Error removing datas:", error);
-    }
-  };
-
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
