@@ -54,10 +54,10 @@ const Welcome = ({ navigation }) => {
             Started
           </Text>
 
-          <View style={{ marginVertical: 0 }}>
+          <View style={{ marginVertical: 20 }}>
             <Text
               style={{
-                fontSize: 16,
+                fontSize: 20,
                 color: theme.colors.WHITE,
                 marginVertical: 4,
               }}
@@ -66,33 +66,33 @@ const Welcome = ({ navigation }) => {
             </Text>
             <Text
               style={{
-                fontSize: 16,
+                fontSize: 20,
                 color: theme.colors.WHITE,
               }}
             >
               Find the perfect freelancer, every time.
             </Text>
           </View>
-
-          <Button
-            title="Login"
-            onPress={() => navigation.navigate("Login")}
-            style={{
-              marginTop: 22,
-              width: "100%",
-            }}
-          />
-
-          <Button
-            title="Sign up"
-            onPress={() => navigation.navigate("Signup")}
-            style={{
-              marginTop: 5,
-              width: "100%",
-              backgroundColor: "#ffe4c4",
-            }}
-          />
         </View>
+      </View>
+      <View style={{ paddingHorizontal: 20, paddingBottom: 20 }}>
+        <Button
+          title="Login"
+          onPress={() => navigation.navigate("Login")}
+          style={{
+            width: "100%",
+          }}
+        />
+
+        <Button
+          title="Sign up"
+          onPress={() => navigation.navigate("Signup")}
+          style={{
+            marginTop: 10,
+            width: "100%",
+            backgroundColor: "#ffe4c4",
+          }}
+        />
       </View>
     </LinearGradient>
   );

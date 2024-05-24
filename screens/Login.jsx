@@ -5,7 +5,6 @@ import {
   Pressable,
   TextInput,
   TouchableOpacity,
-  ActivityIndicator,
   StyleSheet,
 } from "react-native";
 import { useState, useEffect, React } from "react";
@@ -13,53 +12,84 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import * as theme from "../assets/constants/theme";
 import Button from "../components/Button";
 import { useIsFocused } from "@react-navigation/native";
-import { COLORS, UTILITIES } from "../assets/constants/index";
+import { COLORS } from "../assets/constants/index";
 import { useAuthContext } from "../hooks/AuthContext";
 import Ionicons from "react-native-vector-icons/Ionicons";
+import LottieView from "lottie-react-native";
+
 const Login = ({ navigation }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isPasswordShown, setIsPasswordShown] = useState(true);
 
-  const isFocused = useIsFocused();
   const {
     error,
+    setError,
     onGoogleButtonPress,
     handleSignIn,
     setEmailLogin,
     setPasswordLogin,
-    setLoading,
+    isLoading,
   } = useAuthContext();
-
+  const isFocused = useIsFocused();
   useEffect(() => {
     if (!isFocused) {
       setEmail("");
       setPassword("");
       setErrorMessage("");
+      setError("");
     }
   }, [isFocused]);
 
   useEffect(() => {
     if (error) {
-      setErrorMessage(error.message);
+      setErrorMessage(error);
     } else {
       setErrorMessage(null);
     }
   }, [error]);
 
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
   const handleSignInWithValidation = () => {
-    if (!email.trim() || !password.trim()) {
+    if (!email || !password) {
       setErrorMessage("Please enter both email and password.");
+    } else if (!validateEmail(email)) {
+      setErrorMessage("Please enter a valid email address.");
     } else {
+      setErrorMessage("");
+      setEmailLogin(email);
+      setPasswordLogin(password);
       handleSignIn();
     }
   };
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setError(null);
+    }, 8000);
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [isLoading]);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.white }}>
       <View style={{ flex: 1, marginHorizontal: 22, justifyContent: "center" }}>
         <View style={{ marginVertical: 22 }}>
+          <View style={styles.overlay}>
+            <LottieView
+              source={require("../assets/astronautAnimation.json")}
+              style={styles.lottie}
+              speed={2}
+              autoPlay
+              loop
+            />
+          </View>
           <Text
             style={{
               fontSize: 24,
@@ -69,7 +99,7 @@ const Login = ({ navigation }) => {
               fontFamily: "Roboto-Bold",
             }}
           >
-            Hi Welcome Back ! 👋
+            Hi Welcome Back!
           </Text>
 
           <Text
@@ -79,116 +109,70 @@ const Login = ({ navigation }) => {
               fontFamily: "Roboto-Bold",
             }}
           >
-            Hello again you have been missed!
+            You have been missed!
           </Text>
         </View>
 
-        <View style={{ marginBottom: 12 }}>
-          <Text
+        <View style={theme.utilities.inputContainer}>
+          <Text style={theme.utilities.title}>Email</Text>
+          <TextInput
+            placeholder="enter your email address"
+            placeholderTextColor={COLORS.black}
+            keyboardType="email-address"
+            onChangeText={(text) => {
+              setEmail(text);
+            }}
+            value={email}
+            autoCapitalize="none"
+            style={[theme.utilities.inputField, { height: 50 }]}
+          />
+        </View>
+
+        <View style={theme.utilities.inputContainer}>
+          <Text style={theme.utilities.title}>Password</Text>
+          <TextInput
+            placeholder="enter your password"
+            placeholderTextColor={COLORS.black}
+            onChangeText={(text) => {
+              setPassword(text); // Update local state
+            }}
+            value={password}
+            style={[theme.utilities.inputField, { height: 50 }]}
+            secureTextEntry={isPasswordShown}
+          />
+
+          <TouchableOpacity
+            onPress={() => setIsPasswordShown(!isPasswordShown)}
             style={{
-              color: theme.colors.BLACKS,
-              fontFamily: "Roboto-Medium",
-              fontSize: theme.sizes.h3,
-              marginVertical: 3,
-              marginLeft: 2,
+              position: "absolute",
+              right: 12,
+              top: "50%",
             }}
           >
-            Email address
-          </Text>
-
-          <View>
-            <TextInput
-              placeholder="Enter your email address"
-              placeholderTextColor={COLORS.black}
-              keyboardType="email-address"
-              onChangeText={(text) => {
-                setEmail(text); // Update local state
-                setEmailLogin(text);
-              }}
-              value={email}
-              autoCapitalize="none"
-              style={UTILITIES.inputField}
-            />
-          </View>
+            {isPasswordShown == true ? (
+              <Ionicons name="eye-off" size={24} color={COLORS.black} />
+            ) : (
+              <Ionicons name="eye" size={24} color={COLORS.black} />
+            )}
+          </TouchableOpacity>
         </View>
 
-        <View style={{ marginBottom: 18, marginTop: 18 }}>
-          <Text
-            style={{
-              color: theme.colors.BLACKS,
-              fontFamily: "Roboto-Medium",
-              fontSize: theme.sizes.h3,
-              marginVertical: 3,
-              marginLeft: 2,
-            }}
-          >
-            Password
+        {errorMessage || error ? (
+          <Text style={{ color: "red", marginTop: 2, marginLeft: 5 }}>
+            {errorMessage || error}
           </Text>
-
-          <View>
-            <TextInput
-              placeholder="Enter your password"
-              placeholderTextColor={COLORS.black}
-              onChangeText={(text) => {
-                setPassword(text); // Update local state
-                setPasswordLogin(text);
-              }}
-              value={password}
-              style={UTILITIES.inputField}
-              secureTextEntry={isPasswordShown}
-            />
-
-            <TouchableOpacity
-              onPress={() => setIsPasswordShown(!isPasswordShown)}
-              style={{
-                position: "absolute",
-                right: 12,
-                top: "25%",
-              }}
-            >
-              {isPasswordShown == true ? (
-                <Ionicons name="eye-off" size={24} color={COLORS.black} />
-              ) : (
-                <Ionicons name="eye" size={24} color={COLORS.black} />
-              )}
-            </TouchableOpacity>
-          </View>
-
-          {errorMessage && (
-            <Text
-              style={{
-                fontSize: 14,
-                fontWeight: 400,
-                marginVertical: 8,
-                color: "red",
-                marginLeft: 3,
-              }}
-            >
-              {errorMessage}
-            </Text>
-          )}
-        </View>
-
-        {/* <View style={{
-            flexDirection: 'row',
-            marginVertical: 6
-        }}>
-            <Checkbox
-                style={{ marginRight: 8 }}
-                value={isChecked}
-                onValueChange={setIsChecked}
-                color={isChecked ? COLORS.primary : undefined}
-            />
-
-            <Text>Remenber Me</Text>
-        </View> */}
+        ) : (
+          <Text> </Text>
+        )}
 
         <Button
-          onPress={handleSignInWithValidation}
+          onPress={() => {
+            handleSignInWithValidation();
+          }}
           title="Login"
           filled
           style={{
-            marginTop: 18,
+            marginTop: 50,
             marginBottom: 4,
           }}
         />
@@ -292,14 +276,14 @@ const Login = ({ navigation }) => {
 
 export default Login;
 const styles = StyleSheet.create({
-  indicator: {
-    flex: 1,
-    position: "absolute",
-    left: 0,
-    right: 0,
-    top: 0,
-    bottom: 0,
-    alignItems: "center",
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
     justifyContent: "center",
+  },
+  lottie: {
+    position: "absolute",
+    right: -100,
+    width: 300,
+    height: 300,
   },
 });

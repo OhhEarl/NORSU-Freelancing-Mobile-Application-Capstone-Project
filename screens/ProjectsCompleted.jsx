@@ -18,7 +18,7 @@ const ProjectsCompleted = ({ navigation, route }) => {
   const { user } = route?.params;
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
-
+  console.log(loading);
   const fetchJobCompleted = async (userId) => {
     try {
       setLoading(true);

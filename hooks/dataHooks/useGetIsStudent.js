@@ -32,7 +32,7 @@ export const useGetIsStudent = () => {
           },
         };
         const response = await axios.get(
-          `${URL}/api/fetch-user-data`,
+          `${URL}/fetch-user-data`,
           config,
         );
         const data = response.data;

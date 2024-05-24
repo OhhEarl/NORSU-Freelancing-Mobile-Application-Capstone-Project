@@ -14,6 +14,7 @@ const MultiStepForm = ({ navigation }) => {
     norsuIDnumber: "",
     course: "",
     yearLevel: "",
+    mobile_number: "",
     skillTags: [],
   });
   const [selectedImageUriFront, setSelectedImageUriFront] = useState("");

@@ -6,15 +6,12 @@ const NoConnection = () => {
     return (
         <View style={styles.container}>
             <View style={styles.overlay}>
-                <Image
-                    source={require("../assets/noConnection.jpg")}
-                    style={{
-                        height: 300,
-                        width: "100%",
-                        objectFit: 'contain',
-                        justifyContent: 'center',
-                        alignContent: 'center'
-                    }}
+                <LottieView
+                    source={require("../assets/NoConnection.json")}
+                    autoPlay
+                    loop
+                    style={styles.lottie}
+                    speed={1.5}
                 />
             </View>
         </View>
@@ -33,5 +30,8 @@ const styles = StyleSheet.create({
         alignItems: "center",
         backgroundColor: 'white',
     },
-
+    lottie: {
+        width: 300,
+        height: 300,
+    },
 });

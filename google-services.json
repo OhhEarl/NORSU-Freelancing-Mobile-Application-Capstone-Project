@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "1070570385371",
+    "project_id": "norsu-system-27854",
+    "storage_bucket": "norsu-system-27854.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1070570385371:android:c03573f99db507c7aec1fe",
+        "android_client_info": {
+          "package_name": "com.norsu"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1070570385371-ppanugb7f1s7pia9fjo6vqcs7r3dl97k.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.norsu",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "1070570385371-6p351s3v9d1tr5mvrqfqhbe4vnn59mhb.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCuhfeIbXaffNCL5jQnB4UM2qB4zEnEwlU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1070570385371-6p351s3v9d1tr5mvrqfqhbe4vnn59mhb.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

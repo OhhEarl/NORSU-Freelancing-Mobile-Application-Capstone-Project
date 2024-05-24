@@ -7,10 +7,13 @@ import {
   Image,
   TouchableOpacity,
   Modal,
+  Alert,
+  Switch,
+  ScrollView,
 } from "react-native";
 
 import AntDesign from "react-native-vector-icons/AntDesign";
-
+import { AirbnbRating, Rating } from "react-native-ratings";
 import { COLORS } from "../assets/constants/index";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuthContext } from "../hooks/AuthContext";
@@ -20,18 +23,34 @@ import auth from "@react-native-firebase/auth";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import * as theme from "../assets/constants/theme";
-
+import LoadingComponent from "../components/LoadingComponent";
 const ProfileScreen = ({ navigation, route }) => {
+  const [isActive, setIsActive] = useState(false);
+
+  // Function to handle the switch toggle
+
   const { isStudent } = route.params;
-  const { setUserData } = useAuthContext();
   const [modalVisible, setModalVisible] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const baseUrlWithoutApi = URL.replace("/api", "");
+  const rating = isStudent.studentInfo.student_rating
+    ? parseFloat(isStudent.studentInfo.student_rating)
+    : 0;
+
+  const toggleSwitch = () => {
+    const newStatus = !isActive;
+    setIsActive(newStatus);
+
+    // Call the onToggle callback with the new status
+    if (onToggle) {
+      onToggle(newStatus);
+    }
+  };
 
   const signOut = async () => {
     try {
-      await GoogleSignin.signOut();
-      await auth().signOut();
-
-      let url = `${URL}/api/google-callback/auth/google-signout`;
+      setLoading(true);
+      let url = `${URL}/google-callback/auth/google-signout`;
 
       let response = await axios.post(url, isStudent?.token, {
         headers: {
@@ -40,133 +59,173 @@ const ProfileScreen = ({ navigation, route }) => {
         },
       });
 
-      if ((response.status = 200)) {
+      if (response.status === 200) {
         await AsyncStorage.removeItem("userInformation");
-        await setUserData(null);
+        await GoogleSignin.signOut();
+        await auth().signOut();
       }
     } catch (error) {
-      alert(error);
+      Alert.alert("Something Went Wrong. Logout Failed.");
+    } finally {
+      await setLoading(false);
     }
   };
 
+  useEffect(() => {
+    let timer;
+
+    timer = setTimeout(() => {
+      setLoading(false);
+    }, 2000);
+
+    return () => {
+      if (timer) {
+        clearTimeout(timer);
+      }
+    };
+  }, [loading]);
+
   return (
     <SafeAreaView style={styles.mainContainer}>
-      <View style={styles.innerContainer}>
-        <Image
-          style={styles.image}
-          source={
-            isStudent?.studentInfo?.user_avatar
-              ? { uri: isStudent?.studentInfo?.user_avatar }
-              : {
-                  uri: "https://img.freepik.com/free-psd/3d-illustration-person-with-sunglasses_23-2149436188.jpg?w=740&t=st=1670148608~exp=1670149208~hmac=bc57b66d67d2b9f4929c8e592ff17e8c8660721608add2f18fc20d19c1aab7e4",
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {loading ? (
+          <LoadingComponent />
+        ) : (
+          <>
+            <View style={styles.innerContainer}>
+              <Image
+                style={styles.image}
+                source={
+                  isStudent.studentInfo.user_avatar
+                    ? {
+                        uri: `${baseUrlWithoutApi}/storage/${isStudent?.studentInfo?.user_avatar}`,
+                      }
+                    : {
+                        uri: "https://img.freepik.com/free-psd/3d-illustration-person-with-sunglasses_23-2149436188.jpg?w=740&t=st=1670148608~exp=1670149208~hmac=bc57b66d67d2b9f4929c8e592ff17e8c8660721608add2f18fc20d19c1aab7e4",
+                      }
                 }
-          }
-        />
-        <Text style={styles.userText}>
-          {isStudent?.studentInfo?.first_name +
-            " " +
-            isStudent?.studentInfo?.last_name}
-        </Text>
-        <Text style={styles.areaExpertise}>
-          {isStudent?.studentInfo?.area_of_expertise}
-        </Text>
-      </View>
-
-      <View style={styles.anotherContainer}>
-        <TouchableOpacity
-          onPress={() =>
-            navigation.navigate("ProjectsCompleted", {
-              user: isStudent?.studentInfo,
-              token: isStudent?.token,
-            })
-          }
-        >
-          <View style={styles.seperateContainer}>
-            <Text style={styles.seperateText}>Projects Completed</Text>
-            <AntDesign name="arrowright" size={20} color="black" />
-          </View>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() =>
-            navigation.navigate("ProjectCreated", {
-              user: isStudent?.studentInfo,
-              token: isStudent?.token,
-              id: isStudent?.studentInfo?.id,
-            })
-          }
-        >
-          <View style={styles.seperateContainer}>
-            <Text style={styles.seperateText}>Projects Created</Text>
-            <AntDesign name="arrowright" size={20} color="black" />
-          </View>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() =>
-            navigation.navigate("ProposalSubmitted", {
-              user: isStudent?.studentInfo,
-              token: isStudent?.token,
-            })
-          }
-        >
-          <View style={styles.seperateContainer}>
-            <Text style={styles.seperateText}>Proposals Submitted</Text>
-            <AntDesign name="arrowright" size={20} color="black" />
-          </View>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={() =>
-            navigation.navigate("EditProfileScreen", {
-              project: isStudent?.studentInfo,
-              token: isStudent?.token,
-            })
-          }
-        >
-          <View style={styles.seperateContainer}>
-            <Text style={styles.seperateText}>Edit Profile</Text>
-            <AntDesign name="arrowright" size={20} color="black" />
-          </View>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => setModalVisible(true)}>
-          <View
-            style={[
-              styles.seperateContainer,
-              { backgroundColor: theme.colors.primary, borderWidth: 0 },
-            ]}
-          >
-            <Text style={[styles.seperateText, { color: "white" }]}>
-              Logout
-            </Text>
-            <AntDesign name="arrowright" size={20} color="white" />
-          </View>
-        </TouchableOpacity>
-        <Modal
-          animationType="fade "
-          transparent={true}
-          visible={modalVisible}
-          onRequestClose={() => {
-            Alert.alert("Modal has been closed.");
-            setModalVisible(!modalVisible);
-          }}
-        >
-          <View style={styles.centeredView}>
-            <View style={styles.modalView}>
-              <TouchableOpacity
-                style={[styles.button, styles.buttonClose]}
-                onPress={() => setModalVisible(!modalVisible)}
-              >
-                <AntDesign name={"closecircle"} size={30} />
-              </TouchableOpacity>
-              <Text style={styles.modalText}>
-                Are you Sure You Want To Logout?
+              />
+              <Text style={styles.userText}>
+                {isStudent?.studentInfo?.first_name +
+                  " " +
+                  isStudent?.studentInfo?.last_name}
               </Text>
-              <TouchableOpacity onPress={signOut} style={styles.logout}>
-                <Text style={styles.logoutText}>Yes</Text>
-              </TouchableOpacity>
+              <Text style={styles.areaExpertise}>
+                {isStudent?.studentInfo?.area_of_expertise}
+              </Text>
+
+              <AirbnbRating
+                type="star"
+                defaultRating={rating}
+                size={20}
+                isDisabled={true}
+                showRating={false}
+              />
             </View>
-          </View>
-        </Modal>
-      </View>
+
+            <View style={styles.anotherContainer}>
+              <TouchableOpacity
+                onPress={() =>
+                  navigation.navigate("ProjectCreated", {
+                    token: isStudent?.token,
+                    id: isStudent?.studentInfo?.id,
+                  })
+                }
+              >
+                <View style={styles.seperateContainer}>
+                  <Text style={styles.seperateText}>Projects Created</Text>
+                  <AntDesign name="arrowright" size={20} color="black" />
+                </View>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() =>
+                  navigation.navigate("ProposalSubmitted", {
+                    user: isStudent?.studentInfo,
+                    token: isStudent?.token,
+                    id: isStudent?.studentInfo?.id,
+                  })
+                }
+              >
+                <View style={styles.seperateContainer}>
+                  <Text style={styles.seperateText}>Proposals Submitted</Text>
+                  <AntDesign name="arrowright" size={20} color="black" />
+                </View>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() =>
+                  navigation.navigate("EditProfileScreen", {
+                    project: isStudent?.studentInfo,
+                    token: isStudent?.token,
+                  })
+                }
+              >
+                <View style={styles.seperateContainer}>
+                  <Text style={styles.seperateText}>Edit Profile</Text>
+                  <AntDesign name="arrowright" size={20} color="black" />
+                </View>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => navigation.navigate("TermsAndConditions")}
+              >
+                <View style={styles.seperateContainer}>
+                  <Text style={[styles.seperateText, { width: "90%" }]}>
+                    Terms and Conditions And Privacy Policy
+                  </Text>
+                  <AntDesign name="arrowright" size={20} color="black" />
+                </View>
+              </TouchableOpacity>
+
+              <TouchableOpacity onPress={() => setModalVisible(true)}>
+                <View
+                  style={[
+                    styles.seperateContainer,
+                    { backgroundColor: theme.colors.primary, borderWidth: 0 },
+                  ]}
+                >
+                  <Text style={[styles.seperateText, { color: "white" }]}>
+                    Logout
+                  </Text>
+                  <AntDesign name="arrowright" size={20} color="white" />
+                </View>
+              </TouchableOpacity>
+              <Modal
+                animationType="fade "
+                transparent={true}
+                visible={modalVisible}
+                onRequestClose={() => {
+                  Alert.alert("Modal has been closed.");
+                  setModalVisible(!modalVisible);
+                }}
+              >
+                <View style={styles.centeredView}>
+                  <View style={styles.modalView}>
+                    <TouchableOpacity
+                      style={[styles.button, styles.buttonClose]}
+                      onPress={() => setModalVisible(!modalVisible)}
+                    >
+                      <AntDesign name={"closecircle"} size={30} />
+                    </TouchableOpacity>
+                    <Text style={styles.modalText}>
+                      Are you Sure You Want To Logout?
+                    </Text>
+                    <TouchableOpacity
+                      onPress={() => {
+                        signOut();
+                      }}
+                      style={styles.logout}
+                    >
+                      <Text style={styles.logoutText}>Yes</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </Modal>
+            </View>
+          </>
+        )}
+      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -209,7 +268,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 16,
     fontFamily: "Roboto-Medium",
-    color: COLORS.primary,
+    color: "#008DDA",
   },
 
   textField: {

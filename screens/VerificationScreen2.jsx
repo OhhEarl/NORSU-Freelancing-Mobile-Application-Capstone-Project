@@ -7,6 +7,7 @@ import {
   Image,
   ScrollView,
   BackHandler,
+  Alert,
 } from "react-native";
 import { launchImageLibrary } from "react-native-image-picker";
 import { SelectList } from "react-native-dropdown-select-list";
@@ -19,6 +20,12 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as theme from "../assets/constants/theme";
 import { URL } from "@env";
 import LoadingComponent from "../components/LoadingComponent";
+import {
+  ALERT_TYPE,
+  Dialog,
+  AlertNotificationRoot,
+  Toast,
+} from "react-native-alert-notification";
 const VerificationScreen2 = ({
   values,
   setValues,
@@ -31,15 +38,15 @@ const VerificationScreen2 = ({
   const navigation = useNavigation();
   const { userData } = useAuthContext();
   const [userID, setUserID] = useState(null);
-  const [id, setID] = useState(null);
+
   const [token, setToken] = useState(null);
-  const [finalToken, setFinalToken] = useState(null);
+
   const [loading, setIsLoading] = useState(false);
   useEffect(() => {
     const retrieveToken = async () => {
       try {
         const data = await AsyncStorage.getItem("userInformation");
-        if (data !== null) {
+        if (data) {
           const parsedData = JSON.parse(data);
           const userID = parsedData.user.id;
           const userToken = parsedData.token;
@@ -90,16 +97,6 @@ const VerificationScreen2 = ({
     },
   ];
 
-  useEffect(() => {
-    if (userData && userData.user && userData.user.id) {
-      setID(userData.user.id);
-      setToken(userData.token);
-    } else {
-      setID(userID);
-      setFinalToken(token);
-    }
-  }, [userData, userID, token]);
-
   const frontID = async () => {
     try {
       const result = await launchImageLibrary();
@@ -107,6 +104,13 @@ const VerificationScreen2 = ({
         return;
       }
       if (result.error) {
+        Dialog.show({
+          type: ALERT_TYPE.DANGER,
+          title: "Upload Error",
+          textBody: "Something went wrong. Please Try Again!",
+          button: "Close",
+        });
+        return;
         return;
       }
       const fileSizeLimitMB = 2;
@@ -114,9 +118,19 @@ const VerificationScreen2 = ({
       const fileFormatType = result.assets[0].type; // Get file format type
       const fileFormat = ["image/jpeg", "image/jpg", "image/png"];
       if (fileSizeInMB > fileSizeLimitMB) {
-        alert("Cannot upload files larger than 2MB");
+        Dialog.show({
+          type: ALERT_TYPE.DANGER,
+          title: "Upload Error",
+          textBody: "Cannot upload file larger than 2MB.",
+          button: "Close",
+        });
       } else if (!fileFormat.includes(fileFormatType)) {
-        alert("Please upload an image in JPEG, JPG, or PNG format.");
+        Dialog.show({
+          type: ALERT_TYPE.DANGER,
+          title: "Upload Error",
+          textBody: "Please upload an image in JPEG, JPG, or PNG format.",
+          button: "Close",
+        });
       } else {
         const selectedImageUriFront = result.assets[0].uri;
         setSelectedImageUriFront(selectedImageUriFront);
@@ -133,7 +147,12 @@ const VerificationScreen2 = ({
         return;
       }
       if (result.error) {
-        console.error("ImagePicker Error: ", result.error);
+        Dialog.show({
+          type: ALERT_TYPE.DANGER,
+          title: "Upload Error",
+          textBody: "Something went wrong. Please Try Again",
+          button: "Close",
+        });
         return;
       }
       const fileSizeLimitMB = 2;
@@ -141,9 +160,19 @@ const VerificationScreen2 = ({
       const fileFormatType = result.assets[0].type; // Get file format type
       const fileFormat = ["image/jpeg", "image/jpg", "image/png"];
       if (fileSizeInMB > fileSizeLimitMB) {
-        alert("Cannot upload files larger than 2MB");
+        Dialog.show({
+          type: ALERT_TYPE.DANGER,
+          title: "Upload Error",
+          textBody: "Cannot upload file larger than 2MB.",
+          button: "Close",
+        });
       } else if (!fileFormat.includes(fileFormatType)) {
-        alert("Please upload an image in JPEG, JPG, or PNG format.");
+        Dialog.show({
+          type: ALERT_TYPE.DANGER,
+          title: "Upload Error",
+          textBody: "Please upload an image in JPEG, JPG, or PNG format.",
+          button: "Close",
+        });
       } else {
         const selectedImageUriBack = result?.assets[0]?.uri;
         setSelectedImageUriBack(selectedImageUriBack);
@@ -178,9 +207,15 @@ const VerificationScreen2 = ({
       !values.course ||
       !values.areaOfExpertise ||
       !values.norsuIDnumber ||
-      !values.skillTags
+      !values.skillTags ||
+      !values.mobile_number
     ) {
-      alert("Please fill all fields and select both front and back ID's.");
+      Dialog.show({
+        type: ALERT_TYPE.WARNING,
+        title: "Validation Failed",
+        textBody: "Please fill out all required fields.",
+        button: "Close",
+      });
       return;
     }
     const frontFileName = selectedImageUriFront.split("/").pop();
@@ -207,166 +242,180 @@ const VerificationScreen2 = ({
       formData.append("student_skills[]", tag);
     });
     formData.append("course", values.course);
-    formData.append("yearLevel", 4);
+    formData.append("yearLevel", values.yearLevel);
     formData.append("norsuIDnumber", values.norsuIDnumber);
-    formData.append("user_id", id);
+    formData.append("mobile_number", values.mobile_number);
+    formData.append("user_id", userID);
 
     try {
       setIsLoading(true);
-      let url = `${URL}/api/student-validation`;
+      let url = `${URL}/student-validation`;
       const response = await axios.post(url, formData, {
         headers: {
           Accept: "application/json",
           "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${finalToken}`,
+          Authorization: `Bearer ${token}`,
         },
       });
       const data = response.data;
+      console.log(data);
       if (response.status === 200) {
         await setIsLoading(false);
         navigation.navigate("VerificationConfirmation");
       } else {
-        alert("Something went wrong. Please Try Again!");
+        Alert.alert("Something went wrong. Please Try Again!");
       }
     } catch (err) {
-      alert(err);
+      Alert.alert("Something went wrong. Please Try Again!");
     } finally {
-      setSelectedImageUriFront(null);
-      setSelectedImageUriBack(null);
+      setIsLoading(false);
     }
   };
+
   return (
     <>
       {loading ? (
         <LoadingComponent />
       ) : (
         <ScrollView style={{ paddingVertical: 10 }}>
-          <View
-            style={{ flex: 1, backgroundColor: "white", paddingHorizontal: 30 }}
-          >
+          <AlertNotificationRoot style={styles.notification}>
             <View
               style={{
-                flexDirection: "row",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginTop: 20,
-                marginBottom: 20,
+                flex: 1,
+                backgroundColor: "white",
+                paddingHorizontal: 30,
               }}
             >
-              <Feather
-                name="arrow-left"
-                size={24}
-                color={theme.colors.BLACKS}
-                onPress={onPrev}
-              />
-              <Text
+              <View
                 style={{
-                  marginRight: 25,
-                  fontFamily: "Roboto-Bold",
-                  color: theme.colors.BLACKS,
-                  fontSize: 18,
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginTop: 20,
+                  marginBottom: 20,
                 }}
               >
-                STEP 2
-              </Text>
-              <Text></Text>
-            </View>
-            <View style={styles.inputFieldContainer}>
-              <Text style={styles.inputLabel}>ID Number</Text>
-              <TextInput
-                style={styles.inputField}
-                placeholderTextColor="#000"
-                placeholder="Enter NORSU ID number"
-                value={values.norsuIDnumber}
-                onChangeText={(text) =>
-                  setValues({ ...values, norsuIDnumber: text })
-                }
-              />
-            </View>
-
-            <View style={styles.inputFieldContainer}>
-              <Text style={styles.inputLabel}>Course</Text>
-              <TextInput
-                style={styles.inputField}
-                placeholderTextColor="#000"
-                placeholder="Enter your course"
-                value={values.course}
-                onChangeText={(text) => setValues({ ...values, course: text })}
-              />
-            </View>
-            <View style={{ marginVertical: 20 }}>
-              <Text style={styles.inputLabel}>Year Level</Text>
-              <SelectList
-                key={`yearLevel-${values.yearLevel}`} // Ensure a unique key for each SelectList instance
-                setSelected={handleYearLevelChange}
-                style={styles.inputField}
-                data={yearLevelOptions.map((item) => item.yearLevel)} // Pass an array of strings
-                placeholder="Select your year level"
-                search={false}
-                dropdownTextStyles={{
-                  color: "black",
-                  fontFamily: "Roboto-Medium",
-                }}
-                inputStyles={{ color: "black", fontFamily: "Roboto-Regular" }}
-                boxStyles={{
-                  paddingVertical: 15,
-                  borderColor: theme.colors.primary,
-                }}
-                selectedValue={
-                  selectedYearLevel ? selectedYearLevel.yearLevel : ""
-                }
-                defaultOption={{
-                  key: values.yearLevel.toString(), // Keep it as a string
-                  value: selectedYearLevel ? selectedYearLevel.yearLevel : "",
-                }}
-              />
-            </View>
-            <View style={styles.idContainer}>
-              <View style={styles.eachIDContainer}>
-                {selectedImageUriFront && (
-                  <Image
-                    source={{ uri: selectedImageUriFront }}
-                    style={styles.image}
-                  />
-                )}
+                <Feather
+                  name="arrow-left"
+                  size={24}
+                  color={theme.colors.BLACKS}
+                  onPress={onPrev}
+                />
+                <Text
+                  style={{
+                    marginRight: 25,
+                    fontFamily: "Roboto-Bold",
+                    color: theme.colors.BLACKS,
+                    fontSize: 18,
+                  }}
+                >
+                  STEP 2
+                </Text>
+                <Text></Text>
               </View>
-              <View style={styles.eachIDContainer}>
-                {selectedImageUriBack && (
-                  <Image
-                    source={{ uri: selectedImageUriBack }}
-                    style={styles.image}
-                  />
-                )}
+              <View style={styles.inputFieldContainer}>
+                <Text style={styles.inputLabel}>ID Number</Text>
+                <TextInput
+                  style={styles.inputField}
+                  placeholderTextColor={theme.colors.gray}
+                  placeholder="enter NORSU ID number"
+                  keyboardType="numeric"
+                  value={values.norsuIDnumber}
+                  onChangeText={(text) =>
+                    setValues({ ...values, norsuIDnumber: text })
+                  }
+                />
+              </View>
+
+              <View style={styles.inputFieldContainer}>
+                <Text style={styles.inputLabel}>Course</Text>
+                <TextInput
+                  style={styles.inputField}
+                  placeholderTextColor={theme.colors.gray}
+                  placeholder="enter course"
+                  value={values.course}
+                  onChangeText={(text) =>
+                    setValues({ ...values, course: text })
+                  }
+                />
+              </View>
+              <View style={{ marginVertical: 20 }}>
+                <Text style={styles.inputLabel}>Year Level</Text>
+                <SelectList
+                  key={`yearLevel-${values.yearLevel}`} // Ensure a unique key for each SelectList instance
+                  setSelected={handleYearLevelChange}
+                  style={styles.inputField}
+                  data={yearLevelOptions.map((item) => item.yearLevel)} // Pass an array of strings
+                  placeholder="select year level"
+                  search={false}
+                  dropdownTextStyles={{
+                    color: "black",
+                    fontFamily: "Roboto-Medium",
+                  }}
+                  inputStyles={{
+                    color: "black",
+                    fontFamily: "Roboto-Regular",
+                  }}
+                  boxStyles={{
+                    paddingVertical: 15,
+                    borderColor: theme.colors.primary,
+                  }}
+                  selectedValue={
+                    selectedYearLevel ? selectedYearLevel.yearLevel : ""
+                  }
+                  defaultOption={{
+                    key: values.yearLevel.toString(), // Keep it as a string
+                    value: selectedYearLevel ? selectedYearLevel.yearLevel : "",
+                  }}
+                />
+              </View>
+              <View style={styles.idContainer}>
+                <View style={styles.eachIDContainer}>
+                  {selectedImageUriFront && (
+                    <Image
+                      source={{ uri: selectedImageUriFront }}
+                      style={styles.image}
+                    />
+                  )}
+                </View>
+                <View style={styles.eachIDContainer}>
+                  {selectedImageUriBack && (
+                    <Image
+                      source={{ uri: selectedImageUriBack }}
+                      style={styles.image}
+                    />
+                  )}
+                </View>
+              </View>
+              <View style={styles.idContainerButton}>
+                <Button
+                  title="Front ID"
+                  onPress={frontID}
+                  style={styles.button}
+                  filled
+                />
+                <Button
+                  title="Back ID"
+                  onPress={backID}
+                  style={styles.button}
+                  filled
+                />
+              </View>
+
+              <View>
+                <Button
+                  title="Submit"
+                  style={{
+                    position: "relative",
+                    width: "100%",
+                    marginTop: 20,
+                  }}
+                  onPress={studentValidation}
+                  filled
+                />
               </View>
             </View>
-            <View style={styles.idContainerButton}>
-              <Button
-                title="Front ID"
-                onPress={frontID}
-                style={styles.button}
-                filled
-              />
-              <Button
-                title="Back ID"
-                onPress={backID}
-                style={styles.button}
-                filled
-              />
-            </View>
-
-            <View>
-              <Button
-                title="Submit"
-                style={{
-                  position: "relative",
-                  width: "100%",
-                  marginTop: 20,
-                }}
-                onPress={studentValidation}
-                filled
-              />
-            </View>
-          </View>
+          </AlertNotificationRoot>
         </ScrollView>
       )}
     </>
@@ -425,5 +474,11 @@ const styles = StyleSheet.create({
   },
   button: {
     paddingHorizontal: 10,
+  },
+
+  notification: {
+    flex: 1,
+    justifyContent: "center",
+    alignContent: "center",
   },
 });

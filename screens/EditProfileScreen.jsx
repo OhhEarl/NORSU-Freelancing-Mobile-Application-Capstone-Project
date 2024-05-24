@@ -8,8 +8,6 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
-  FlatList,
-  TouchableWithoutFeedback,
   Alert,
 } from "react-native";
 import { AuthProvider, useAuthContext } from "../hooks/AuthContext";
@@ -19,100 +17,39 @@ import * as theme from "../assets/constants/theme";
 import Tags from "react-native-tags";
 import { launchImageLibrary } from "react-native-image-picker";
 import LoadingComponent from "../components/LoadingComponent";
-import Button from "../components/Button";
 import axios from "axios";
 import TagInput from "../components/TagInput";
+import {
+  ALERT_TYPE,
+  Dialog,
+  AlertNotificationRoot,
+  Toast,
+} from "react-native-alert-notification";
 import { URL } from "@env";
-const EditProfileScreen = ({ navigation }) => {
-  const { isStudent, updateIsStudent } = useAuthContext();
-
+const EditProfileScreen = ({ navigation, route }) => {
+  const { updateIsStudent } = useAuthContext();
+  const { isStudent } = route.params;
+  const baseUrlWithoutApi = URL.replace("/api", "");
   const [userAvatar, setUserAvatar] = useState(
-    isStudent?.studentInfo?.user_avatar
+    `${baseUrlWithoutApi}/storage/${isStudent?.studentInfo?.user_avatar}`
   );
   const [userName, setUserName] = useState(isStudent?.studentInfo?.user_name);
-
+  const [phoneNumber, setPhoneNumber] = useState(
+    isStudent?.studentInfo?.mobile_number
+  );
   const [aboutMe, setAboutMe] = useState("");
   const [studentSkills, setStudentSkills] = useState(
     isStudent?.studentInfo?.skill_tags || []
   );
   const [portfolioImages, setPortfolioImages] = useState([]);
   const [isLoading, setLoading] = useState(false);
-
-  const [inputText, setInputText] = useState("");
-  const [suggestions, setSuggestions] = useState([]);
-  const [areasOfExpertise, setAreasOfExpertise] = useState({});
-  const [areaExpertise, setAreaExpertise] = useState(
+  const [areaOfExpertise, setAreaOfExpertise] = useState(
     isStudent?.studentInfo?.area_of_expertise || ""
   );
   const [key, setKey] = useState(0);
 
   const onChangeSkills = (newSkills) => {
     setStudentSkills((prev) => ({ ...prev, skillTags: newSkills }));
-  };
-
-  useEffect(() => {
-    setInputText(areaExpertise); // Set initial input text to current area of expertise
-  }, []);
-
-  const handleInputChange = (text) => {
-    setInputText(text); // Update the state
-    setAreaExpertise(text); // Update the areaExpertise state
-    if (text === "") {
-      setSuggestions([]); // Clear suggestions when input is empty
-    } else {
-      const filteredSuggestions = Object.values(
-        areasOfExpertise.areasOfExpertise
-      ).filter((category) =>
-        category.toLowerCase().includes(text.toLowerCase())
-      );
-      setSuggestions(filteredSuggestions);
-    }
-  };
-  const handleSuggestionPress = (category) => {
-    const key = Object.keys(areasOfExpertise.areasOfExpertise).find(
-      (key) => areasOfExpertise.areasOfExpertise[key] === category
-    );
-
-    setInputText(category); // Set the category as the input text
-    setAreaExpertise(key); // Set the key as the value for areaExpertise
-    setSuggestions([]); // Clear suggestions
-  };
-
-  const handlePressOutside = () => {
-    setSuggestions([]); // Clear suggestions when pressing outside the TextInput or FlatList
-  };
-
-  useEffect(() => {
-    fetchExpertiseCategories();
-  }, []);
-
-  const fetchExpertiseCategories = async () => {
-    try {
-      const response = await axios.get(
-        `${URL}/api/student-validations/expertise`,
-        {
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      const data = await response.data;
-
-      const transformedData = {
-        areasOfExpertise: {},
-      };
-
-      data.forEach((item) => {
-        transformedData.areasOfExpertise[item.id.toString()] = item.expertise;
-      });
-
-      setAreasOfExpertise(transformedData);
-      setLoading(false);
-    } catch (error) {
-      alert(error);
-      setLoading(false);
-    }
   };
 
   const imageAvatar = async () => {
@@ -210,88 +147,122 @@ const EditProfileScreen = ({ navigation }) => {
   };
 
   const updateProfile = async () => {
-    setLoading(true);
-    const formData = new FormData();
-    formData.append("user_id", isStudent.studentInfo.user_id);
-    formData.append("user_name", userName);
-    studentSkills.forEach((skill, index) => {
-      formData.append(`student_skills[${index}]`, skill);
-    });
-    formData.append("area_of_expertise", areaExpertise);
-
-    formData.append("user_avatar", {
-      uri: userAvatar,
-      name: `${userAvatar.split("/").pop()}`,
-      type: `image/${userAvatar.split(".").pop()}`,
-    });
-    -portfolioImages.forEach((image, index) => {
-      formData.append(`portfolio[${index}]`, {
-        uri: image,
-        name: `${image.split("/").pop()}`,
-        type: `image/${image.split(".").pop()}`,
+    if (!userName && areaOfExpertise && phoneNumber) {
+      Dialog.show({
+        type: ALERT_TYPE.WARNING,
+        title: "Validation Failed",
+        textBody: "Username, Area of Expertise and Phone Number are required.",
+        button: "Close",
       });
-    });
-
-    let url = `${URL}/api/student-validations/update`;
-    try {
-      const response = await axios.post(url, formData, {
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${isStudent.token}`,
-        },
+    } else if (phoneNumber === 11) {
+      Dialog.show({
+        type: ALERT_TYPE.WARNING,
+        title: "Phone Number Error",
+        textBody: "Phone number must be 11 digits number.",
+        button: "Close",
       });
+    } else {
+      const formData = new FormData();
+      formData.append("user_name", userName);
+      formData.append("mobile_number", phoneNumber);
+      studentSkills.forEach((skill, index) => {
+        formData.append(`student_skills[${index}]`, skill);
+      });
+      formData.append("area_of_expertise", areaOfExpertise);
 
-      if (response.status === 200 && response.data) {
-        updateIsStudent(response.data); // Use passed prop
-        Alert.alert("User updated Successfully.");
+      if (userAvatar && userAvatar.startsWith("file://")) {
+        formData.append("user_avatar", {
+          uri: userAvatar,
+          name: userAvatar.split("/").pop(),
+          type: `image/${userAvatar.split(".").pop()}`,
+        });
       }
-    } catch (error) {
-      Alert.alert(error.message);
-    } finally {
-      setLoading(false);
+
+      portfolioImages.forEach((image, index) => {
+        formData.append(`portfolio[${index}]`, {
+          uri: image,
+          name: image.split("/").pop(),
+          type: `image/${image.split(".").pop()}`,
+        });
+      });
+
+      let url = `${URL}/student/validations/profile/update/${isStudent.studentInfo.user_id}`;
+
+      try {
+        setLoading(true);
+        const response = await axios({
+          method: "post",
+          url: url,
+          data: formData,
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${isStudent.token}`,
+          },
+        });
+
+        if (response.status === 200) {
+          await updateIsStudent(response.data.data);
+        }
+      } catch (error) {
+        Dialog.show({
+          type: ALERT_TYPE.DANGER,
+          title: "Success",
+          textBody: error.message,
+          button: "Close",
+        });
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
-  const fetchPortfolio = async (studentUserId) => {
+  const fetchPortfolio = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(
-        `${URL}/api/student-portfolio/${studentUserId}`,
-        {
-          headers: {
-            Accept: "application/json",
-            Authorization: `Bearer ${isStudent.token}`, // Include only the authorization header
-          },
-        }
-      );
+      if (isStudent && isStudent.studentInfo && isStudent.studentInfo.user_id) {
+        // Check for all properties
+        const response = await axios.get(
+          `${URL}/student-portfolio/${isStudent.studentInfo.user_id}`,
+          {
+            headers: {
+              Accept: "application/json",
+              Authorization: `Bearer ${isStudent.token}`,
+            },
+          }
+        );
 
-      if (response.status === 200 && response.data && response.data.portfolio) {
-        setPortfolioImages(response.data.portfolio);
+        if (
+          response.status === 200 &&
+          response.data &&
+          response.data.portfolio
+        ) {
+          await setPortfolioImages(response.data.portfolio);
+        }
       } else {
-        console.error("Error fetching portfolio:", response.data); // Log detailed error information
-        // Handle errors gracefully, e.g., display an error message or retry logic
+        console.warn("User information not available yet"); // Or handle it differently
       }
     } catch (error) {
-      console.error("Error fetching portfolio:", error); // Log detailed error information
-      // Handle network errors or other exceptions gracefully
+      Dialog.show({
+        type: ALERT_TYPE.DANGER,
+        title: "Error",
+        textBody: error.message,
+        button: "Close",
+      });
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    // Fetch portfolio only after isStudent data is available (assuming it contains studentUserId)
-    if (isStudent && isStudent.studentInfo && isStudent.studentInfo.user_id) {
-      fetchPortfolio(isStudent.studentInfo.user_id);
+    if (isStudent) {
+      fetchPortfolio();
     }
-  }, [isStudent]);
+  }, []);
 
   return (
     <SafeAreaView style={styles.mainContainer}>
-      {isLoading ? (
-        <LoadingComponent />
-      ) : (
+      <AlertNotificationRoot style={styles.notification}>
         <ScrollView showsVerticalScrollIndicator={false}>
           <View
             style={{
@@ -310,7 +281,7 @@ const EditProfileScreen = ({ navigation }) => {
             />
             <Text
               style={{
-                marginRight: 25,
+                marginRight: 5,
                 fontFamily: "Roboto-Medium",
                 color: theme.colors.BLACKS,
                 fontSize: 18,
@@ -331,11 +302,15 @@ const EditProfileScreen = ({ navigation }) => {
               <Image
                 objectFit="contain"
                 style={styles.image}
-                source={{
-                  uri:
-                    userAvatar ||
-                    "https://img.freepik.com/free-psd/3d-illustration-person-with-sunglasses_23-2149436188.jpg?w=740&t=st=1670148608~exp=1670149208~hmac=bc57b66d67d2b9f4929c8e592ff17e8c8660721608add2f18fc20d19c1aab7e4",
-                }}
+                source={
+                  userAvatar
+                    ? {
+                        uri: userAvatar,
+                      }
+                    : {
+                        uri: "https://img.freepik.com/free-psd/3d-illustration-person-with-sunglasses_23-2149436188.jpg?w=740&t=st=1670148608~exp=1670149208~hmac=bc57b66d67d2b9f4929c8e592ff17e8c8660721608add2f18fc20d19c1aab7e4",
+                      }
+                }
               />
 
               <TouchableOpacity
@@ -348,6 +323,7 @@ const EditProfileScreen = ({ navigation }) => {
             <View style={styles.inputFieldContainer}>
               <Text style={styles.inputLabel}>Username</Text>
               <TextInput
+                placeholderTextColor={theme.colors.gray}
                 placeholder="Username"
                 type="text"
                 value={userName}
@@ -356,45 +332,29 @@ const EditProfileScreen = ({ navigation }) => {
               />
             </View>
 
-            <TouchableWithoutFeedback onPress={handlePressOutside}>
-              <View style={styles.inputFieldContainer}>
-                <Text style={styles.inputLabel}>Area of Expertise</Text>
-                <TextInput
-                  style={styles.inputField}
-                  label="Area of Expertise"
-                  placeholderTextColor="#000"
-                  placeholder="Choose or input your area of expertise"
-                  value={inputText}
-                  onChangeText={handleInputChange}
-                />
-                <FlatList
-                  style={{ maxHeight: 150, backgroundColor: "white" }}
-                  data={suggestions}
-                  scrollEnabled={false}
-                  renderItem={({ item }) => (
-                    <TouchableOpacity
-                      onPress={() => handleSuggestionPress(item)}
-                    >
-                      <View>
-                        <Text
-                          style={{
-                            marginTop: 12,
-                            marginStart: 12,
-                            fontWeight: 600,
-                            fontSize: 14,
-                            marginBottom: 5,
-                            color: "black",
-                          }}
-                        >
-                          {item}
-                        </Text>
-                      </View>
-                    </TouchableOpacity>
-                  )}
-                  keyExtractor={(item, index) => index.toString()}
-                />
-              </View>
-            </TouchableWithoutFeedback>
+            <View style={styles.inputFieldContainer}>
+              <Text style={styles.inputLabel}>Phone Number</Text>
+              <TextInput
+                placeholderTextColor={theme.colors.gray}
+                placeholder="Phone Number"
+                type="text"
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.nativeEvent.text)}
+                style={styles.inputField}
+              />
+            </View>
+
+            <View style={styles.inputFieldContainer}>
+              <Text style={styles.inputLabel}>Area of Expertise</Text>
+              <TextInput
+                style={styles.inputField}
+                label="Area of Expertise"
+                placeholderTextColor={theme.colors.gray}
+                placeholder="Input your area of expertise"
+                value={areaOfExpertise}
+                onChangeText={setAreaOfExpertise}
+              />
+            </View>
 
             <View style={styles.inputFieldContainer}>
               <Text style={[styles.inputLabel, { marginBottom: -4 }]}>
@@ -434,38 +394,40 @@ const EditProfileScreen = ({ navigation }) => {
               </View>
             </View>
 
-            {isLoading ? (
-              <LoadingComponent />
-            ) : (
-              <View style={styles.inputFieldContainer}>
-                <Text style={styles.inputLabel}>Portfolio</Text>
-                <View style={styles.portfolioContainer}>
-                  {portfolioImages.map((image, index) => (
-                    <View key={index} style={styles.portfolioImageContainer}>
-                      <Image
-                        source={{ uri: image }}
-                        style={styles.portfolioImage}
-                      />
-                      <TouchableOpacity
-                        style={styles.closeButton}
-                        onPress={() => handleImageDelete(index)}
-                      >
-                        <Text style={styles.closeButtonText}>X</Text>
-                      </TouchableOpacity>
-                    </View>
-                  ))}
-                  <TouchableOpacity
-                    style={styles.addImageContainer}
-                    onPress={selectImage}
-                  >
-                    <Text style={styles.addImageText}>+</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            )}
+            <View style={[styles.inputFieldContainer, { marginTop: 20 }]}>
+              {isLoading ? (
+                <LoadingComponent />
+              ) : (
+                <>
+                  <Text style={styles.inputLabel}>Portfolio</Text>
+                  <View style={styles.portfolioContainer}>
+                    {portfolioImages.map((image, index) => (
+                      <View key={index} style={styles.portfolioImageContainer}>
+                        <Image
+                          source={{ uri: image }}
+                          style={styles.portfolioImage}
+                        />
+                        <TouchableOpacity
+                          style={styles.closeButton}
+                          onPress={() => handleImageDelete(index)}
+                        >
+                          <Text style={styles.closeButtonText}>X</Text>
+                        </TouchableOpacity>
+                      </View>
+                    ))}
+                    <TouchableOpacity
+                      style={styles.addImageContainer}
+                      onPress={selectImage}
+                    >
+                      <Text style={styles.addImageText}>+</Text>
+                    </TouchableOpacity>
+                  </View>
+                </>
+              )}
+            </View>
           </View>
         </ScrollView>
-      )}
+      </AlertNotificationRoot>
     </SafeAreaView>
   );
 };
@@ -482,11 +444,11 @@ const styles = StyleSheet.create({
     marginHorizontal: 5,
     alignItems: "center",
     marginVertical: 30,
-    marginTop: 50,
+    marginTop: 40,
   },
   imageContainer: {
     position: "relative",
-    marginBottom: 30,
+    marginBottom: 10,
   },
   image: {
     height: 120,
@@ -505,7 +467,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   inputFieldContainer: {
-    marginVertical: 10,
+    marginVertical: 5,
     width: "100%",
   },
   inputLabel: {

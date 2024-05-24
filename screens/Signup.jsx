@@ -1,237 +1,220 @@
-import { View, Text, Pressable, TextInput } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Alert,
+  StyleSheet,
+} from "react-native";
 import React, { useState, useEffect } from "react";
-import { useIsFocused } from "@react-navigation/native";
+
 import { SafeAreaView } from "react-native-safe-area-context";
 import Button from "../components/Button";
 import * as theme from "../assets/constants/theme";
 import auth from "@react-native-firebase/auth";
-import DeviceInfo from "react-native-device-info";
+
+import Ionicons from "react-native-vector-icons/Ionicons";
+import { COLORS } from "../assets/constants/index";
+import LottieView from "lottie-react-native";
+import {
+  ALERT_TYPE,
+  Dialog,
+  AlertNotificationRoot,
+  Toast,
+} from "react-native-alert-notification";
 const Signup = ({ navigation }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const isFocused = useIsFocused();
-  const uniqueId = DeviceInfo.getUniqueId();
-  useEffect(() => {
-    if (!isFocused) {
-      setEmail("");
-      setPassword("");
-      setErrorMessage("");
-    }
-  }, [isFocused]);
+  const [isPasswordShown, setIsPasswordShown] = useState(true);
 
   const handleSignup = async () => {
-    setLoading(true);
-    if (!email || !password) {
-      return;
-    } else if (password.length < 8) {
-      setErrorMessage("Password must be at least 8 characters long.");
+    try {
+      setLoading(true);
+      const userCredential = await auth().createUserWithEmailAndPassword(
+        email,
+        password
+      );
+      const user = userCredential.user;
+      if (user && !user.emailVerified) {
+        await user.sendEmailVerification();
+
+        Alert.alert("Please very your email before logging in.");
+      }
+    } catch (error) {
+      if (error.code === "auth/email-already-in-use") {
+        setErrorMessage("Email address is already in use!");
+      } else if (error.code === "auth/invalid-email") {
+        setErrorMessage("Email address is invalid!");
+      } else {
+        setErrorMessage(error.message); // Use error.message to display a human-readable error message
+      }
+    } finally {
       setLoading(false);
-      return;
     }
+  };
 
-    setErrorMessage("");
-
-    auth()
-      .createUserWithEmailAndPassword(email, password)
-      .then(async (userCredential) => {
-        const user = userCredential.user;
-        if (!user.emailVerified) {
-          await user.sendEmailVerification();
-          navigation.replace("Login");
-          alert("Please verify your email before logging in.");
-          return;
-        }
-      })
-      .catch((error) => {
-        if (error.code === "auth/email-already-in-use") {
-          setErrorMessage("Email address is already in use!");
-        }
-
-        if (error.code === "auth/invalid-email") {
-          setErrorMessage("Email address is invalid!");
-        }
-
-        alert(error);
-      });
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
   };
 
   const handleSignupButtonClick = () => {
-    if (!email || !password) {
-      setErrorMessage("Email and password are required.");
+    if (!email.trim() || !password.trim()) {
+      setErrorMessage("Please enter both email and password.");
+    } else if (!validateEmail(email)) {
+      setErrorMessage("Please enter a valid email address.");
+    } else if (password.length < 8) {
+      setErrorMessage("Password must be at least 8 characters long.");
     } else {
       handleSignup();
     }
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.WHITE }}>
-      <View style={{ flex: 1, marginHorizontal: 22, justifyContent: "center" }}>
-        <View style={{ marginVertical: 22, alignItems: "center" }}>
-          <Text
-            style={{
-              fontSize: 35,
-              fontWeight: "bold",
-              marginVertical: 12,
-              color: theme.colors.BLACKS,
-            }}
-          >
-            Create an account
-          </Text>
-
-          <Text
-            style={{
-              fontSize: 16,
-              color: theme.colors.BLACKS,
-            }}
-          >
-            Get paid for passion!
-          </Text>
-        </View>
-
-        <View style={{ marginBottom: 12 }}>
-          <Text
-            style={{
-              fontSize: 16,
-              fontWeight: 400,
-              marginVertical: 8,
-            }}
-          >
-            Email address
-          </Text>
-
-          <View
-            style={{
-              width: "100%",
-              height: 48,
-              borderColor: theme.colors.BLACKS,
-              borderWidth: 1,
-              borderRadius: 8,
-              alignItems: "center",
-              justifyContent: "center",
-              paddingLeft: 22,
-            }}
-          >
-            <TextInput
-              placeholder="Enter your email address"
-              placeholderTextColor={theme.colors.BLACKS}
-              onChangeText={(text) => setEmail(text)}
-              value={email}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              style={{
-                width: "100%",
-              }}
-            />
-          </View>
-        </View>
-
-        <View style={{ marginBottom: 12 }}>
-          <Text
-            style={{
-              fontSize: 16,
-              fontWeight: 400,
-              marginVertical: 8,
-            }}
-          >
-            Password
-          </Text>
-
-          <View
-            style={{
-              width: "100%",
-              height: 48,
-              borderColor: theme.colors.BLACKS,
-              borderWidth: 1,
-              borderRadius: 8,
-              alignItems: "center",
-              justifyContent: "center",
-              paddingLeft: 22,
-            }}
-          >
-            <TextInput
-              placeholder="Enter your password"
-              placeholderTextColor={theme.colors.BLACKS}
-              onChangeText={(text) => setPassword(text)}
-              value={password}
-              secureTextEntry
-              style={{
-                width: "100%",
-              }}
-            />
-
-            {/* <TouchableOpacity
-                            onPress={() => setIsPasswordShown(!isPasswordShown)}
-                            style={{
-                                position: "absolute",
-                                right: 12
-                            }}
-                        >
-                            {
-                                isPasswordShown == true ? (
-                                    <Ionicons name="eye-off" size={24} color={COLORS.black} />
-                                ) : (
-                                    <Ionicons name="eye" size={24} color={COLORS.black} />
-                                )
-                            }
-
-                        </TouchableOpacity> */}
-          </View>
-          <Text style={{ color: "red", marginTop: 5 }}>{errorMessage}</Text>
-        </View>
-
-        {/* <View style={{
-                    flexDirection: 'row',
-                    marginVertical: 6
-                }}>
-                    <Checkbox
-                        style={{ marginRight: 8 }}
-                        value={isChecked}
-                        onValueChange={setIsChecked}
-                        color={isChecked ? COLORS.primary : undefined}
-                    />
-
-                    <Text>I aggree to the terms and conditions</Text>
-                </View> */}
-
-        <Button
-          onPress={handleSignupButtonClick}
-          title="Sign Up"
-          filled
-          style={{
-            marginTop: 18,
-            marginBottom: 4,
-          }}
-        />
-
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.red }}>
+      <AlertNotificationRoot style={styles.notification}>
         <View
-          style={{
-            flexDirection: "row",
-            justifyContent: "center",
-            marginVertical: 22,
-          }}
+          style={{ flex: 1, marginHorizontal: 22, justifyContent: "center" }}
         >
-          <Text style={{ fontSize: 16, color: theme.colors.BLACKS }}>
-            Already have an account?
-          </Text>
-          <Pressable onPress={() => navigation.navigate("Login")}>
-            <Text
+          <View>
+            <View style={{ alignItems: "center" }}>
+              <View style={styles.overlay}>
+                <LottieView
+                  source={require("../assets/astronautAnimation.json")}
+                  style={styles.lottie}
+                  speed={2}
+                  autoPlay
+                  loop
+                />
+              </View>
+              <Text
+                style={{
+                  fontSize: 35,
+                  fontWeight: "bold",
+                  marginVertical: 12,
+                  color: theme.colors.BLACKS,
+                }}
+              >
+                Create an account
+              </Text>
+
+              <Text
+                style={{
+                  fontSize: 16,
+                  color: theme.colors.BLACKS,
+                }}
+              >
+                Get paid for passion!
+              </Text>
+            </View>
+
+            <View style={theme.utilities.inputContainer}>
+              <Text style={theme.utilities.title}>Email</Text>
+              <TextInput
+                placeholder="enter your email address"
+                placeholderTextColor={COLORS.black}
+                onChangeText={(text) => setEmail(text)}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                style={[theme.utilities.inputField, { height: 50 }]}
+              />
+            </View>
+
+            <View style={theme.utilities.inputContainer}>
+              <Text style={theme.utilities.title}>Password</Text>
+              <TextInput
+                placeholder="enter your password"
+                placeholderTextColor={COLORS.black}
+                onChangeText={(text) => setPassword(text)}
+                style={[theme.utilities.inputField, { height: 50 }]}
+                secureTextEntry={isPasswordShown}
+                value={password}
+              />
+
+              <TouchableOpacity
+                onPress={() => setIsPasswordShown(!isPasswordShown)}
+                style={{
+                  position: "absolute",
+                  right: 12,
+                  top: "50%",
+                }}
+              >
+                {isPasswordShown == true ? (
+                  <Ionicons name="eye-off" size={24} color={COLORS.black} />
+                ) : (
+                  <Ionicons name="eye" size={24} color={COLORS.black} />
+                )}
+              </TouchableOpacity>
+            </View>
+
+            {errorMessage ? (
+              <Text style={{ color: "red", marginTop: 2, marginLeft: 5 }}>
+                {errorMessage || error}
+              </Text>
+            ) : (
+              <Text> </Text>
+            )}
+
+            <Button
+              onPress={handleSignupButtonClick}
+              title="Sign Up"
+              filled
               style={{
-                fontSize: 16,
-                color: theme.colors.primary,
-                fontWeight: "bold",
-                marginLeft: 6,
-                textDecorationLine: "underline",
+                marginTop: 18,
+                marginBottom: 4,
+              }}
+            />
+
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "center",
+                marginVertical: 22,
               }}
             >
-              Login
-            </Text>
-          </Pressable>
+              <Text style={{ fontSize: 16, color: theme.colors.BLACKS }}>
+                Already have an account?
+              </Text>
+              <TouchableOpacity onPress={() => navigation.navigate("Login")}>
+                <Text
+                  style={{
+                    fontSize: 16,
+                    color: theme.colors.primary,
+                    fontWeight: "bold",
+                    marginLeft: 6,
+                    textDecorationLine: "underline",
+                  }}
+                >
+                  Login
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
-      </View>
+      </AlertNotificationRoot>
     </SafeAreaView>
   );
 };
 
 export default Signup;
+const styles = StyleSheet.create({
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: "center",
+  },
+  lottie: {
+    position: "absolute",
+    right: -100,
+    width: 300,
+    height: 300,
+    top: -170,
+  },
+
+  notification: {
+    flex: 1,
+    justifyContent: "center",
+    alignContent: "center",
+  },
+});

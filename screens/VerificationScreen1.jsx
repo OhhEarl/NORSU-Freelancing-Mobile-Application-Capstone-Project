@@ -1,264 +1,224 @@
-import { React, useEffect, useState } from "react";
-import {
-  View,
-  StyleSheet,
-  Image,
-  TextInput,
-  Text,
-  FlatList,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
-  Keyboard,
-  ScrollView,
-} from "react-native";
-import { URL } from "@env";
+import { React, useState, useEffect } from "react";
+import { View, StyleSheet, TextInput, Text, ScrollView } from "react-native";
+import { useIsFocused } from "@react-navigation/native";
 import * as theme from "../assets/constants/theme";
 import Button from "../components/Button";
 import Feather from "react-native-vector-icons/Feather";
-import axios from "axios";
+import {
+  ALERT_TYPE,
+  Dialog,
+  AlertNotificationRoot,
+  Toast,
+} from "react-native-alert-notification";
 import TagInput from "../components/TagInput";
-import LoadingComponent from "../components/LoadingComponent";
 const VerificationScreen1 = ({ onNext, values, setValues, navigation }) => {
-  const [inputText, setInputText] = useState("");
-  const [suggestions, setSuggestions] = useState([]);
-  const [areasOfExpertise, setAreasOfExpertise] = useState({});
-  const [loading, setLoading] = useState(false);
   const [key, setKey] = useState(0);
   const onChangeSkills = (newSkills) => {
     setValues((prev) => ({ ...prev, skillTags: newSkills }));
   };
-
-  const handleInputChange = (text) => {
-    setInputText(text); // Update the state
-    setValues({ ...values, areaOfExpertise: text }); // Update the values state
-    if (text === "") {
-      setSuggestions([]); // Clear suggestions when input is empty
-    } else {
-      const filteredSuggestions = Object.values(
-        areasOfExpertise.areasOfExpertise
-      ).filter((category) =>
-        category.toLowerCase().includes(text.toLowerCase())
-      );
-      setSuggestions(filteredSuggestions);
-    }
-  };
-  const handleSuggestionPress = (category) => {
-    const key = Object.keys(areasOfExpertise.areasOfExpertise).find(
-      (key) => areasOfExpertise.areasOfExpertise[key] === category
-    );
-
-    setInputText(category); // Set the category as the input text
-    setValues({ ...values, areaOfExpertise: key }); // Set the key as the value for areaOfExpertise in the props
-    setSuggestions([]); // Clear suggestions
-  };
-  const handlePressOutside = () => {
-    setSuggestions([]); // Clear suggestions when pressing outside the TextInput or FlatList
-  };
+  const isFocused = useIsFocused();
+  useEffect(() => {
+    setKey((prevKey) => prevKey - 1);
+    setValues((prev) => ({ ...prev, skillTags: [] }));
+  }, [isFocused]);
 
   const handleNextPress = () => {
-    // Check if all input fields are filled
+    const {
+      userName,
+      firstName,
+      lastName,
+      areaOfExpertise,
+      mobile_number,
+      skillTags,
+    } = values;
+
     if (
-      values.userName &&
-      values.firstName &&
-      values.lastName &&
-      values.areaOfExpertise
+      !userName ||
+      !firstName ||
+      !lastName ||
+      !areaOfExpertise ||
+      !mobile_number ||
+      skillTags.length === 0
     ) {
-      onNext();
-    } else {
-      alert("All fields are required");
-    }
-  };
-
-  useEffect(() => {
-    fetchExpertiseCategories();
-  }, []);
-  const fetchExpertiseCategories = async () => {
-    try {
-      const response = await axios.get(
-        `${URL}/api/student-validations/expertise`,
-        {
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      const data = await response.data;
-
-      const transformedData = {
-        areasOfExpertise: {},
-      };
-
-      data.forEach((item) => {
-        transformedData.areasOfExpertise[item.id.toString()] = item.expertise;
+      Dialog.show({
+        type: ALERT_TYPE.WARNING,
+        title: "Validation Failed",
+        textBody: "Please fill out all required fields.",
+        button: "Close",
       });
-
-      setAreasOfExpertise(transformedData);
-      setLoading(false);
-    } catch (error) {
-      alert(error);
-      setLoading(false);
+    } else if (mobile_number === 11) {
+      Dialog.show({
+        type: ALERT_TYPE.WARNING,
+        title: "Phone Number Error",
+        textBody: "Phone number must be 11 digits number.",
+        button: "Close",
+      });
+    } else {
+      onNext();
     }
   };
+
   return (
     <ScrollView>
-      <TouchableWithoutFeedback
-        onPress={(handlePressOutside, Keyboard.dismiss)}
-      >
-        {loading ? (
-          <LoadingComponent />
-        ) : (
+      <AlertNotificationRoot style={styles.notification}>
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: "white",
+            paddingHorizontal: 30,
+            paddingVertical: 10,
+          }}
+        >
           <View
             style={{
-              flex: 1,
-              backgroundColor: "white",
-              paddingHorizontal: 30,
-              paddingVertical: 10,
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginTop: 20,
             }}
           >
-            <View
+            <Feather
+              name="arrow-left"
+              size={24}
+              color={theme.colors.BLACKS}
+              onPress={() => {
+                navigation.goBack();
+              }}
+            />
+            <Text
               style={{
-                flexDirection: "row",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginTop: 20,
+                marginRight: 25,
+                fontFamily: "Roboto-Bold",
+                color: theme.colors.BLACKS,
+                fontSize: 18,
               }}
             >
-              <Feather
-                name="arrow-left"
-                size={24}
-                color={theme.colors.BLACKS}
-                onPress={() => {
-                  navigation.goBack();
-                }}
-              />
+              Step 1
+            </Text>
+            <Text></Text>
+          </View>
+          <View>
+            <View style={{ marginVertical: 9, marginTop: 30 }}>
               <Text
                 style={{
-                  marginRight: 25,
+                  fontSize: 18,
                   fontFamily: "Roboto-Bold",
                   color: theme.colors.BLACKS,
-                  fontSize: 18,
+                  textAlign: "center",
                 }}
               >
-                Step 1
+                Please fill up the following to proceed!
               </Text>
-              <Text></Text>
             </View>
-            <View>
-              <View style={{ marginVertical: 9, marginTop: 30 }}>
+            <View style={styles.inputFieldContainer}>
+              <Text style={styles.inputLabel}>Username</Text>
+              <TextInput
+                autoCapitalize="words"
+                placeholderTextColor={theme.colors.gray}
+                style={styles.inputField}
+                placeholder="enter username"
+                value={values.userName}
+                onChangeText={(text) =>
+                  setValues({ ...values, userName: text })
+                }
+              />
+            </View>
+            <View style={styles.inputFieldContainer}>
+              <Text style={styles.inputLabel}>First Name</Text>
+              <TextInput
+                autoCapitalize="words"
+                placeholderTextColor={theme.colors.gray}
+                style={styles.inputField}
+                placeholder="enter first name"
+                value={values.firstName}
+                onChangeText={(text) =>
+                  setValues({ ...values, firstName: text })
+                }
+              />
+            </View>
+
+            <View style={styles.inputFieldContainer}>
+              <Text style={styles.inputLabel}>Last Name</Text>
+              <TextInput
+                placeholderTextColor={theme.colors.gray}
+                style={styles.inputField}
+                placeholder="enter last name"
+                value={values.lastName}
+                onChangeText={(text) =>
+                  setValues({ ...values, lastName: text })
+                }
+                autoCapitalize="words"
+              />
+            </View>
+
+            <View style={styles.inputFieldContainer}>
+              <Text style={styles.inputLabel}>Phone Number</Text>
+              <TextInput
+                type="text"
+                maxLength={11}
+                keyboardType="numeric"
+                placeholderTextColor={theme.colors.gray}
+                style={styles.inputField}
+                placeholder="enter mobile number"
+                value={values.mobile_number}
+                onChangeText={(text) =>
+                  setValues({ ...values, mobile_number: text })
+                }
+              />
+
+              <View style={{ alignItems: "flex-end", marginBottom: -5 }}>
                 <Text
                   style={{
-                    fontSize: 18,
-                    fontFamily: "Roboto-Bold",
-                    color: theme.colors.BLACKS,
-                    textAlign: "center",
+                    fontFamily: "Roboto-Medium",
+                    color: "black",
+                    fontSize: 12,
+                    marginEnd: 5,
+                    marginBottom: -25,
                   }}
                 >
-                  Please fill up the following to proceed!
+                  {values.mobile_number.length} / 11
                 </Text>
-              </View>
-              <View style={styles.inputFieldContainer}>
-                <Text style={styles.inputLabel}>Username</Text>
-                <TextInput
-                  placeholderTextColor="#000"
-                  style={styles.inputField}
-                  placeholder="Enter your username"
-                  value={values.userName}
-                  onChangeText={(text) =>
-                    setValues({ ...values, userName: text })
-                  }
-                />
-              </View>
-              <View style={styles.inputFieldContainer}>
-                <Text style={styles.inputLabel}>First Name</Text>
-                <TextInput
-                  placeholderTextColor="#000"
-                  style={styles.inputField}
-                  placeholder="Enter your first name"
-                  value={values.firstName}
-                  onChangeText={(text) =>
-                    setValues({ ...values, firstName: text })
-                  }
-                />
-              </View>
-
-              <View style={styles.inputFieldContainer}>
-                <Text style={styles.inputLabel}>Last Name</Text>
-                <TextInput
-                  placeholderTextColor="#000"
-                  style={styles.inputField}
-                  placeholder="Enter your last name"
-                  value={values.lastName}
-                  onChangeText={(text) =>
-                    setValues({ ...values, lastName: text })
-                  }
-                />
-              </View>
-
-              <TouchableWithoutFeedback onPress={handlePressOutside}>
-                <View style={styles.inputFieldContainer}>
-                  <Text style={styles.inputLabel}>Area of Expertise</Text>
-                  <TextInput
-                    style={styles.inputField}
-                    label="Area of Expertise"
-                    placeholderTextColor="#000"
-                    placeholder="Choose or input your area of expertise"
-                    value={inputText}
-                    onChangeText={handleInputChange}
-                  />
-                  <FlatList
-                    style={{ maxHeight: 150, backgroundColor: "white" }}
-                    data={suggestions}
-                    scrollEnabled={false}
-                    renderItem={({ item }) => (
-                      <TouchableOpacity
-                        onPress={() => handleSuggestionPress(item)}
-                      >
-                        <View>
-                          <Text
-                            style={{
-                              marginTop: 12,
-                              marginStart: 12,
-                              fontWeight: 600,
-                              fontSize: 14,
-                              marginBottom: 5,
-                              color: "black",
-                            }}
-                          >
-                            {item}
-                          </Text>
-                        </View>
-                      </TouchableOpacity>
-                    )}
-                    keyExtractor={(item, index) => index.toString()}
-                  />
-                </View>
-              </TouchableWithoutFeedback>
-              <View style={styles.inputFieldContainer}>
-                <Text style={[styles.inputLabel, { marginBottom: -4 }]}>
-                  Skill Tags
-                </Text>
-                <TagInput
-                  key={key}
-                  initialTags={values.jobTags}
-                  onChangeTags={onChangeSkills}
-                  style={{ marginVertical: 0 }}
-                />
               </View>
             </View>
 
-            <View
-              style={{
-                position: "relative",
-                width: "100%",
-                marginTop: 50,
-              }}
-            >
-              <Button title="Next" onPress={handleNextPress} filled />
+            <View style={styles.inputFieldContainer}>
+              <Text style={styles.inputLabel}>Area of Expertise</Text>
+              <TextInput
+                style={styles.inputField}
+                placeholderTextColor={theme.colors.gray}
+                placeholder="enter area of expertise"
+                value={values.areaOfExpertise}
+                onChangeText={(text) =>
+                  setValues({ ...values, areaOfExpertise: text })
+                }
+                autoCapitalize="words"
+              />
+            </View>
+
+            <View style={styles.inputFieldContainer}>
+              <Text style={[styles.inputLabel, { marginBottom: -4 }]}>
+                Skill Tags
+              </Text>
+              <TagInput
+                key={key}
+                initialTags={values.jobTags}
+                onChangeTags={onChangeSkills}
+                style={{ marginVertical: 0 }}
+                tags={values.skillTags}
+              />
             </View>
           </View>
-        )}
-      </TouchableWithoutFeedback>
+
+          <View
+            style={{
+              position: "relative",
+              width: "100%",
+            }}
+          >
+            <Button title="Next" onPress={handleNextPress} filled />
+          </View>
+        </View>
+      </AlertNotificationRoot>
     </ScrollView>
   );
 };

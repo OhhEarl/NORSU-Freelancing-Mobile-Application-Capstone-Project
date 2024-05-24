@@ -7,47 +7,99 @@ import {
   ScrollView,
   TouchableOpacity,
   useWindowDimensions,
+  Alert,
 } from "react-native";
 
 import Feather from "react-native-vector-icons/Feather";
-import Entypo from "react-native-vector-icons/Entypo";
-import AntDesign from "react-native-vector-icons/AntDesign";
+
 import { TabView, SceneMap, TabBar } from "react-native-tab-view";
-import { COLORS, UTILITIES } from "../assets/constants/index";
+import { COLORS } from "../assets/constants/index";
 import { SafeAreaView } from "react-native-safe-area-context";
-
 import * as theme from "../assets/constants/theme";
+import { URL } from "@env";
+import { Rating } from "react-native-ratings";
+import LoadingComponent from "../components/LoadingComponent";
+import axios from "axios";
 
-const PortfolioScreen = ({ user }) => (
-  <View style={styles.containerPortfolio}>
-    <View style={styles.portfolioContainer}>
-      {user?.portfolio?.map((image, index) => (
-        <View key={index} style={styles.portfolioImageContainer}>
-          <Image
-            source={{ uri: image.student_portfolio_path }}
-            style={styles.portfolioImage}
-          />
-        </View>
-      ))}
+import dayjs from "dayjs";
+import "dayjs/locale/en";
+const PortfolioScreen = ({ portfolio }) => {
+  const baseUrlWithoutApi = URL.replace("/api", "");
+
+  return (
+    // Add return statement here
+    <View style={styles.containerPortfolio}>
+      <View style={styles.portfolioContainer}>
+        {portfolio?.length > 0 ? (
+          <>
+            {portfolio?.map((image, index) => (
+              <View key={index} style={styles.portfolioImageContainer}>
+                <Image
+                  source={{
+                    uri: `${baseUrlWithoutApi}/storage/${image.student_portfolio_path}`,
+                  }}
+                  style={styles.portfolioImage}
+                />
+              </View>
+            ))}
+          </>
+        ) : (
+          <View
+            style={{
+              flex: 1,
+              justifyContent: "center",
+              alignItems: "center",
+              marginTop: 250,
+            }}
+          >
+            <View style={{ justifyContent: "center", alignItems: "center" }}>
+              <Image
+                source={require("../assets/no-data-found.jpg")}
+                style={{ height: 100, width: 100 }}
+              />
+              <Text
+                style={{
+                  fontFamily: "Roboto-Bold",
+                  fontSize: 18,
+                  color: "black",
+                }}
+              >
+                NO PORTFOLIO ADDED
+              </Text>
+            </View>
+          </View>
+        )}
+      </View>
     </View>
-  </View>
-);
-
-const ResumeScreen = ({ user }) => (
+  ); // Close the return statement
+};
+const ResumeScreen = ({ resume }) => (
   <ScrollView showsVerticalScrollIndicator={false}>
     <View style={styles.inputFieldContainer}>
       <View style={{ marginVertical: 6 }}>
         <Text style={styles.title}>Year Level</Text>
-        <Text style={styles.content}>{user?.year_level}</Text>
+        <Text style={styles.content}>
+          {resume?.year_level === 1
+            ? "First Year"
+            : resume?.year_level === 2
+            ? "Second Year"
+            : resume?.year_level === 3
+            ? "Third Year"
+            : resume?.year_level === 4
+            ? "Fourth Year"
+            : resume?.year_level === 5
+            ? "Fifth Year"
+            : "Unknown Year Level"}
+        </Text>
       </View>
       <View style={{ marginVertical: 6 }}>
         <Text style={styles.title}>About Me</Text>
-        <Text style={styles.content}>{user?.about_me}</Text>
+        <Text style={styles.content}>{resume?.about_me}</Text>
       </View>
       <View style={{ marginVertical: 6 }}>
         <Text style={styles.title}>Skill Tags</Text>
         <View style={styles.tagsContainer}>
-          {user?.student_tags?.map((tags, index) => (
+          {resume?.student_skills?.map((tags, index) => (
             <Text key={index} style={styles.tags}>
               {tags?.student_skills}
             </Text>
@@ -57,90 +109,182 @@ const ResumeScreen = ({ user }) => (
     </View>
   </ScrollView>
 );
+
+const FeedBackScreen = ({ feedback }) => {
+  return (
+    <ScrollView showsVerticalScrollIndicator={false}>
+      <View style={styles.inputFieldContainer}>
+        <View style={{ marginVertical: 6 }}>
+          <Text style={styles.title}>Feedbacks</Text>
+          {feedback?.feedback?.map((feedback, index) => (
+            <View style={styles.feedBackContainer} key={index}>
+              <Text style={styles.feedback}>{feedback.feedback}</Text>
+              <Text style={styles.createdAt}>
+                {dayjs(feedback.created_at).format("MMMM DD, YYYY")}
+              </Text>
+            </View>
+          ))}
+        </View>
+      </View>
+    </ScrollView>
+  );
+};
+
 const FreelancerProfileScreen = ({ navigation, route }) => {
-  const { user } = route?.params;
+  console.log(route.params.freelancer_id);
   const layout = useWindowDimensions();
   const [index, setIndex] = useState(0);
-  const [routes] = useState([
-    { key: "portfolio", title: "Portfolio" },
-    { key: "resume", title: "Resume" },
-  ]);
+  const [loading, setLoading] = useState([]);
+  const { token, studentInfo } = route.params.isStudent;
+  const freelancer_id = route.params.freelancer_id;
+  const [freelancer, setFreelancer] = useState(null);
+  const averageRating = freelancer?.average_rating
+    ? parseFloat(freelancer?.average_rating)
+    : 0;
+
+  const fetchFreelancerList = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(
+        `${URL}/fetch-all-freelancer/${studentInfo.id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        // Find the freelancer with the matching id
+        const matchedFreelancer = response.data.data.find(
+          (freelancer) => freelancer.id === freelancer_id
+        );
+        setFreelancer(matchedFreelancer);
+      }
+    } catch (error) {
+      Alert.alert("Error", error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchFreelancerList();
+  }, [freelancer_id]);
 
   const renderScene = ({ route }) => {
     switch (route.key) {
       case "portfolio":
-        return <PortfolioScreen user={user.freelancer} />;
+        return <PortfolioScreen portfolio={freelancer?.student_portfolio} />;
       case "resume":
-        return <ResumeScreen user={user.freelancer} />;
+        return <ResumeScreen resume={freelancer} />;
+      case "feedback":
+        return <FeedBackScreen feedback={freelancer} />;
       default:
         return null;
     }
   };
 
+  const [routes] = useState([
+    { key: "portfolio", title: "Portfolio" },
+    { key: "resume", title: "Resume" },
+    { key: "feedback", title: "FeedBack" },
+  ]);
+
   return (
     <SafeAreaView style={styles.mainContainer}>
-      <View
-        style={{
-          flexDirection: "row",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <Feather
-          name="arrow-left"
-          size={24}
-          color={theme.colors.BLACKS}
-          onPress={() => {
-            navigation.goBack();
-          }}
-        />
-        <Text
-          style={{
-            marginRight: 25,
-            fontFamily: "Roboto-Medium",
-            color: theme.colors.BLACKS,
-            fontSize: 18,
-          }}
-        >
-          Freelancer Profile
-        </Text>
-        <Text></Text>
-      </View>
-      <View style={styles.innerContainer}>
-        <Image
-          style={styles.image}
-          source={
-            user?.freelancer?.user_avatar
-              ? { uri: user?.freelancer?.user_avatar }
-              : {
-                  uri: "https://img.freepik.com/free-psd/3d-illustration-person-with-sunglasses_23-2149436188.jpg?w=740&t=st=1670148608~exp=1670149208~hmac=bc57b66d67d2b9f4929c8e592ff17e8c8660721608add2f18fc20d19c1aab7e4",
-                }
-          }
-        />
-
-        <Text style={styles.userText}>{user?.freelancer?.user_name}</Text>
-        <Text style={styles.course}>{user?.freelancer?.area_of_expertise}</Text>
-      </View>
-
-      <TabView
-        navigationState={{ index, routes }}
-        renderScene={renderScene}
-        onIndexChange={setIndex}
-        initialLayout={{ width: layout.width }}
-        renderTabBar={(props) => (
-          <TabBar
-            {...props}
+      {loading ? (
+        <LoadingComponent />
+      ) : (
+        <>
+          <View
             style={{
-              backgroundColor: "white",
-              fontFamily: "Roboto-Medium",
-              marginTop: 15,
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
             }}
-            inactiveColor={"black"}
-            activeColor={"black"}
-            indicatorStyle={{ backgroundColor: theme.colors.primary }}
+          >
+            <Feather
+              name="arrow-left"
+              size={24}
+              color={theme.colors.BLACKS}
+              onPress={() => {
+                navigation.goBack();
+              }}
+            />
+            <Text
+              style={{
+                marginRight: 25,
+                fontFamily: "Roboto-Medium",
+                color: theme.colors.BLACKS,
+                fontSize: 18,
+              }}
+            >
+              Freelancer Profile
+            </Text>
+            <Text></Text>
+          </View>
+          <View style={styles.innerContainer}>
+            <Image
+              style={styles.image}
+              source={
+                freelancer?.user_avatar
+                  ? {
+                      uri: `${baseUrlWithoutApi}/storage/${freelancer?.user_avatar}`,
+                    }
+                  : {
+                      uri: "https://img.freepik.com/free-psd/3d-illustration-person-with-sunglasses_23-2149436188.jpg?w=740&t=st=1670148608~exp=1670149208~hmac=bc57b66d67d2b9f4929c8e592ff17e8c8660721608add2f18fc20d19c1aab7e4",
+                    }
+              }
+            />
+
+            <Text style={styles.userText}>{freelancer?.user_name}</Text>
+            <Text style={styles.areaExpertise}>
+              {freelancer?.area_of_expertise}
+            </Text>
+            <Rating
+              type="star"
+              ratingCount={5}
+              imageSize={18}
+              style={{ marginTop: 4 }}
+              readonly
+              startingValue={averageRating}
+              fractions={2} // Allows half-star ratings
+            />
+
+            <TouchableOpacity
+              style={styles.hireMeContainer}
+              onPress={() => {
+                navigation.navigate("CreateProjectScreenHire", {
+                  freelancer_id: freelancer.id,
+                });
+              }}
+            >
+              <Text style={styles.hireMe}>HIRE ME</Text>
+            </TouchableOpacity>
+          </View>
+          <TabView
+            navigationState={{ index, routes }}
+            renderScene={renderScene}
+            onIndexChange={setIndex}
+            initialLayout={{ width: layout.width }}
+            renderTabBar={(props) => (
+              <TabBar
+                {...props}
+                style={{
+                  backgroundColor: "white",
+                  fontFamily: "Roboto-Medium",
+                  marginTop: 15,
+                }}
+                inactiveColor={"black"}
+                activeColor={"black"}
+                indicatorStyle={{ backgroundColor: theme.colors.primary }}
+              />
+            )}
           />
-        )}
-      />
+        </>
+      )}
     </SafeAreaView>
   );
 };
@@ -167,14 +311,15 @@ const styles = StyleSheet.create({
   innerContainer: {
     marginHorizontal: 30,
     alignItems: "center",
-    marginTop: 40,
+    marginTop: 20,
   },
 
   userText: {
-    marginHorizontal: 50,
-    fontSize: 20,
+    fontSize: 22,
     color: "black",
     fontFamily: "Roboto-Bold",
+    maxWidth: 400,
+    textAlign: "center",
   },
 
   inputFieldContainer: {
@@ -217,8 +362,9 @@ const styles = StyleSheet.create({
   },
 
   content: {
-    fontFamily: "Roboto-Regular",
+    fontFamily: "Roboto-Light",
     fontSize: theme.sizes.h3,
+    color: "black",
   },
 
   tagsContainer: {
@@ -236,5 +382,49 @@ const styles = StyleSheet.create({
     margin: 5,
     color: "white",
     borderRadius: 10,
+  },
+
+  areaExpertise: {
+    textAlign: "center",
+    fontSize: 16,
+    fontFamily: "Roboto-Medium",
+    color: "#008DDA",
+  },
+
+  feedBackContainer: {
+    width: "100%",
+    borderWidth: 1,
+    borderColor: theme.colors.grey,
+    marginVertical: 8,
+    padding: 5,
+    borderRadius: 10,
+  },
+
+  feedback: {
+    fontFamily: "Roboto-Light",
+    color: "black",
+    padding: 5,
+  },
+
+  createdAt: {
+    alignSelf: "flex-end",
+    fontFamily: "Roboto-Thin",
+    fontSize: 10,
+    color: "black",
+  },
+
+  hireMeContainer: {
+    marginTop: 7,
+    color: "white",
+    padding: 10,
+    paddingHorizontal: 15,
+    backgroundColor: theme.colors.primary,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: theme.colors.primary,
+  },
+  hireMe: {
+    fontFamily: "Roboto-Medium",
+    color: "white",
   },
 });

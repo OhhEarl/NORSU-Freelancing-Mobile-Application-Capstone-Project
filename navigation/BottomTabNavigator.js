@@ -1,12 +1,14 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { StyleSheet, TouchableOpacity, View } from 'react-native'
-import { useGetIsStudent } from '../hooks/dataHooks/useGetIsStudent';
+
 import HomeScreen from '../screens/HomeScreen';
+import FreelancerListScreen from '../screens/FreelancerListScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import CreateProjectScreen from '../screens/CreateProjectScreen';
 import Entypo from 'react-native-vector-icons/Entypo';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import * as theme from "../assets/constants/theme";
 
 
@@ -28,6 +30,25 @@ export const BottomTabNavigator = ({ route }) => {
           tabBarIcon: ({ focused }) => (
             <Entypo
               name="home"
+              size={25}
+              color={focused ? theme.colors.primary : theme.colors.BLACKS}
+            />
+          ),
+
+        }}
+      />
+
+
+      <Tab.Screen
+        name={'FreelancerListScreen'}
+        component={FreelancerListScreen}
+        initialParams={{ isStudent }}
+        options={{
+          title: 'Find Freelancer',
+          headerShown: false,
+          tabBarIcon: ({ focused }) => (
+            <MaterialCommunityIcons
+              name="account-search"
               size={25}
               color={focused ? theme.colors.primary : theme.colors.BLACKS}
             />

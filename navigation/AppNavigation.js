@@ -1,8 +1,10 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { Alert, } from 'react-native';
+import React, { useState, useEffect } from 'react';
+
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { AuthProvider, useAuthContext } from '../hooks/AuthContext';
+import { PeopleProvider, usePeopleContext } from '../hooks/PeopleContext';
+import { ProposalProvider, useProposalContext } from '../hooks/ProposalContext';
 import { BottomTabNavigator } from './BottomTabNavigator';
 import NoConnection from '../components/NoConnection';
 // Screens
@@ -18,18 +20,31 @@ import ProjectDetailsScreen from '../screens/ProjectDetailsScreen';
 import ProposalScreen from '../screens/ProposalScreen';
 import ProposalSubmitted from '../screens/ProposalSubmitted';
 import ProjectCreated from '../screens/ProjectCreated';
-import ProjectsCompleted from '../screens/ProjectsCompleted';
+
 import ProposalListScreen from '../screens/ProposalListScreen';
 import FreelancerProfileScreen from '../screens/FreelancerProfileScreen';
-const Stack = createNativeStackNavigator();
 import NetInfo from "@react-native-community/netinfo";
 import OpeningScreen from '../components/OpeningScreen';
-import { useProjectContext, ProjectProvider } from '../hooks/ProjectContext';
+import { ProjectProvider } from '../hooks/ProjectContext';
+import SubmitOutputScreen from '../screens/SubmitOutputScreen';
+import GcashPaymentScreen from '../screens/GcashPaymentScreen';
+import TermsAndConditions from '../screens/TermsAndConditions';
+import FeedBackRatingScreen from '../screens/FeedBackRatingScreen';
+import ProjectDetailsHireScreen from '../screens/ProjectDetailsHireScreen';
+import OutputScreen from '../screens/OutputScreen';
+import CreateProjectScreenHire from '../screens/CreateProjectScreenHire';
+
+
 
 const AuthenticatedApp = () => {
-  const { user, error, isLoading, isEmailVerified, isStudent } = useAuthContext();
+  const { token, user, isLoading, setIsLoading, isStudent, student, } = useAuthContext();
+  const { peoples, } = usePeopleContext();
   const [isConnected, setIsConnected] = useState(true);
   const [isCheckingConnection, setIsCheckingConnection] = useState(true);
+  const [showOpeningScreen, setShowOpeningScreen] = useState(true);
+  const [loading, setLoading] = useState(false);
+
+
   useEffect(() => {
     const checkConnection = async () => {
       const state = await NetInfo.fetch();
@@ -43,162 +58,137 @@ const AuthenticatedApp = () => {
 
     checkConnection(); // Call the function to check connection
 
-
     return () => {
       unsubscribe();
     };
   }, []);
 
+  useEffect(() => {
+    let timer;
+
+    if (isLoading) {
+      setLoading(true);
+    } else {
+      timer = setTimeout(() => {
+        setLoading(false);
+      }, 3000);
+    }
+
+    return () => {
+      if (timer) {
+        clearTimeout(timer);
+      }
+    };
+  }, [isLoading]);
+
+
+  useEffect(() => {
+
+    const timer = setTimeout(() => {
+      setShowOpeningScreen(false);
+    }, 3000);
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [isLoading]);
 
 
 
-  if (isCheckingConnection) {
-    return <OpeningScreen />; // Return a loading component while checking connection
+
+
+
+
+
+  if (showOpeningScreen && isCheckingConnection) {
+    return <OpeningScreen />;
   }
 
   if (!isConnected) {
-    return (
-      <NoConnection />
-    );
+    return <NoConnection />;
   }
+
+
+  if (loading) {
+    return <LoadingComponent />;
+  }
+
+
+
+
+  const UserStack = createNativeStackNavigator();
+  const User = () => (
+    <UserStack.Navigator initialRouteName={Welcome}>
+
+      <UserStack.Screen name="Login" component={Login} options={{ headerShown: false }} />
+      <UserStack.Screen name="Signup" component={Signup} options={{ headerShown: false }} />
+      <UserStack.Screen name="Welcome" component={Welcome} options={{ headerShown: false }} />
+    </UserStack.Navigator>
+  );
+
+  const StudentStack = createNativeStackNavigator();
+  const Student = () => (
+    <StudentStack.Navigator>
+
+      <StudentStack.Screen name="VerificationNotification" component={VerificationNotification} options={{ headerShown: false }} />
+      <StudentStack.Screen name="MultiStepForm" component={MultiStepForm} options={{ headerShown: false }} />
+      <StudentStack.Screen name="VerificationConfirmation" component={VerificationConfirmation} options={{ headerShown: false }} />
+    </StudentStack.Navigator>
+  );
+
+  const StudentVerificationStack = createNativeStackNavigator();
+  const StudentVerification = () => (
+    <StudentVerificationStack.Navigator>
+      <StudentVerificationStack.Screen name="VerificationConfirmation" component={VerificationConfirmation} options={{ headerShown: false }} />
+    </StudentVerificationStack.Navigator>
+  );
+
+  const MainTabStack = createNativeStackNavigator();
+  const Main = () => (
+    <MainTabStack.Navigator>
+      <MainTabStack.Screen name="BottomTabNavigator" component={BottomTabNavigator} options={{ headerShown: false }} initialParams={{ isStudent }} />
+      <MainTabStack.Screen name="ProjectDetailsScreen" component={ProjectDetailsScreen} options={{ headerShown: false }} />
+      <MainTabStack.Screen name="EditProfileScreen" initialParams={{ isStudent }} component={EditProfileScreen} options={{ headerShown: false }} />
+      <MainTabStack.Screen initialParams={{ isStudent }} name="ProposalScreen" component={ProposalScreen} options={{ headerShown: false }} />
+      <MainTabStack.Screen name="ProposalSubmitted" component={ProposalSubmitted} options={{ headerShown: false }} />
+      <MainTabStack.Screen name="ProjectCreated" component={ProjectCreated} options={{ headerShown: false }} initialParams={{ isStudent }} />
+      <MainTabStack.Screen name="OutputScreen" component={OutputScreen} initialParams={{ isStudent }} options={{ headerShown: false }} />
+      <MainTabStack.Screen name="ProposalListScreen" initialParams={{ isStudent }} component={ProposalListScreen} options={{ headerShown: false }} />
+      <MainTabStack.Screen name="FreelancerProfileScreen" component={FreelancerProfileScreen} initialParams={{ isStudent }} options={{ headerShown: false }} />
+      <MainTabStack.Screen name="SubmitOutputScreen" component={SubmitOutputScreen} options={{ headerShown: false }} initialParams={{ isStudent }} />
+      <MainTabStack.Screen name="GcashPaymentScreen" component={GcashPaymentScreen} options={{ headerShown: false }} initialParams={{ isStudent }} />
+      <MainTabStack.Screen name="TermsAndConditions" component={TermsAndConditions} options={{ headerShown: false }} />
+      <MainTabStack.Screen name="FeedBackRatingScreen" component={FeedBackRatingScreen} initialParams={{ isStudent }} options={{ headerShown: false }} />
+      <MainTabStack.Screen name="ProjectDetailsHireScreen" component={ProjectDetailsHireScreen} initialParams={{ isStudent }} options={{ headerShown: false }} />
+      <MainTabStack.Screen name="CreateProjectScreenHire" component={CreateProjectScreenHire} initialParams={{ isStudent }} options={{ headerShown: false }} />
+
+    </MainTabStack.Navigator>
+  );
+
+
+
+  const renderNavigator = () => {
+    if (loading) {
+      <LoadingComponent />
+    } else {
+      if (user) {
+        if (isStudent !== null && isStudent !== undefined && student) {
+          return <Main />;
+        } else if (isStudent !== null && isStudent !== undefined && !student)
+          return <StudentVerification />;
+        else {
+          return <Student />;
+        }
+      } else {
+        return <User />
+      }
+    }
+
+
+  };
 
   return (
     <NavigationContainer>
-      {isLoading ? (
-        <LoadingComponent />
-      ) : (
-        <Stack.Navigator>
-          {user && isEmailVerified ? (
-            <>
-              {isStudent !== null ? (
-                isStudent.studentInfo?.is_student === 0 ? (
-                  <Stack.Screen
-                    name="VerificationConfirmation"
-                    component={VerificationConfirmation}
-                    options={{ headerShown: false }}
-                  />
-                ) : isStudent.studentInfo?.is_student === 1 ? (
-                  <>
-                    <Stack.Screen
-                      name="BottomTabNavigator"
-                      component={BottomTabNavigator} // Render BottomTabNavigator within a Screen component
-                      options={{ headerShown: false }}
-                      initialParams={{ isStudent }}
-                    />
-                    <Stack.Screen
-                      name="ProjectDetailsScreen"
-                      component={ProjectDetailsScreen}
-                      options={{ headerShown: false }}
-             
-                    />
-                    <Stack.Screen
-                      name="EditProfileScreen"
-                      initialParams={{ isStudent }}
-                      component={EditProfileScreen}
-                      options={{ headerShown: false }}
-                    />
-                    <Stack.Screen
-                      name="ProposalScreen"
-                      component={ProposalScreen}
-                      options={{ headerShown: false }}
-                    />
-                    <Stack.Screen
-                      name="ProposalSubmitted"
-                      component={ProposalSubmitted}
-                      options={{ headerShown: false }}
-                    />
-                    <Stack.Screen
-                      name="ProjectCreated"
-                      component={ProjectCreated}
-                      options={{ headerShown: false }}
-                    />
-                    <Stack.Screen
-                      name="ProjectsCompleted"
-                      component={ProjectsCompleted}
-                      options={{ headerShown: false }}
-                    />
-                    <Stack.Screen
-                      name="ProposalListScreen"
-                      component={ProposalListScreen}
-                      options={{ headerShown: false }}
-                    />
-
-                    <Stack.Screen
-                      name="FreelancerProfileScreen"
-                      component={FreelancerProfileScreen}
-                      options={{ headerShown: false }}
-                    />
-                  </>
-                ) : (
-                  <>
-                    <Stack.Screen
-                      name="VerificationNotification"
-                      component={VerificationNotification}
-                      options={{ headerShown: false }}
-                    />
-                    <Stack.Screen
-                      name="MultiStepForm"
-                      component={MultiStepForm}
-                      options={{ headerShown: false }}
-                    />
-                    <Stack.Screen
-                      name="VerificationConfirmation"
-                      component={VerificationConfirmation}
-                      options={{ headerShown: false }}
-                    />
-                  </>
-                )
-              ) : (
-                <>
-                  {/* <Stack.Screen
-                  name="VerificationScreen"
-                  component={VerificationScreen}
-                  options={{ headerShown: false }}
-                /> */}
-                  <Stack.Screen
-                    name="VerificationNotification"
-                    component={VerificationNotification}
-                    options={{ headerShown: false }}
-                  />
-
-                  <Stack.Screen
-                    name="MultiStepForm"
-                    component={MultiStepForm}
-                    options={{ headerShown: false }}
-                  />
-
-                  <Stack.Screen
-                    name="VerificationConfirmation"
-                    component={VerificationConfirmation}
-                    options={{ headerShown: false }}
-                  />
-                </>
-              )}
-            </>
-          ) : (
-            <>
-              <Stack.Screen
-                name="Welcome"
-                component={Welcome}
-                options={{ headerShown: false }}
-              />
-              <Stack.Screen
-                name="Login"
-                component={Login}
-                options={{ headerShown: false }}
-              />
-              <Stack.Screen
-                name="Signup"
-                component={Signup}
-                options={{ headerShown: false }}
-              />
-            </>
-          )}
-
-
-        </Stack.Navigator>
-
-      )}
+      {renderNavigator()}
     </NavigationContainer>
   );
 };
@@ -206,13 +196,17 @@ const AuthenticatedApp = () => {
 const AppNavigation = () => {
   return (
     <AuthProvider>
+
       <ProjectProvider>
-        <AuthenticatedApp />
+        <PeopleProvider>
+          <ProposalProvider>
+            <AuthenticatedApp />
+          </ProposalProvider>
+        </PeopleProvider>
       </ProjectProvider>
+
     </AuthProvider>
   );
 };
 
 export default AppNavigation;
-
-

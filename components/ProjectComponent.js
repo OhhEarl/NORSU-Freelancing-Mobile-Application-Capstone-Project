@@ -8,9 +8,9 @@ import locale from 'dayjs/locale/en'
 
 const ProjectComponent = ({ item }) => {
 
-    dayjs.extend(relativeTime);
+    dayjs.extend(relativeTime).locale('en');
     const formattedStartDate = dayjs(item?.job_start_date).format('MMMM D, YYYY');
-    const formattedEndDate = dayjs(item?.job_end_date).format('MMMM D, YYYY');
+    const formattedEndDate = dayjs(item?.job_end_date).format('MMMM D, YYYY')
 
 
     const startDate = dayjs(item?.job_start_date);
@@ -34,35 +34,25 @@ const ProjectComponent = ({ item }) => {
                 </View>
 
             </View>
-            <View style={styles.rowContainer}>
-                <View style={styles.priceContainer}>
-                    <View style={styles.jobPriceRow}>
-                        <Text style={styles.jobPrice}>₱{item?.job_budget_from}</Text>
-                        <Text style={styles.jobPrice}> - </Text>
-                        <Text style={styles.jobPrice}>₱{item?.job_budget_to}</Text>
-                    </View>
-                    <Text style={styles.jobRangePrice}>Budget</Text>
-                </View>
 
-                <View style={styles.priceContainer}>
-                    <View style={styles.jobPriceRow}>
-                        <Text style={styles.jobPrice}>{durationInDays} Days</Text>
-                    </View>
-                    <Text style={styles.jobRangePrice}>Duration</Text>
-                </View>
+            <View style={styles.textContainer}>
 
-                <View style={styles.priceContainer}>
-                    <View style={styles.jobPriceRow}>
-                        <Text style={styles.jobPrice}>{item?.proposals_count}</Text>
-                    </View>
-                    <Text style={styles.jobRangePrice}>Proposal</Text>
-                </View>
+                <View style={{ flexDirection: 'row' }}>
+                    <Text style={styles.jobTime}>Budget:</Text>
+                    <Text style={styles.jobTime}> • </Text>
 
+
+                    <Text style={styles.jobTime}>₱{new Intl.NumberFormat("en-US", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                    }).format(item?.job_budget_from)}</Text>
+                </View>
 
             </View>
 
+
             <Text style={styles.jobDescription}>
-                {jobDescription.trimStart().length > 100 ? jobDescription.trimStart().slice(0, 100) + '...' : jobDescription.trimStart()}
+                {jobDescription.trimStart().length > 100 ? jobDescription.trimStart().slice(0, 125) + '...' : jobDescription.trimStart()}
             </Text>
             <View style={styles.jobTagsContainer}>
 
@@ -106,21 +96,21 @@ const styles = StyleSheet.create({
     jobTime: {
         color: theme.colors.gray,
         fontFamily: 'Roboto-Medium',
-        fontSize: theme.sizes.h2,
+        fontSize: theme.sizes.h2 - 2,
     },
     rowContainer: {
         flexDirection: 'row',
         justifyContent: 'space-evenly'
     },
     priceContainer: {
-        paddingVertical: 8,
-        paddingHorizontal: 10,
+        paddingVertical: 6,
         flexDirection: 'column',
         alignItems: 'center',
         borderColor: theme.colors.grey,
         borderWidth: 1,
         borderRadius: 10,
-        marginVertical: 8,
+        marginVertical: 6,
+        width: 100
     },
     jobPriceRow: {
         flexDirection: 'row',
@@ -141,18 +131,19 @@ const styles = StyleSheet.create({
         paddingHorizontal: 12,
         fontFamily: 'Roboto-Light',
         color: theme.colors.gray,
+        marginTop: 5
     },
     jobTagsContainer: {
         flexDirection: 'row',
-        paddingHorizontal: 12,
+        paddingHorizontal: 8,
         marginTop: 10
     },
     jobTag: {
         marginEnd: 10,
         borderRadius: 10,
         backgroundColor: theme.colors.primary,
-        paddingVertical: 6,
-        paddingHorizontal: 15,
+        paddingVertical: 2,
+        paddingHorizontal: 10,
         fontSize: theme.sizes.h2 - 1,
         color: theme.colors.WHITE,
         fontFamily: 'Roboto-Light'

@@ -11,7 +11,7 @@ const LoadingComponent = () => {
                     autoPlay
                     loop
                     style={styles.lottie}
-                    speed={2.5}
+                    speed={1.5}
                 />
             </View>
         </View>
