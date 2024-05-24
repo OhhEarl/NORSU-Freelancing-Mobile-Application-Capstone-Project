@@ -2,14 +2,12 @@ import React, { useState, useEffect, useRef } from "react";
 import {
   StyleSheet,
   View,
-  Modal,
   Text,
   TextInput,
   TouchableOpacity,
   FlatList,
   Image,
-  Alert,
-  useFocusEffect,
+  RefreshControl,
 } from "react-native";
 
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -29,7 +27,7 @@ const HomeScreen = ({ navigation, route }) => {
   let previousSort = useRef("");
   const sheetRef = useRef(null);
   const baseUrlWithoutApi = URL.replace("/api", "");
-
+  const [refreshing, setRefreshing] = useState(false); // Refreshing state
   const sortOptions = {
     name: {
       label: "Sort By Name",
@@ -80,6 +78,7 @@ const HomeScreen = ({ navigation, route }) => {
       project_id: item.id,
     });
   };
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.WHITE }}>
       <View style={{ flex: 1 }}>
@@ -148,6 +147,12 @@ const HomeScreen = ({ navigation, route }) => {
                   </TouchableOpacity>
                 )}
                 showsVerticalScrollIndicator={false}
+                refreshControl={
+                  <RefreshControl
+                    refreshing={refreshing}
+                    onRefresh={fetchData}
+                  />
+                }
               />
             ) : (
               <View

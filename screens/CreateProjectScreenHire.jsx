@@ -542,13 +542,13 @@ const CreateProjectScreenHire = ({ route, navigation }) => {
                 width: "100%",
                 alignSelf: "center",
               }}
-              onPress={() => handleSubmit(projects?.id)}
+              onPress={() => handleSubmit()}
             >
               <Text style={styles.postText}>SUBMIT</Text>
             </TouchableOpacity>
           </ScrollView>
         )}
-        {loading ? <LoadingFlying /> : <></>}
+
         <View>
           {hasError && (
             <ErrorModal

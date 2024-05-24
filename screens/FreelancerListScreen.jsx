@@ -11,39 +11,52 @@ import {
   Alert,
   useFocusEffect,
   ScrollView,
+  RefreshControl,
 } from "react-native";
 
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useProjectContext } from "../hooks/ProjectContext";
-import { URL } from "@env";
+
 import * as theme from "../assets/constants/theme";
 import Icon from "react-native-vector-icons/MaterialIcons";
-import ProjectComponent from "../components/ProjectComponent";
+
 import LoadingComponent from "../components/LoadingComponent";
-import BottomSheet, { BottomSheetMethods } from "@devvie/bottom-sheet";
-import axios from "axios";
+
 import { usePeopleContext } from "../hooks/PeopleContext";
-import { AirbnbRating, Rating } from "react-native-ratings";
+import { Rating } from "react-native-ratings";
 const FreelancerListScreen = ({ navigation, route }) => {
   const { isStudent } = route.params;
+  const ownID = isStudent.studentInfo.id;
+
   const { peopleError, peopleLoading, peoples, fetchPeopleData } =
     usePeopleContext();
   const [searchTerm, setSearchTerm] = useState("");
-  const [searchResults, setSearchResults] = useState([]);
+  const [searchResults, setSearchResults] = useState(
+    peoples.filter(
+      (item) => item.id !== ownID // Exclude user with matching ID
+    )
+  );
+  const [refreshing, setRefreshing] = useState(false); // Refreshing state
 
   const handleSearch = (text) => {
     setSearchTerm(text);
+
+    if (!text.trim()) {
+      // If search term is empty, reset search results to all peoples
+      setSearchResults(peoples);
+      return;
+    }
+
     const filteredResults = peoples.filter(
       (item) =>
-        item.user_name.toLowerCase().includes(text.toLowerCase()) ||
-        item.area_of_expertise.toLowerCase().includes(text.toLowerCase())
+        (item.user_name.toLowerCase().includes(text.toLowerCase()) ||
+          item.area_of_expertise.toLowerCase().includes(text.toLowerCase())) &&
+        item.id !== ownID // Exclude user with matching ID
     );
+
     setSearchResults(filteredResults);
   };
-
   const renderItem = ({ item }) => {
     const rating = item?.average_rating ? parseFloat(item?.average_rating) : 0;
-
     return (
       <View style={{ flex: 1, paddingHorizontal: 24 }}>
         <ScrollView showsVerticalScrollIndicator={false}>
@@ -51,7 +64,8 @@ const FreelancerListScreen = ({ navigation, route }) => {
             <TouchableOpacity
               onPress={() =>
                 navigation.navigate("FreelancerProfileScreen", {
-                  freelancer_id: item.id,
+                  id: item.id,
+                  isStudent: item,
                 })
               }
             >
@@ -110,7 +124,17 @@ const FreelancerListScreen = ({ navigation, route }) => {
                   marginBottom: 10,
                 }}
               ></Text>
-              <View style={{ flexDirection: "row" }}>
+
+              <View>
+                <Text style={{ fontFamily: "Roboto-Medium", color: "black" }}>
+                  About Me
+                </Text>
+                <Text style={{ fontFamily: "Roboto-Light", color: "black" }}>
+                  {item?.about_me?.substring(0, 120)}
+                  {item?.about_me?.length > 100 && "..."}
+                </Text>
+              </View>
+              <View style={{ flexDirection: "row", marginTop: 10 }}>
                 {item?.student_skills?.map((skills, index) => (
                   <Text key={index} style={styles.tag}>
                     {skills.student_skills}
@@ -179,48 +203,14 @@ const FreelancerListScreen = ({ navigation, route }) => {
               data={searchResults}
               renderItem={renderItem}
               keyExtractor={(item) => item.id.toString()}
+              refreshControl={
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={fetchPeopleData}
+                />
+              }
             />
           )}
-
-          {/* <View style={styles.sheet}>
-            <BottomSheet
-              ref={sheetRef}
-              height={200}
-              style={{ backgroundColor: "white" }}
-            >
-              <View style={styles.sheetContent}>
-                <Text
-                  style={[
-                    styles.sort,
-                    selectedSort === "name" && styles.selectedSort,
-                  ]}
-                  onPress={() => handleSortSelection("name")}
-                >
-                  Sort By Name
-                </Text>
-                <Text
-                  style={[
-                    styles.sort,
-                    selectedSort === "datePosted" && styles.selectedSort,
-                  ]}
-                  onPress={() => handleSortSelection("datePosted")}
-                >
-                  Sort By Date Posted
-                </Text>
-                <Text
-                  style={[
-                    styles.sort,
-                    selectedSort === "budget" && styles.selectedSort,
-                    ,
-                    { borderBottomWidth: 1 },
-                  ]}
-                  onPress={() => handleSortSelection("budget")}
-                >
-                  Sort By Budget
-                </Text>
-              </View>
-            </BottomSheet>
-          </View> */}
         </View>
       </View>
     </SafeAreaView>
@@ -241,7 +231,7 @@ const styles = StyleSheet.create({
     paddingVertical: 24,
     marginTop: 10,
     borderWidth: 1,
-    borderColor: theme.colors.gray,
+    borderColor: theme.colors.GRAY_LIGHT,
     borderRadius: 5,
   },
 

@@ -20,7 +20,7 @@ import { URL } from "@env";
 import { Rating } from "react-native-ratings";
 import LoadingComponent from "../components/LoadingComponent";
 import axios from "axios";
-
+import { usePeopleContext } from "../hooks/PeopleContext";
 import dayjs from "dayjs";
 import "dayjs/locale/en";
 const PortfolioScreen = ({ portfolio }) => {
@@ -131,56 +131,26 @@ const FeedBackScreen = ({ feedback }) => {
 };
 
 const FreelancerProfileScreen = ({ navigation, route }) => {
-  console.log(route.params.freelancer_id);
+  const { peopleError, peopleLoading, peoples, fetchPeopleData } =
+    usePeopleContext();
   const layout = useWindowDimensions();
   const [index, setIndex] = useState(0);
-  const [loading, setLoading] = useState([]);
-  const { token, studentInfo } = route.params.isStudent;
-  const freelancer_id = route.params.freelancer_id;
-  const [freelancer, setFreelancer] = useState(null);
-  const averageRating = freelancer?.average_rating
-    ? parseFloat(freelancer?.average_rating)
+  const { id } = route.params;
+  const filteredProfile = peoples.filter((people) => people.id === id);
+  const averageRating = filteredProfile?.average_rating
+    ? parseFloat(averageRating?.average_rating)
     : 0;
-
-  const fetchFreelancerList = async () => {
-    try {
-      setLoading(true);
-      const response = await axios.get(
-        `${URL}/fetch-all-freelancer/${studentInfo.id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "application/json",
-          },
-        }
-      );
-
-      if (response.status === 200) {
-        // Find the freelancer with the matching id
-        const matchedFreelancer = response.data.data.find(
-          (freelancer) => freelancer.id === freelancer_id
-        );
-        setFreelancer(matchedFreelancer);
-      }
-    } catch (error) {
-      Alert.alert("Error", error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchFreelancerList();
-  }, [freelancer_id]);
 
   const renderScene = ({ route }) => {
     switch (route.key) {
       case "portfolio":
-        return <PortfolioScreen portfolio={freelancer?.student_portfolio} />;
+        return (
+          <PortfolioScreen portfolio={filteredProfile?.student_portfolio} />
+        );
       case "resume":
-        return <ResumeScreen resume={freelancer} />;
+        return <ResumeScreen resume={filteredProfile[0]} />;
       case "feedback":
-        return <FeedBackScreen feedback={freelancer} />;
+        return <FeedBackScreen feedback={filteredProfile[0]} />;
       default:
         return null;
     }
@@ -194,97 +164,93 @@ const FreelancerProfileScreen = ({ navigation, route }) => {
 
   return (
     <SafeAreaView style={styles.mainContainer}>
-      {loading ? (
-        <LoadingComponent />
-      ) : (
-        <>
-          <View
+      <>
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <Feather
+            name="arrow-left"
+            size={24}
+            color={theme.colors.BLACKS}
+            onPress={() => {
+              navigation.goBack();
+            }}
+          />
+          <Text
             style={{
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "center",
+              marginRight: 25,
+              fontFamily: "Roboto-Medium",
+              color: theme.colors.BLACKS,
+              fontSize: 18,
             }}
           >
-            <Feather
-              name="arrow-left"
-              size={24}
-              color={theme.colors.BLACKS}
-              onPress={() => {
-                navigation.goBack();
-              }}
-            />
-            <Text
-              style={{
-                marginRight: 25,
-                fontFamily: "Roboto-Medium",
-                color: theme.colors.BLACKS,
-                fontSize: 18,
-              }}
-            >
-              Freelancer Profile
-            </Text>
-            <Text></Text>
-          </View>
-          <View style={styles.innerContainer}>
-            <Image
-              style={styles.image}
-              source={
-                freelancer?.user_avatar
-                  ? {
-                      uri: `${baseUrlWithoutApi}/storage/${freelancer?.user_avatar}`,
-                    }
-                  : {
-                      uri: "https://img.freepik.com/free-psd/3d-illustration-person-with-sunglasses_23-2149436188.jpg?w=740&t=st=1670148608~exp=1670149208~hmac=bc57b66d67d2b9f4929c8e592ff17e8c8660721608add2f18fc20d19c1aab7e4",
-                    }
-              }
-            />
-
-            <Text style={styles.userText}>{freelancer?.user_name}</Text>
-            <Text style={styles.areaExpertise}>
-              {freelancer?.area_of_expertise}
-            </Text>
-            <Rating
-              type="star"
-              ratingCount={5}
-              imageSize={18}
-              style={{ marginTop: 4 }}
-              readonly
-              startingValue={averageRating}
-              fractions={2} // Allows half-star ratings
-            />
-
-            <TouchableOpacity
-              style={styles.hireMeContainer}
-              onPress={() => {
-                navigation.navigate("CreateProjectScreenHire", {
-                  freelancer_id: freelancer.id,
-                });
-              }}
-            >
-              <Text style={styles.hireMe}>HIRE ME</Text>
-            </TouchableOpacity>
-          </View>
-          <TabView
-            navigationState={{ index, routes }}
-            renderScene={renderScene}
-            onIndexChange={setIndex}
-            initialLayout={{ width: layout.width }}
-            renderTabBar={(props) => (
-              <TabBar
-                {...props}
-                style={{
-                  backgroundColor: "white",
-                  fontFamily: "Roboto-Medium",
-                  marginTop: 15,
-                }}
-                inactiveColor={"black"}
-                activeColor={"black"}
-                indicatorStyle={{ backgroundColor: theme.colors.primary }}
-              />
-            )}
+            Freelancer Profile
+          </Text>
+          <Text></Text>
+        </View>
+        <View style={styles.innerContainer}>
+          <Image
+            style={styles.image}
+            source={
+              filteredProfile?.user_avatar
+                ? {
+                    uri: `${baseUrlWithoutApi}/storage/${filteredProfile?.[0]?.user_avatar}`,
+                  }
+                : {
+                    uri: "https://img.freepik.com/free-psd/3d-illustration-person-with-sunglasses_23-2149436188.jpg?w=740&t=st=1670148608~exp=1670149208~hmac=bc57b66d67d2b9f4929c8e592ff17e8c8660721608add2f18fc20d19c1aab7e4",
+                  }
+            }
           />
-        </>
-      )}
+
+          <Text style={styles.userText}>{filteredProfile?.[0]?.user_name}</Text>
+          <Text style={styles.areaExpertise}>
+            {filteredProfile?.[0]?.area_of_expertise}
+          </Text>
+          <Rating
+            type="star"
+            ratingCount={5}
+            imageSize={18}
+            style={{ marginTop: 4 }}
+            readonly
+            startingValue={averageRating}
+            fractions={2} // Allows half-star ratings
+          />
+
+          <TouchableOpacity
+            style={styles.hireMeContainer}
+            onPress={() => {
+              navigation.navigate("CreateProjectScreenHire", {
+                freelancer_id: id,
+              });
+            }}
+          >
+            <Text style={styles.hireMe}>HIRE ME</Text>
+          </TouchableOpacity>
+        </View>
+        <TabView
+          navigationState={{ index, routes }}
+          renderScene={renderScene}
+          onIndexChange={setIndex}
+          initialLayout={{ width: layout.width }}
+          renderTabBar={(props) => (
+            <TabBar
+              {...props}
+              style={{
+                backgroundColor: "white",
+                fontFamily: "Roboto-Medium",
+                marginTop: 15,
+              }}
+              inactiveColor={"black"}
+              activeColor={"black"}
+              indicatorStyle={{ backgroundColor: theme.colors.primary }}
+            />
+          )}
+        />
+      </>
     </SafeAreaView>
   );
 };

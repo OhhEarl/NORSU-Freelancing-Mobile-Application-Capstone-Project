@@ -22,10 +22,10 @@ export const PeopleProvider = ({ children }) => {
     const [peopleLoading, setPeopleLoading] = useState(false);
 
     const [peoples, setPeoples] = useState([]);
-    const { token } = useAuthContext();
+    const { token, user } = useAuthContext();
 
     const fetchPeopleData = async () => {
-        if (token) {
+        if (token || user) {
             try {
                 setPeopleLoading(true);
                 const config = {
@@ -52,7 +52,7 @@ export const PeopleProvider = ({ children }) => {
     };
     useEffect(() => {
         fetchPeopleData();
-    }, [token]);
+    }, [token, user]);
     return (
         <PeopleContext.Provider
             value={{

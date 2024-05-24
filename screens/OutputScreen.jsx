@@ -32,7 +32,8 @@ const OutputScreen = ({ navigation, route }) => {
   const id = route.params.isStudent.studentInfo.id;
   const { loading, fetchData } = useProjectContext();
   const [isLoading, setLoading] = useState(false);
-  const { item, projectId, enabled, userID, project, finished } = route.params;
+  const { item, projectId, enabled, userID, project, finished, output } =
+    route.params;
 
   const JobOwnedID = item?.[0]?.student_user_id;
   const JobCompleted = project?.project_info?.job_finished === 2;
@@ -146,9 +147,9 @@ const OutputScreen = ({ navigation, route }) => {
             name: file.name,
           });
         });
-        formData.append("project_id", item?.[0].id);
-        formData.append("user_id", JobOwnedID);
-        formData.append("freelancer_id", id);
+        formData.append("project_id", item?.[0].id || projectId);
+        formData.append("user_id", JobOwnedID || output);
+        formData.append("freelancer_id", id || userID);
 
         const response = await axios.post(`${URL}/project/outputs`, formData, {
           headers: {
@@ -175,7 +176,7 @@ const OutputScreen = ({ navigation, route }) => {
         Dialog.show({
           type: ALERT_TYPE.DANGER,
           title: "Error",
-          textBody: "Something Went Wrong. Please Try Again.",
+          textBody: "Something Went Wrong." + error.message,
           button: "Close",
         });
       }

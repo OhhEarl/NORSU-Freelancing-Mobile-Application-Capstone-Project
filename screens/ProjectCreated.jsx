@@ -133,6 +133,7 @@ const ProjectCreated = ({ route, navigation }) => {
       (output) => output.status === 2
     );
 
+    console.log(JSON.stringify(item, null, 2));
     return (
       <TouchableOpacity
         onPress={() => {
@@ -193,9 +194,15 @@ const ProjectCreated = ({ route, navigation }) => {
 
               {item?.job_finished === 0 ? (
                 <Text style={styles.ongoing}>On Going</Text>
-              ) : item?.job_finished === 1 && item?.hireMe === 1 ? (
-                <Text style={styles.requested}>Requested</Text>
+              ) : item?.job_finished === 1 &&
+                item?.hireMe === 1 &&
+                item.job_proposal.status === 0 ? (
+                <Text style={styles.requested}>Requesting</Text>
               ) : item?.job_finished === 1 || item?.job_finished === 2 ? (
+                <Text style={styles.awarded}>Awarded</Text>
+              ) : item.job_finished === 1 &&
+                item.hireMe === 1 &&
+                item.job_proposal.status === 1 ? (
                 <Text style={styles.awarded}>Awarded</Text>
               ) : null}
             </View>
@@ -219,33 +226,27 @@ const ProjectCreated = ({ route, navigation }) => {
                 </Text>
               </TouchableOpacity>
             </View>
-          ) : item.job_finished === 1 ||
-            (item.job_finished === 2 && item?.hireMe === 1) ? (
+          ) : item.job_finished === 1 && item?.hireMe === 1 ? (
+            <View style={[styles.optionButton, { marginTop: 10 }]}>
+              <Text style={[styles.optionText, { color: "black" }]}>
+                Waiting for Confirmation
+              </Text>
+            </View>
+          ) : item.job_finished === 1 && item?.job_proposal.status === 1 ? (
             <View style={styles.buttonContainer}>
               <TouchableOpacity
                 style={[
                   styles.optionButton,
                   { backgroundColor: theme.colors.primary },
                 ]}
-                onPress={() => {
-                  navigation.navigate("OutputScreen", {
-                    projectId: item.id,
-                    userID: filteredProjectOutputs[0].freelancer_id,
-                    enabled: true,
-                    finished: true,
-                  });
-                }}
+                onPress={() =>
+                  navigation.navigate("ProposalListScreen", {
+                    project: item.id,
+                  })
+                }
               >
                 <Text style={[styles.optionText, { color: "white" }]}>
                   View Outputs
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.optionButton}
-                onPress={() => handleShowModal(item.id)}
-              >
-                <Text style={[styles.optionText, { color: "black" }]}>
-                  Delete Project
                 </Text>
               </TouchableOpacity>
             </View>
