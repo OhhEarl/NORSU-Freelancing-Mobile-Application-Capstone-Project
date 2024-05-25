@@ -23,11 +23,12 @@ const HomeScreen = ({ navigation, route }) => {
   const { isStudent } = route.params;
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredProjects, setFilteredProjects] = useState([]);
-  const [selectedSort, setSelectedSort] = useState("name"); // Default sort
+  const [selectedSort, setSelectedSort] = useState("name");
   let previousSort = useRef("");
   const sheetRef = useRef(null);
   const baseUrlWithoutApi = URL.replace("/api", "");
-  const [refreshing, setRefreshing] = useState(false); // Refreshing state
+  const [refreshing, setRefreshing] = useState(false);
+
   const sortOptions = {
     name: {
       label: "Sort By Name",
@@ -37,7 +38,7 @@ const HomeScreen = ({ navigation, route }) => {
     datePosted: {
       label: "Sort By Date Posted",
       sortFunction: (projectA, projectB) =>
-        new Date(projectB.created_at) - new Date(projectA.created_at), // Descending (newest first)
+        new Date(projectB.created_at) - new Date(projectA.created_at),
     },
     budget: {
       label: "Sort By Budget",
@@ -47,9 +48,7 @@ const HomeScreen = ({ navigation, route }) => {
   };
 
   const handleSortSelection = (sortKey) => {
-    // Regardless of selection, close the BottomSheet
     sheetRef.current?.close();
-
     if (sortKey !== previousSort.current) {
       setSelectedSort(sortKey);
       const sortedProjects = filteredProjects
@@ -61,13 +60,26 @@ const HomeScreen = ({ navigation, route }) => {
   };
 
   useEffect(() => {
+    if (projects) {
+      const filtered = projects.filter(
+        (project) => project?.job_finished !== 2 && project?.job_finished !== 1
+      );
+      setFilteredProjects(filtered);
+    }
+  }, [projects]);
+
+  useEffect(() => {
     if (searchQuery.trim() === "") {
-      setFilteredProjects(projects.slice()); // Ensure a copy is used to avoid mutation
+      const filtered = projects.filter(
+        (project) => project.job_finished !== 2 && project?.job_finished !== 1
+      );
+      setFilteredProjects(filtered.slice());
     } else {
       const filtered = projects.filter(
         (project) =>
           project.job_title &&
-          project.job_title.toLowerCase().includes(searchQuery.toLowerCase())
+          project.job_title.toLowerCase().includes(searchQuery.toLowerCase()) &&
+          project.job_finished !== 2
       );
       setFilteredProjects(filtered);
     }
@@ -78,7 +90,6 @@ const HomeScreen = ({ navigation, route }) => {
       project_id: item.id,
     });
   };
-
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.WHITE }}>
       <View style={{ flex: 1 }}>
@@ -212,7 +223,6 @@ const HomeScreen = ({ navigation, route }) => {
                   style={[
                     styles.sort,
                     selectedSort === "budget" && styles.selectedSort,
-                    ,
                     { borderBottomWidth: 1 },
                   ]}
                   onPress={() => handleSortSelection("budget")}

@@ -21,6 +21,7 @@ import DocumentPicker from "react-native-document-picker";
 import { URL } from "@env";
 import axios from "axios";
 import CurrencyInput from "react-native-currency-input";
+import { useProjectContext } from "../hooks/ProjectContext";
 import {
   ALERT_TYPE,
   Dialog,
@@ -29,7 +30,7 @@ import {
 } from "react-native-alert-notification";
 const GcashPaymentScreen = ({ navigation, route }) => {
   const { project_id, user_id, freelancer_id, project_price } = route.params;
-
+  const { projects, fetchData } = useProjectContext();
   const token = route.params.isStudent.token;
   const [loading, setLoading] = useState(false);
 
@@ -43,7 +44,7 @@ const GcashPaymentScreen = ({ navigation, route }) => {
   const [number, setNumber] = useState(null);
   const [selectedFiles, setSelectedFiles] = useState([]);
   const isFocused = useIsFocused();
-  console.log(project_price);
+
   useEffect(() => {
     if (!isFocused) {
       setGcashAccountNumber(null);
@@ -156,6 +157,7 @@ const GcashPaymentScreen = ({ navigation, route }) => {
         });
 
         if (response.status === 200) {
+          await fetchData();
           navigation.navigate("FeedBackRatingScreen", {
             freelancer_id: freelancer_id,
           });

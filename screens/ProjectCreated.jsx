@@ -46,13 +46,13 @@ const ProjectCreated = ({ route, navigation }) => {
   const filteredProjects = projects.filter(
     (project) => project.student_user_id === id
   );
-
+  console.log(JSON.stringify(filteredProjects, null, 2));
   useEffect(() => {
     let allData = filteredProjects.filter(
       (project) => project.job_finished === 0
     );
     let ongoingData = filteredProjects.filter(
-      (project) => project.job_finished === 1 && project.hireMe === 0
+      (project) => project.job_finished === 2
     );
     let hiredData = filteredProjects.filter(
       (project) =>
@@ -133,7 +133,6 @@ const ProjectCreated = ({ route, navigation }) => {
       (output) => output.status === 2
     );
 
-    console.log(JSON.stringify(item, null, 2));
     return (
       <TouchableOpacity
         onPress={() => {
@@ -196,7 +195,7 @@ const ProjectCreated = ({ route, navigation }) => {
                 <Text style={styles.ongoing}>On Going</Text>
               ) : item?.job_finished === 1 &&
                 item?.hireMe === 1 &&
-                item.job_proposal.status === 0 ? (
+                item?.job_proposal?.status === 0 ? (
                 <Text style={styles.requested}>Requesting</Text>
               ) : item?.job_finished === 1 || item?.job_finished === 2 ? (
                 <Text style={styles.awarded}>Awarded</Text>
@@ -226,13 +225,13 @@ const ProjectCreated = ({ route, navigation }) => {
                 </Text>
               </TouchableOpacity>
             </View>
-          ) : item.job_finished === 1 && item?.hireMe === 1 ? (
+          ) : item?.job_finished === 1 && item?.hireMe === 1 ? (
             <View style={[styles.optionButton, { marginTop: 10 }]}>
               <Text style={[styles.optionText, { color: "black" }]}>
                 Waiting for Confirmation
               </Text>
             </View>
-          ) : item.job_finished === 1 && item?.job_proposal.status === 1 ? (
+          ) : item?.job_finished === 2 && item?.proposals[0].status !== 3 ? (
             <View style={styles.buttonContainer}>
               <TouchableOpacity
                 style={[
@@ -244,6 +243,24 @@ const ProjectCreated = ({ route, navigation }) => {
                     project: item.id,
                   })
                 }
+              >
+                <Text style={[styles.optionText, { color: "white" }]}>
+                  View Outputs
+                </Text>
+              </TouchableOpacity>
+            </View>
+          ) : item?.job_finished === 2 && item?.proposals[0].status === 3 ? (
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.optionButton,
+                  { backgroundColor: theme.colors.primary },
+                ]}
+                onPress={() => {
+                  navigation.navigate("SubmitOutputScreen", {
+                    project: item,
+                  });
+                }}
               >
                 <Text style={[styles.optionText, { color: "white" }]}>
                   View Outputs

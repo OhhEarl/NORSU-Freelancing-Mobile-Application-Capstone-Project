@@ -328,7 +328,7 @@ const CreateProjectScreenHire = ({ route, navigation }) => {
               <TextInput
                 autoCapitalize="words"
                 style={theme.utilities.inputField}
-                placeholder="Logo Design"
+                placeholder="ex. Logo Design"
                 type="text"
                 value={jobCategory}
                 onChange={(e) => setJobCategory(e.nativeEvent.text)}

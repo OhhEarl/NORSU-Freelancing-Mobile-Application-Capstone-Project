@@ -35,10 +35,10 @@ import OutputScreen from '../screens/OutputScreen';
 import CreateProjectScreenHire from '../screens/CreateProjectScreenHire';
 
 
-
 const AuthenticatedApp = () => {
   const { token, user, isLoading, setIsLoading, isStudent, student, } = useAuthContext();
-  const { peoples, } = usePeopleContext();
+  const { peopleLoading } = usePeopleContext();
+
   const [isConnected, setIsConnected] = useState(true);
   const [isCheckingConnection, setIsCheckingConnection] = useState(true);
   const [showOpeningScreen, setShowOpeningScreen] = useState(true);
@@ -71,22 +71,23 @@ const AuthenticatedApp = () => {
     } else {
       timer = setTimeout(() => {
         setLoading(false);
-      }, 3000);
+      }, 5000);
     }
 
     return () => {
-      if (timer) {
+      if (student) {
         clearTimeout(timer);
+        setLoading(false); // Ensure loading state is false immediately
       }
     };
-  }, [isLoading]);
+  }, [isLoading, student]);
 
 
   useEffect(() => {
 
     const timer = setTimeout(() => {
       setShowOpeningScreen(false);
-    }, 3000);
+    }, 5000);
     return () => {
       clearTimeout(timer);
     };
@@ -108,7 +109,7 @@ const AuthenticatedApp = () => {
   }
 
 
-  if (loading) {
+  if (peopleLoading || loading) {
     return <LoadingComponent />;
   }
 
@@ -167,7 +168,7 @@ const AuthenticatedApp = () => {
 
 
   const renderNavigator = () => {
-    if (loading) {
+    if (peopleLoading || loading) {
       <LoadingComponent />
     } else {
       if (user) {

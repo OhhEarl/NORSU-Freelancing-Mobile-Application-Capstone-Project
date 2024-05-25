@@ -29,11 +29,11 @@ const FreelancerListScreen = ({ navigation, route }) => {
 
   const { peopleError, peopleLoading, peoples, fetchPeopleData } =
     usePeopleContext();
+
+  const peopleRender = peoples.filter((people) => people.id !== ownID);
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState(
-    peoples.filter(
-      (item) => item.id !== ownID // Exclude user with matching ID
-    )
+    peopleRender ? peopleRender : []
   );
   const [refreshing, setRefreshing] = useState(false); // Refreshing state
 

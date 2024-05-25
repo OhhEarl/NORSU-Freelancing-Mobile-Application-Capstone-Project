@@ -98,7 +98,7 @@ const ProposalSubmitted = ({ route, navigation }) => {
         );
 
         if (response.status === 200) {
-          setVisible(false);
+          await fetchData();
           await fetchProposalSubmitted(id);
           await Alert.alert("Due Date Extension Submitted.");
         }
@@ -140,9 +140,12 @@ const ProposalSubmitted = ({ route, navigation }) => {
         );
         let ongoingData = proposals.filter(
           (project) =>
-            project.job_proposal.job_finished === 1 &&
-            project.job_proposal.hireMe === 0
+            (project.job_proposal.job_finished === 1 &&
+              project.job_proposal.hireMe === 0) ||
+            (project.job_proposal.job_finished === 2 &&
+              project.job_proposal.hireMe === 0)
         );
+
         let completedData = proposals.filter(
           (project) =>
             project.job_proposal.job_finished === 1 &&
@@ -230,6 +233,38 @@ const ProposalSubmitted = ({ route, navigation }) => {
     }
   };
 
+  const rejectRequest = async (id) => {
+    try {
+      setLoading(true);
+      const formData = new FormData();
+      const response = await axios.post(
+        `${URL}/project/requested-project/delete/${id}`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        await fetchProposalSubmitted();
+        Toast.show({
+          type: ALERT_TYPE.SUCCESS,
+          title: "SUCCESS",
+          textBody: "Project request accepted successfully.",
+          button: "Close",
+        });
+      }
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   //routes for pages
   const [routes] = useState([
     { key: "all", title: "Submited" },
@@ -239,14 +274,16 @@ const ProposalSubmitted = ({ route, navigation }) => {
 
   const renderItem = ({ item, index }) => {
     console.log(JSON.stringify(item, null, 2));
+
     const today = dayjs(new Date()).format("YYYY-MM-DD");
-    const isPastDue = today > item.due_date;
+    const isPastDue = today > item.job_proposal.job_end_date;
+
     const hasProjectOutput = item.job_proposal?.project_outputs?.some(
       (output) => output.freelancer_id === item.freelancer_id
     );
 
     const handlePress = () => {
-      handleShowModalExtension(item.id, item.due_date);
+      handleShowModalExtension(item.id, item.job_proposal.job_end_date);
     };
 
     return (
@@ -352,9 +389,7 @@ const ProposalSubmitted = ({ route, navigation }) => {
             <TouchableOpacity
               style={[styles.optionButton, { backgroundColor: "red" }]}
               onPress={() => {
-                navigation.navigate("SubmitOutputScreen", {
-                  project: item,
-                });
+                rejectRequest(item.id);
               }}
             >
               <Text style={[styles.optionText, { color: "white" }]}>
@@ -375,28 +410,21 @@ const ProposalSubmitted = ({ route, navigation }) => {
               </Text>
             </TouchableOpacity>
           </View>
-        ) : item.status === 1 &&
-          item.job_proposal.job_finished === 1 &&
-          item.job_proposal.hireMe === 0 ? (
+        ) : item.status === 3 ? (
           <View style={styles.buttonContainer}>
             <TouchableOpacity
               style={[
                 styles.optionButton,
                 { backgroundColor: theme.colors.primary },
               ]}
-              onPress={() =>
-                navigation.navigate("OutputScreen", {
-                  projectId: item.project_id,
-                  userID: item.freelancer_id,
-                  enabled: true,
-                  status: true,
-                  output: item.user_id,
-                  projectOwned: item.job_proposal.student_user_id,
-                })
-              }
+              onPress={() => {
+                navigation.navigate("SubmitOutputScreen", {
+                  project: item,
+                });
+              }}
             >
               <Text style={[styles.optionText, { color: "white" }]}>
-                View Outputs
+                Submit Output
               </Text>
             </TouchableOpacity>
           </View>
@@ -409,23 +437,6 @@ const ProposalSubmitted = ({ route, navigation }) => {
     );
   };
 
-  // <View style={styles.buttonContainer}>
-  //   <TouchableOpacity
-  //     style={[
-  //       styles.optionButton,
-  //       { backgroundColor: theme.colors.primary },
-  //     ]}
-  //     onPress={() => {
-  //       navigation.navigate("SubmitOutputScreen", {
-  //         project: item,
-  //       });
-  //     }}
-  //   >
-  //     <Text style={[styles.optionText, { color: "white" }]}>
-  //       Submit Output
-  //     </Text>
-  //   </TouchableOpacity>
-  // </View>
   const renderScene = ({ route }) => {
     switch (route.key) {
       case "all":

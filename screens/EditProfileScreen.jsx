@@ -37,7 +37,7 @@ const EditProfileScreen = ({ navigation, route }) => {
   const [phoneNumber, setPhoneNumber] = useState(
     isStudent?.studentInfo?.mobile_number
   );
-  const [aboutMe, setAboutMe] = useState("");
+  const [aboutMe, setAboutMe] = useState(isStudent?.studentInfo?.about_me);
   const [studentSkills, setStudentSkills] = useState(
     isStudent?.studentInfo?.skill_tags || []
   );
@@ -51,6 +51,12 @@ const EditProfileScreen = ({ navigation, route }) => {
   const onChangeSkills = (newSkills) => {
     setStudentSkills((prev) => ({ ...prev, skillTags: newSkills }));
   };
+
+  useEffect(() => {
+    if (isStudent) {
+      setUserAvatar(isStudent.studentInfo.user_avatar);
+    }
+  }, []);
 
   const imageAvatar = async () => {
     try {
@@ -164,6 +170,7 @@ const EditProfileScreen = ({ navigation, route }) => {
     } else {
       const formData = new FormData();
       formData.append("user_name", userName);
+      formData.append("about_me", aboutMe);
       formData.append("mobile_number", phoneNumber);
       studentSkills.forEach((skill, index) => {
         formData.append(`student_skills[${index}]`, skill);
@@ -390,7 +397,7 @@ const EditProfileScreen = ({ navigation, route }) => {
               />
 
               <View style={{ alignItems: "flex-end", marginRight: 5 }}>
-                <Text>{aboutMe.length} / 300</Text>
+                <Text>{aboutMe?.length} / 300</Text>
               </View>
             </View>
 

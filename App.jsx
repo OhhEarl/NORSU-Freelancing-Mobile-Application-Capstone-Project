@@ -14,28 +14,6 @@ import { NetInfoCellularGeneration } from "@react-native-community/netinfo";
 // WEbClientID: 1070570385371-oki1o1e7h9mph2qnk0evo7l22k80683c.apps.googleusercontent.com
 
 export default function App() {
-  window.Pusher = Pusher;
-
-  const echo = new Echo({
-    broadcaster: "pusher",
-    key: "53231ce4041de663c561",
-    cluster: "ap1",
-    forceTLS: true,
-  });
-
-  useEffect(() => {
-    const channel = echo.channel("messages");
-
-    channel.listen("MessageSent", (e) => {
-      console.log("Message received:", e.message);
-      // Here you can update the state or trigger a notification
-    });
-
-    return () => {
-      echo.leaveChannel("messages");
-    };
-  }, []);
-
   // const [token, setToken] = useState(null);
   // const getToken = async () => {
   //   try {

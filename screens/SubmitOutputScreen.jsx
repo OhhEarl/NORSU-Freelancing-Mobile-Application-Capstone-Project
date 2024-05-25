@@ -24,7 +24,7 @@ import DocumentPicker from "react-native-document-picker";
 import LoadingComponent from "../components/LoadingComponent";
 import dayjs from "dayjs";
 import Spinner from "react-native-loading-spinner-overlay";
-
+import Button from "../components/Button";
 const SubmitOutputScreen = ({ navigation, route }) => {
   const [loading, setLoading] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState([]);
@@ -40,14 +40,6 @@ const SubmitOutputScreen = ({ navigation, route }) => {
   const user_id = route.params.isStudent.studentInfo.id;
 
   const isFocused = useIsFocused();
-
-  useEffect(() => {
-    if (!isFocused) {
-      selectedFiles(null);
-    }
-  }, [isFocused, route]);
-
-  console.log(token);
 
   const fetchOutputAttachment = async () => {
     try {
@@ -381,7 +373,7 @@ const SubmitOutputScreen = ({ navigation, route }) => {
             fontSize: 18,
           }}
         >
-          Submitted Outputs
+          Submit Output
         </Text>
         <Text></Text>
       </View>
@@ -573,26 +565,27 @@ const SubmitOutputScreen = ({ navigation, route }) => {
         </ScrollView>
       )}
 
-      {project?.student_user_id === user_id ? (
-        <TouchableOpacity
-          style={{ marginLeft: "auto" }}
+      {project?.student_user_id === user_id && !loading ? (
+        <Button
+          title="Accept Output"
+          filled
+          style={{
+            borderRadius: 10,
+            position: "absolute",
+            alignItems: "center",
+            width: "100%",
+            bottom: 0,
+            marginLeft: 20,
+          }}
           onPress={() =>
             navigation.navigate("GcashPaymentScreen", {
-              project_id: project?.project_info?.id || project?.id,
-              user_id:
-                project?.project_info?.student_user_id ||
-                project?.student_user_id,
-              freelancer_id:
-                project?.freelancer_info?.id ||
-                project?.proposals?.freelancer_id,
-              project_price:
-                project?.project_info?.job_budget_from ||
-                project?.job_budget_from,
+              project_id: project.id,
+              user_id: project.student_user_id,
+              freelancer_id: project.proposals[0].freelancer_id,
+              project_price: project.job_budget_from,
             })
           }
-        >
-          <Text style={styles.submitFileText}>SUBMIT</Text>
-        </TouchableOpacity>
+        />
       ) : (
         <></>
       )}

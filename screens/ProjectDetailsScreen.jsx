@@ -33,7 +33,7 @@ import {
 
 const ProjectDetailsScreen = ({ route, navigation }) => {
   const baseUrlWithoutApi = URL.replace("/api", "");
-  const { projectError, loading, projects } = useProjectContext();
+  const { projectError, loading, projects, fetchData } = useProjectContext();
   const { token, isStudent } = useAuthContext();
   const { project_id } = route.params;
   const [visible, setVisible] = useState(false);
@@ -41,6 +41,8 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
   const filteredProjects = projects.filter(
     (project) => project.id === project_id
   );
+
+  const [isLoading, setLoading] = useState(false);
 
   const formattedNumber = new Intl.NumberFormat("en-US", {
     minimumFractionDigits: 2,
@@ -66,11 +68,12 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
       });
 
       if (response.status === 200) {
+        await fetchData();
         await navigation.navigate("GcashPaymentScreen", {
-          project_id: project.id,
-          user_id: project.student_user_id,
-          freelancer_id: project.proposals[0].freelancer_id,
-          project_price: project.job_budget_from,
+          project_id: filteredProjects[0].id,
+          user_id: filteredProjects[0].student_user_id,
+          freelancer_id: filteredProjects[0].proposals[0].freelancer_id,
+          project_price: filteredProjects.job_budget_from,
         });
       }
     } catch (error) {
@@ -155,7 +158,8 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
       const response = await axios.post(
         url,
         {
-          extension_due_date: proposal.extension_due_date,
+          extension_due_date:
+            proposal.filteredProjects[0].proposals[0].extension_due_date,
         },
         {
           headers: {
@@ -167,6 +171,7 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
       );
 
       if (response.status === 200) {
+        await fetchData();
         await navigation.navigate("ProjectCreated");
         Alert.alert("Extension Accepted Successfully.");
       } else {
@@ -198,6 +203,7 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
       });
 
       if (response.status === 200) {
+        await fetchData();
         await navigation.navigate("ProjectCreated");
         Alert.alert("Extension Rejected Successfully.");
       } else {
@@ -458,8 +464,7 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
             </ScrollView>
           )}
 
-          {filteredProjects[0].job_finished === 1 &&
-          filteredProjects[0].hireMe === 1 &&
+          {filteredProjects[0].proposals[0].extension_status === 1 &&
           !loading ? (
             <View style={styles.applyNow}>
               <Button
@@ -518,7 +523,7 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
                   width: "90%",
                 }}
                 onPress={() => {
-                  confirmMarkAsDone(project.id);
+                  confirmMarkAsDone(filteredProjects[0].id);
                   sheetRef.current?.close();
                 }}
               />
@@ -575,11 +580,11 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
                     >
                       Extension Due Date
                     </Text>
-                    {!filteredProjects.proposals ? (
+                    {filteredProjects[0].proposals[0].extension_status === 1 ? (
                       <Text style={styles.date}>
-                        {dayjs(filteredProjects?.extension_due_date).format(
-                          "MM/DD/YYYY"
-                        )}
+                        {dayjs(
+                          filteredProjects[0].proposals[0].extension_due_date
+                        ).format("MM/DD/YYYY")}
                       </Text>
                     ) : (
                       <Text style={{ color: "black" }}>
@@ -590,12 +595,12 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
                 </View>
               </View>
 
-              {filteredProjects.proposal ? (
+              {filteredProjects[0].proposals[0].extension_status === 1 ? (
                 <>
                   <TouchableOpacity
                     style={styles.dismiss}
                     onPress={() => {
-                      handleAccept(filteredProjects.id);
+                      handleAccept(filteredProjects[0].id);
                     }}
                   >
                     <Text style={styles.dismissText}>Accept</Text>
@@ -603,7 +608,7 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
                   <TouchableOpacity
                     style={[styles.dismiss, { backgroundColor: "#dc143c" }]}
                     onPress={() => {
-                      handleReject();
+                      handleReject(filteredProjects[0].id);
                     }}
                   >
                     <Text style={styles.dismissText}>Reject</Text>

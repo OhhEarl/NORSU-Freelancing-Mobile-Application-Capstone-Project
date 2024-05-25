@@ -53,6 +53,7 @@ const CreateProjectScreenHire = ({ route, navigation }) => {
 
   const isFocused = useIsFocused();
 
+  console.log(isStudent);
   const onChangeTags = (tags) => {
     setJobTags(tags);
   };
@@ -120,25 +121,29 @@ const CreateProjectScreenHire = ({ route, navigation }) => {
       }));
 
       if (!results) {
-        Dialog.show({
+        Toast.show({
           type: ALERT_TYPE.DANGER,
-          title: "Error",
+          title: "ERROR",
+          textBody:
+            "An error occurred while selecting the file. Please try again.",
+          button: "Close",
+        });
+      } else if (results === undefined) {
+        Toast.show({
+          type: ALERT_TYPE.DANGER,
+          title: "ERROR",
           textBody:
             "An error occurred while selecting the file. Please try again.",
           button: "Close",
         });
       } else {
-        setSelectedFile((prevSelectedFiles) => [
-          ...prevSelectedFiles,
-          ...files,
-        ]);
+        setSelectedFile((prevFiles) => [...prevFiles, ...files]);
       }
     } catch (err) {
-      if (DocumentPicker.isCancel(err)) {
-      } else {
-        Dialog.show({
+      if (err) {
+        await Toast.show({
           type: ALERT_TYPE.DANGER,
-          title: "Error",
+          title: "ERROR",
           textBody:
             "An error occurred while selecting the file. Please try again.",
           button: "Close",
@@ -216,9 +221,13 @@ const CreateProjectScreenHire = ({ route, navigation }) => {
 
       if (response.status === 200) {
         await fetchData();
-        await navigation.navigate("ProjectDetailsScreen", {
-          project_id: projects.id,
-        });
+
+        if (studentId) {
+          await navigation.navigate("ProjectDetailsScreen", {
+            project_id: projects.id,
+          });
+        }
+
         (await studentId)
           ? Toast.show({
               type: ALERT_TYPE.SUCCESS,
@@ -328,7 +337,7 @@ const CreateProjectScreenHire = ({ route, navigation }) => {
                 <TextInput
                   autoCapitalize="words"
                   style={theme.utilities.inputField}
-                  placeholder="Logo Design"
+                  placeholder="ex. Logo Design"
                   type="text"
                   value={jobCategory}
                   onChange={(e) => setJobCategory(e.nativeEvent.text)}
@@ -540,21 +549,35 @@ const CreateProjectScreenHire = ({ route, navigation }) => {
                 ))}
               </View>
 
-              <TouchableOpacity
-                style={{
-                  position: "relative",
-                  backgroundColor: theme.colors.primary,
-                  borderRadius: 10,
-                  marginTop: 13,
-                  width: "100%",
-                  alignSelf: "center",
-                }}
-                onPress={() =>
-                  projects ? handleSubmit(projects.id) : handleSubmit()
-                }
-              >
-                <Text style={styles.postText}>SUBMIT</Text>
-              </TouchableOpacity>
+              {projects ? (
+                <TouchableOpacity
+                  style={{
+                    position: "relative",
+                    backgroundColor: theme.colors.primary,
+                    borderRadius: 10,
+                    marginTop: 13,
+                    width: "100%",
+                    alignSelf: "center",
+                  }}
+                  onPress={() => handleSubmit(projects.id)}
+                >
+                  <Text style={styles.postText}>SUBMIT</Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  style={{
+                    position: "relative",
+                    backgroundColor: theme.colors.primary,
+                    borderRadius: 10,
+                    marginTop: 13,
+                    width: "100%",
+                    alignSelf: "center",
+                  }}
+                  onPress={() => handleSubmit()}
+                >
+                  <Text style={styles.postText}>SUBMIT</Text>
+                </TouchableOpacity>
+              )}
             </>
           )}
         </ScrollView>

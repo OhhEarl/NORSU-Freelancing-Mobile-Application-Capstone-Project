@@ -21,7 +21,7 @@ const FeedBackRatingScreen = ({ navigation, route }) => {
   const [rating, setRating] = useState(0);
   const [feedBack, setFeedBack] = useState("");
   const [loading, setLoading] = useState(false);
-  console.log(token);
+
   const submitRating = async () => {
     try {
       setLoading(true);
@@ -34,6 +34,7 @@ const FeedBackRatingScreen = ({ navigation, route }) => {
         },
         {
           headers: {
+            Accept: "application/json",
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
@@ -50,6 +51,7 @@ const FeedBackRatingScreen = ({ navigation, route }) => {
         });
       }
     } catch (error) {
+      console.log(error);
       Dialog.show({
         type: ALERT_TYPE.DANGER,
         title: "Error",
@@ -91,7 +93,7 @@ const FeedBackRatingScreen = ({ navigation, route }) => {
               fontSize: 18,
             }}
           >
-            Feedback Rating
+            Feedback
           </Text>
           <Text></Text>
         </View>

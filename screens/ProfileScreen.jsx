@@ -148,7 +148,7 @@ const ProfileScreen = ({ navigation, route }) => {
                 }
               >
                 <View style={styles.seperateContainer}>
-                  <Text style={styles.seperateText}>Proposals Submitted</Text>
+                  <Text style={styles.seperateText}>Outputs Submitted</Text>
                   <AntDesign name="arrowright" size={20} color="black" />
                 </View>
               </TouchableOpacity>
