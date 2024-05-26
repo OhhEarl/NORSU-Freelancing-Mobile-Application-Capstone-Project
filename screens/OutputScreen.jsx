@@ -161,10 +161,10 @@ const OutputScreen = ({ navigation, route }) => {
 
         if (response.status === 200) {
           await fetchData();
-          Dialog.show({
+          Toast.show({
             type: ALERT_TYPE.SUCCESS,
             title: "Success",
-            textBody: "Files uploaded successfully.",
+            textBody: "Project output submitted successfully.",
             button: "Close",
           });
         }
@@ -483,7 +483,7 @@ const OutputScreen = ({ navigation, route }) => {
           </ScrollView>
         )}
 
-        {!show && !finished ? (
+        {!show && !finished && !loading && !isLoading ? (
           <Button
             title="Accept Output"
             filled

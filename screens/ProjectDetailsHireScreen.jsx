@@ -36,7 +36,7 @@ const ProjectDetailsHireScreen = ({ route, navigation }) => {
   const [proposal, setProposal] = useState(null);
   const [feedBack, setFeedBack] = useState(null);
   const [visible, setVisible] = useState(false);
-  console.log(proposal);
+
   const baseUrlWithoutApi = URL.replace("/api", "");
   const formattedNumber = new Intl.NumberFormat("en-US", {
     minimumFractionDigits: 2,

@@ -37,12 +37,12 @@ const ProjectComponent = ({ item }) => {
 
             <View style={styles.textContainer}>
 
-                <View style={{ flexDirection: 'row' }}>
-                    <Text style={styles.jobTime}>Budget:</Text>
-                    <Text style={styles.jobTime}> • </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <Text style={[styles.jobTime, { color: 'black', fontSize: 15 }]}>Budget: </Text>
 
 
-                    <Text style={styles.jobTime}>₱{new Intl.NumberFormat("en-US", {
+
+                    <Text style={[styles.jobTime, { color: 'black', fontSize: 15 }]}>₱{new Intl.NumberFormat("en-US", {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
                     }).format(item?.job_budget_from)}</Text>

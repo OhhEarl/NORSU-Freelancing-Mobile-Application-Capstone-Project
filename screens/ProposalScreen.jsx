@@ -50,7 +50,6 @@ const ProposalScreen = ({ route, navigation }) => {
   const [isDetailsVisible, setIsDetailsVisible] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  console.log(startDate);
   const formattedStartDate = dayjs(startDate)
     .locale("tl-ph")
     .format("YYYY-MM-DD");

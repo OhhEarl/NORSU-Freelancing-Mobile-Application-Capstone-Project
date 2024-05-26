@@ -22,6 +22,7 @@ import {
   AlertNotificationRoot,
   Toast,
 } from "react-native-alert-notification";
+import LoadingComponent from "../components/LoadingComponent";
 const Signup = ({ navigation }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -74,126 +75,134 @@ const Signup = ({ navigation }) => {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.red }}>
-      <AlertNotificationRoot style={styles.notification}>
-        <View
-          style={{ flex: 1, marginHorizontal: 22, justifyContent: "center" }}
-        >
-          <View>
-            <View style={{ alignItems: "center" }}>
-              <View style={styles.overlay}>
-                <LottieView
-                  source={require("../assets/astronautAnimation.json")}
-                  style={styles.lottie}
-                  speed={2}
-                  autoPlay
-                  loop
-                />
-              </View>
-              <Text
-                style={{
-                  fontSize: 35,
-                  fontWeight: "bold",
-                  marginVertical: 12,
-                  color: theme.colors.BLACKS,
-                }}
-              >
-                Create an account
-              </Text>
+      {loading ? (
+        <LoadingComponent />
+      ) : (
+        <AlertNotificationRoot style={styles.notification}>
+          <View
+            style={{ flex: 1, marginHorizontal: 22, justifyContent: "center" }}
+          >
+            <View>
+              <View style={{ alignItems: "center" }}>
+                <View style={styles.overlay}>
+                  <LottieView
+                    source={require("../assets/astronautAnimation.json")}
+                    style={styles.lottie}
+                    speed={2}
+                    autoPlay
+                    loop
+                  />
+                </View>
+                <Text
+                  style={{
+                    fontSize: 35,
+                    fontWeight: "bold",
+                    marginVertical: 12,
+                    color: theme.colors.BLACKS,
+                  }}
+                >
+                  Create an account
+                </Text>
 
-              <Text
-                style={{
-                  fontSize: 16,
-                  color: theme.colors.BLACKS,
-                }}
-              >
-                Get paid for passion!
-              </Text>
-            </View>
-
-            <View style={theme.utilities.inputContainer}>
-              <Text style={theme.utilities.title}>Email</Text>
-              <TextInput
-                placeholder="enter your email address"
-                placeholderTextColor={COLORS.black}
-                onChangeText={(text) => setEmail(text)}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                style={[theme.utilities.inputField, { height: 50 }]}
-              />
-            </View>
-
-            <View style={theme.utilities.inputContainer}>
-              <Text style={theme.utilities.title}>Password</Text>
-              <TextInput
-                placeholder="enter your password"
-                placeholderTextColor={COLORS.black}
-                onChangeText={(text) => setPassword(text)}
-                style={[theme.utilities.inputField, { height: 50 }]}
-                secureTextEntry={isPasswordShown}
-                value={password}
-              />
-
-              <TouchableOpacity
-                onPress={() => setIsPasswordShown(!isPasswordShown)}
-                style={{
-                  position: "absolute",
-                  right: 12,
-                  top: "50%",
-                }}
-              >
-                {isPasswordShown == true ? (
-                  <Ionicons name="eye-off" size={24} color={COLORS.black} />
-                ) : (
-                  <Ionicons name="eye" size={24} color={COLORS.black} />
-                )}
-              </TouchableOpacity>
-            </View>
-
-            {errorMessage ? (
-              <Text style={{ color: "red", marginTop: 2, marginLeft: 5 }}>
-                {errorMessage || error}
-              </Text>
-            ) : (
-              <Text> </Text>
-            )}
-
-            <Button
-              onPress={handleSignupButtonClick}
-              title="Sign Up"
-              filled
-              style={{
-                marginTop: 18,
-                marginBottom: 4,
-              }}
-            />
-
-            <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "center",
-                marginVertical: 22,
-              }}
-            >
-              <Text style={{ fontSize: 16, color: theme.colors.BLACKS }}>
-                Already have an account?
-              </Text>
-              <TouchableOpacity onPress={() => navigation.navigate("Login")}>
                 <Text
                   style={{
                     fontSize: 16,
-                    color: theme.colors.primary,
-                    fontWeight: "bold",
-                    marginLeft: 6,
-                    textDecorationLine: "underline",
+                    color: theme.colors.BLACKS,
                   }}
                 >
-                  Login
+                  Get paid for passion!
                 </Text>
-              </TouchableOpacity>
+              </View>
+
+              <View style={theme.utilities.inputContainer}>
+                <Text style={theme.utilities.title}>Email</Text>
+                <TextInput
+                  placeholder="enter your email address"
+                  placeholderTextColor={COLORS.black}
+                  onChangeText={(text) => setEmail(text)}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  style={[theme.utilities.inputField, { height: 50 }]}
+                />
+              </View>
+
+              <View style={theme.utilities.inputContainer}>
+                <Text style={theme.utilities.title}>Password</Text>
+                <TextInput
+                  placeholder="enter your password"
+                  placeholderTextColor={COLORS.black}
+                  onChangeText={(text) => setPassword(text)}
+                  style={[theme.utilities.inputField, { height: 50 }]}
+                  secureTextEntry={isPasswordShown}
+                  value={password}
+                />
+
+                <TouchableOpacity
+                  onPress={() => setIsPasswordShown(!isPasswordShown)}
+                  style={{
+                    position: "absolute",
+                    right: 12,
+                    top: "50%",
+                  }}
+                >
+                  {isPasswordShown == true ? (
+                    <Ionicons name="eye-off" size={24} color={COLORS.black} />
+                  ) : (
+                    <Ionicons name="eye" size={24} color={COLORS.black} />
+                  )}
+                </TouchableOpacity>
+              </View>
+
+              {errorMessage ? (
+                <Text style={{ color: "red", marginTop: 2, marginLeft: 5 }}>
+                  {errorMessage || error}
+                </Text>
+              ) : (
+                <Text> </Text>
+              )}
+
+              <Button
+                onPress={handleSignupButtonClick}
+                title="Sign Up"
+                filled
+                style={{
+                  marginTop: 18,
+                  marginBottom: 4,
+                }}
+              />
+
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "center",
+                  marginVertical: 22,
+                }}
+              >
+                <Text style={{ fontSize: 16, color: theme.colors.BLACKS }}>
+                  Already have an account?
+                </Text>
+                <TouchableOpacity
+                  onPress={() => {
+                    navigation.navigate("Login");
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 16,
+                      color: theme.colors.primary,
+                      fontWeight: "bold",
+                      marginLeft: 6,
+                      textDecorationLine: "underline",
+                    }}
+                  >
+                    Login
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
-        </View>
-      </AlertNotificationRoot>
+        </AlertNotificationRoot>
+      )}
     </SafeAreaView>
   );
 };

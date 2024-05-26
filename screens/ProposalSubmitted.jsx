@@ -134,31 +134,23 @@ const ProposalSubmitted = ({ route, navigation }) => {
 
       if (response.status === 200) {
         const data = response.data.data;
-        const proposals = Array.isArray(data) ? data : [data];
-        let allData = proposals.filter(
-          (project) => project.job_proposal.job_finished === 0
-        );
-        let ongoingData = proposals.filter(
-          (project) =>
-            (project.job_proposal.job_finished === 1 &&
-              project.job_proposal.hireMe === 0) ||
-            (project.job_proposal.job_finished === 2 &&
-              project.job_proposal.hireMe === 0)
-        );
 
-        let completedData = proposals.filter(
-          (project) =>
-            project.job_proposal.job_finished === 1 &&
-            project.job_proposal.hireMe === 1 &&
-            project.status === 1
-        );
-        console.log(allData);
+        const proposals = Array.isArray(data) ? data : [data];
+        const allData = proposals.filter((project) => project.status === 0);
+
+        const ongoingData = proposals.filter((project) => {
+          project.status === 1;
+          return project.status === 1;
+        });
+        const completedData = proposals.filter((project) => {
+          return project.status === 2;
+        });
+
         setAllProjects(allData);
         setOngoingProjects(ongoingData);
         setCompletedProjects(completedData);
       }
     } catch (error) {
-      console.log(error);
       Toast.show({
         type: ALERT_TYPE.DANGER,
         title: "Error",
@@ -227,7 +219,12 @@ const ProposalSubmitted = ({ route, navigation }) => {
         });
       }
     } catch (error) {
-      console.log(error);
+      Toast.show({
+        type: ALERT_TYPE.DANGER,
+        title: "ERROR",
+        textBody: "Something Went Wrong, Please Try Again",
+        button: "Close",
+      });
     } finally {
       setLoading(false);
     }
@@ -254,27 +251,25 @@ const ProposalSubmitted = ({ route, navigation }) => {
         Toast.show({
           type: ALERT_TYPE.SUCCESS,
           title: "SUCCESS",
-          textBody: "Project request accepted successfully.",
+          textBody: "Project request rejected successfully.",
           button: "Close",
         });
       }
     } catch (error) {
-      console.log(error);
+      Toast.show({
+        type: ALERT_TYPE.DANGER,
+        title: "ERROR",
+        textBody: "Something Went Wrong. Please Try Again",
+        button: "Close",
+      });
     } finally {
       setLoading(false);
     }
   };
 
   //routes for pages
-  const [routes] = useState([
-    { key: "all", title: "Submited" },
-    { key: "ongoing", title: "Awarded" },
-    { key: "completed", title: "Requesting" },
-  ]);
 
   const renderItem = ({ item, index }) => {
-    console.log(JSON.stringify(item, null, 2));
-
     const today = dayjs(new Date()).format("YYYY-MM-DD");
     const isPastDue = today > item.job_proposal.job_end_date;
 
@@ -306,7 +301,7 @@ const ProposalSubmitted = ({ route, navigation }) => {
             delimiter=","
             separator="."
             style={[styles.dueDate, { marginTop: 2 }]}
-            value={item.job_amount_bid}
+            value={item.job_proposal.job_budget_from}
             prefix="₱"
           />
         </View>
@@ -320,33 +315,18 @@ const ProposalSubmitted = ({ route, navigation }) => {
             </Text>
           </View>
 
-          <Text
-            style={[
-              styles.status,
-              item.status === 0
-                ? styles.pendingStatus
-                : item.status === 1
-                ? styles.acceptedStatus
-                : styles.completedStatus,
-            ]}
-          >
-            {item?.job_finished === 0 ? (
-              <Text style={styles.ongoing}>On Going</Text>
-            ) : item?.job_finished === 1 &&
-              item?.hireMe === 1 &&
-              item.job_proposal.status === 0 ? (
-              <Text style={styles.requested}>Requesting</Text>
-            ) : item?.job_finished === 1 || item?.job_finished === 2 ? (
-              <Text style={styles.awarded}>Awarded</Text>
-            ) : item.job_proposal.job_finished === 1 &&
-              item.job_proposal.hireMe === 0 &&
-              item.status === 1 ? (
-              <Text style={styles.awarded}>Awarded</Text>
-            ) : null}
-          </Text>
+          {item.job_proposal.job_finished === 0 ? (
+            <Text style={styles.ongoing}>On Going</Text>
+          ) : item.job_proposal.job_finished === 1 ? (
+            <Text style={styles.awarded}>Awarded</Text>
+          ) : item.job_proposal.job_finished === 2 ? (
+            <Text style={styles.requested}>Pending</Text>
+          ) : item.job_proposal.job_finished === 4 ? (
+            <Text style={styles.rejected}>Rejected</Text>
+          ) : null}
         </View>
 
-        {item.status === 0 ? (
+        {item.job_proposal.job_finished === 0 ? (
           <View style={styles.buttonContainer}>
             <TouchableOpacity
               style={[
@@ -369,9 +349,71 @@ const ProposalSubmitted = ({ route, navigation }) => {
               </Text>
             </TouchableOpacity>
           </View>
-        ) : item.status === 1 &&
-          item.job_proposal.job_finished === 1 &&
-          item.job_proposal.hireMe === 1 ? (
+        ) : item.job_proposal.job_finished === 1 &&
+          item.job_proposal.hireMe === 0 &&
+          item.status === 1 ? (
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={[
+                styles.optionButton,
+                { backgroundColor: theme.colors.primary },
+              ]}
+              onPress={() =>
+                navigation.navigate("OutputScreen", {
+                  projectId: item.project_id,
+                  userID: item.freelancer_id,
+                  enabled: true,
+                  status: true,
+                  output: item.user_id,
+                  projectOwned: item.job_proposal.student_user_id,
+                })
+              }
+            >
+              <Text style={[styles.optionText, { color: "white" }]}>
+                View Outputs
+              </Text>
+            </TouchableOpacity>
+          </View>
+        ) : item.job_proposal.job_finished === 3 &&
+          item.job_proposal.hireMe === 3 &&
+          item.status === 2 ? (
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={[
+                styles.optionButton,
+                { backgroundColor: "red", color: "white" },
+              ]}
+            >
+              <Text style={[styles.optionText, { color: "white" }]}>
+                Rejected
+              </Text>
+            </TouchableOpacity>
+          </View>
+        ) : item.job_proposal.job_finished === 1 &&
+          item.job_proposal.hireMe === 1 &&
+          item.status === 1 ? (
+          <View style={styles.buttonContainer}>
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.optionButton,
+                  { backgroundColor: theme.colors.primary },
+                ]}
+                onPress={() => {
+                  navigation.navigate("SubmitOutputScreen", {
+                    project: item,
+                  });
+                }}
+              >
+                <Text style={[styles.optionText, { color: "white" }]}>
+                  Submit Output
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        ) : item.status === 2 &&
+          item.job_proposal.job_finished === 2 &&
+          item.job_proposal.hireMe === 0 ? (
           <View style={styles.buttonContainer}>
             <TouchableOpacity
               style={[
@@ -410,24 +452,6 @@ const ProposalSubmitted = ({ route, navigation }) => {
               </Text>
             </TouchableOpacity>
           </View>
-        ) : item.status === 3 ? (
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              style={[
-                styles.optionButton,
-                { backgroundColor: theme.colors.primary },
-              ]}
-              onPress={() => {
-                navigation.navigate("SubmitOutputScreen", {
-                  project: item,
-                });
-              }}
-            >
-              <Text style={[styles.optionText, { color: "white" }]}>
-                Submit Output
-              </Text>
-            </TouchableOpacity>
-          </View>
         ) : (
           <TouchableOpacity style={styles.optionButton}>
             <Text style={[styles.optionText, { color: "black" }]}></Text>
@@ -437,6 +461,11 @@ const ProposalSubmitted = ({ route, navigation }) => {
     );
   };
 
+  const [routes] = useState([
+    { key: "all", title: "Submited" },
+    { key: "ongoing", title: "Awarded" },
+    { key: "completed", title: "Requesting" },
+  ]);
   const renderScene = ({ route }) => {
     switch (route.key) {
       case "all":
@@ -523,7 +552,7 @@ const ProposalSubmitted = ({ route, navigation }) => {
                     color: "black",
                   }}
                 >
-                  NO PROPOSALS FOUND
+                  NO PROJECTS FOUND
                 </Text>
               </View>
             </View>
@@ -859,5 +888,46 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.GRAY_LIGHT,
     borderRadius: 10,
     paddingStart: 15,
+  },
+  awarded: {
+    padding: 6,
+    backgroundColor: theme.colors.primary,
+    borderRadius: 5,
+    fontFamily: "Roboto-Medium",
+    color: "white",
+    fontSize: theme.sizes.h1 + 2,
+    marginTop: 5,
+    textAlign: "center",
+  },
+
+  rejected: {
+    padding: 6,
+    backgroundColor: "red",
+    borderRadius: 5,
+    fontFamily: "Roboto-Medium",
+    color: "white",
+    fontSize: theme.sizes.h1 + 2,
+    marginTop: 5,
+    textAlign: "center",
+  },
+  requested: {
+    padding: 6,
+    backgroundColor: theme.colors.secondary,
+    borderRadius: 5,
+    fontFamily: "Roboto-Medium",
+    color: "white",
+    fontSize: theme.sizes.h1 + 2,
+    marginTop: 5,
+    textAlign: "center",
+  },
+  ongoing: {
+    padding: 6,
+    backgroundColor: "blue",
+    borderRadius: 5,
+    fontFamily: "Roboto-Medium",
+    color: "white",
+    fontSize: theme.sizes.h1 + 2,
+    marginTop: 5,
+    textAlign: "center",
   },
 });

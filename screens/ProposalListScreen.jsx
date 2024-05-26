@@ -32,7 +32,7 @@ const ProposalListScreen = ({ route, navigation }) => {
   const { project } = route.params;
 
   const baseUrlWithoutApi = URL.replace("/api", "");
-  console.log(JSON.stringify(data));
+
   const fetchSubmittedList = async (id) => {
     try {
       setLoading(true);
@@ -115,14 +115,6 @@ const ProposalListScreen = ({ route, navigation }) => {
             marginBottom: 10,
           }}
         ></Text>
-
-        <View style={styles.jobTagsContainer}>
-          {item?.freelancer?.student_skills.map((skill) => (
-            <Text key={skill.id} style={styles.jobTag}>
-              {skill.student_skills}
-            </Text>
-          ))}
-        </View>
 
         <View>
           <TouchableOpacity

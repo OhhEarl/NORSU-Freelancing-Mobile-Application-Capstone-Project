@@ -33,7 +33,8 @@ export const AuthProvider = ({ children, navigation }) => {
   const [token, setToken] = useState(null);
   const [isStudent, setIsStudent] = useState(null);
   const [student, setStudent] = useState(null);
-  console.log(token)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+
   const updateIsStudent = async (updatedStudentData) => {
     setIsStudent(updatedStudentData);
     fetchIsStudent();
@@ -57,7 +58,7 @@ export const AuthProvider = ({ children, navigation }) => {
     getToken();
   }, [user])
 
-  console.log(isStudent)
+
   const fetchIsStudent = async () => {
     if (token) {
       try {
@@ -206,19 +207,32 @@ export const AuthProvider = ({ children, navigation }) => {
 
 
   useEffect(() => {
+    let timeoutId;
+
     const unsubscribe = auth().onAuthStateChanged(async (user) => {
       setIsLoading(true);
+      clearTimeout(timeoutId); // Clear previous timeout
+
       if (user && token) {
-        await setUser(user);
-        await setIsEmailVerified(user.emailVerified);
+        setUser(user);
+        setIsEmailVerified(user.emailVerified);
+        setIsLoggedIn(true);
       } else {
-        await setUser(null);
-        await setIsStudent(null)
+        setUser(null);
+        setIsStudent(null);
+        setIsLoggedIn(false);
       }
-      setIsLoading(false);
+
+      // Set timeout to recheck user after 5 seconds (adjust as needed)
+      timeoutId = setTimeout(() => {
+        setIsLoading(false);
+      }, 15000);
     });
 
-    return () => unsubscribe();
+    return () => {
+      clearTimeout(timeoutId); // Clear timeout on component unmount
+      unsubscribe();
+    };
   }, [token]);
 
   return (
@@ -242,7 +256,8 @@ export const AuthProvider = ({ children, navigation }) => {
         updateIsStudent,
         setIsEmailVerified,
         setIsStudent,
-        student
+        student,
+        isLoggedIn
       }}>
       {children}
     </AuthContext.Provider>

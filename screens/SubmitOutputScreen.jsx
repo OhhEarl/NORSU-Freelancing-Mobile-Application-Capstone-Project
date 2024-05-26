@@ -25,6 +25,7 @@ import LoadingComponent from "../components/LoadingComponent";
 import dayjs from "dayjs";
 import Spinner from "react-native-loading-spinner-overlay";
 import Button from "../components/Button";
+import { Toast } from "react-native-alert-notification";
 const SubmitOutputScreen = ({ navigation, route }) => {
   const [loading, setLoading] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState([]);
@@ -34,7 +35,7 @@ const SubmitOutputScreen = ({ navigation, route }) => {
 
   const { project } = route?.params;
   const { token } = route?.params?.isStudent;
-  // console.log(JSON.stringify(project, null, 2));
+
   const projectId = project?.project_id || project.id;
 
   const user_id = route.params.isStudent.studentInfo.id;
@@ -111,7 +112,12 @@ const SubmitOutputScreen = ({ navigation, route }) => {
 
         if (response.status === 200) {
           await fetchOutputAttachment();
-          Alert.alert("Success", "Files Uploaded Successfully");
+          Toast.show({
+            type: ALERT_TYPE.SUCCESS,
+            title: "SUCCESS",
+            textBody: "Output uploaded successfully.",
+            button: "Close",
+          });
         }
       });
 

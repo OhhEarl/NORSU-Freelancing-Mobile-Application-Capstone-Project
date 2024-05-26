@@ -51,7 +51,6 @@ const FeedBackRatingScreen = ({ navigation, route }) => {
         });
       }
     } catch (error) {
-      console.log(error);
       Dialog.show({
         type: ALERT_TYPE.DANGER,
         title: "Error",

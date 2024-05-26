@@ -5,6 +5,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { AuthProvider, useAuthContext } from '../hooks/AuthContext';
 import { PeopleProvider, usePeopleContext } from '../hooks/PeopleContext';
 import { ProposalProvider, useProposalContext } from '../hooks/ProposalContext';
+import { MessageProvider, useMessageContext } from '../hooks/MessageContext';
 import { BottomTabNavigator } from './BottomTabNavigator';
 import NoConnection from '../components/NoConnection';
 // Screens
@@ -36,7 +37,7 @@ import CreateProjectScreenHire from '../screens/CreateProjectScreenHire';
 
 
 const AuthenticatedApp = () => {
-  const { token, user, isLoading, setIsLoading, isStudent, student, } = useAuthContext();
+  const { token, user, isLoading, setIsLoading, isStudent, student, isLoggedIn } = useAuthContext();
   const { peopleLoading } = usePeopleContext();
 
   const [isConnected, setIsConnected] = useState(true);
@@ -92,6 +93,7 @@ const AuthenticatedApp = () => {
       clearTimeout(timer);
     };
   }, [isLoading]);
+
 
 
 
@@ -168,10 +170,10 @@ const AuthenticatedApp = () => {
 
 
   const renderNavigator = () => {
-    if (peopleLoading || loading) {
+    if (loading) {
       <LoadingComponent />
     } else {
-      if (user) {
+      if (isLoggedIn) {
         if (isStudent !== null && isStudent !== undefined && student) {
           return <Main />;
         } else if (isStudent !== null && isStudent !== undefined && !student)
@@ -201,7 +203,9 @@ const AppNavigation = () => {
       <ProjectProvider>
         <PeopleProvider>
           <ProposalProvider>
-            <AuthenticatedApp />
+            <MessageProvider>
+              <AuthenticatedApp />
+            </MessageProvider>
           </ProposalProvider>
         </PeopleProvider>
       </ProjectProvider>

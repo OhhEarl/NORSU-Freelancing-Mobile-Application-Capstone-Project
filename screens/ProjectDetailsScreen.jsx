@@ -159,7 +159,7 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
         url,
         {
           extension_due_date:
-            proposal.filteredProjects[0].proposals[0].extension_due_date,
+            proposal?.filteredProjects[0]?.proposals[0]?.extension_due_date,
         },
         {
           headers: {
@@ -464,7 +464,7 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
             </ScrollView>
           )}
 
-          {filteredProjects[0].proposals[0].extension_status === 1 &&
+          {filteredProjects[0]?.proposals[0]?.extension_status === 1 &&
           !loading ? (
             <View style={styles.applyNow}>
               <Button
@@ -580,10 +580,11 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
                     >
                       Extension Due Date
                     </Text>
-                    {filteredProjects[0].proposals[0].extension_status === 1 ? (
+                    {filteredProjects[0]?.proposals[0]?.extension_status ===
+                    1 ? (
                       <Text style={styles.date}>
                         {dayjs(
-                          filteredProjects[0].proposals[0].extension_due_date
+                          filteredProjects[0]?.proposals[0]?.extension_due_date
                         ).format("MM/DD/YYYY")}
                       </Text>
                     ) : (
@@ -595,7 +596,7 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
                 </View>
               </View>
 
-              {filteredProjects[0].proposals[0].extension_status === 1 ? (
+              {filteredProjects[0]?.proposals[0]?.extension_status === 1 ? (
                 <>
                   <TouchableOpacity
                     style={styles.dismiss}

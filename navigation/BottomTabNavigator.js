@@ -6,6 +6,7 @@ import HomeScreen from '../screens/HomeScreen';
 import FreelancerListScreen from '../screens/FreelancerListScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import CreateProjectScreen from '../screens/CreateProjectScreen';
+import MessagesScreen from '../screens/MessagesScreen';
 import Entypo from 'react-native-vector-icons/Entypo';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -77,6 +78,24 @@ export const BottomTabNavigator = ({ route }) => {
       />
 
       <Tab.Screen
+        name={'MessagesScreen'}
+        component={MessagesScreen}
+        initialParams={{ isStudent }}
+        options={{
+          title: 'Messages',
+          headerShown: false,
+          tabBarIcon: ({ focused }) => (
+            <Entypo
+              name="message"
+              size={25}
+              color={focused ? theme.colors.primary : theme.colors.BLACKS}
+            />
+          ),
+
+        }}
+      />
+
+      <Tab.Screen
         name={'ProfileScreen'}
         component={ProfileScreen}
         initialParams={{ isStudent }}
@@ -93,6 +112,7 @@ export const BottomTabNavigator = ({ route }) => {
 
         }}
       />
+
 
 
     </Tab.Navigator>

@@ -220,18 +220,8 @@ const CreateProjectScreenHire = ({ route, navigation }) => {
       if (response.status === 200) {
         await fetchData();
         studentId
-          ? Toast.show({
-              type: ALERT_TYPE.SUCCESS,
-              title: "Success",
-              textBody: "Job has been updated successfully.",
-              button: "Close",
-            })
-          : Toast.show({
-              type: ALERT_TYPE.SUCCESS,
-              title: "Success",
-              textBody: "Job has been created successfully.",
-              button: "Close",
-            });
+          ? Alert.alert("Job has been updated Successfully.")
+          : Alert.alert("Job has been created Successfully.");
       }
       await navigation.navigate("HomeScreen");
     } catch (err) {

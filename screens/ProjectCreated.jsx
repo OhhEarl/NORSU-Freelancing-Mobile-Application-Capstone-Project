@@ -46,18 +46,16 @@ const ProjectCreated = ({ route, navigation }) => {
   const filteredProjects = projects.filter(
     (project) => project.student_user_id === id
   );
-  console.log(JSON.stringify(filteredProjects, null, 2));
+
   useEffect(() => {
     let allData = filteredProjects.filter(
       (project) => project.job_finished === 0
     );
     let ongoingData = filteredProjects.filter(
-      (project) => project.job_finished === 2
+      (project) => project.job_finished === 1
     );
     let hiredData = filteredProjects.filter(
-      (project) =>
-        (project.job_finished === 1 && project?.hireMe === 1) ||
-        (project.job_finished === 2 && project?.hireMe === 1)
+      (project) => project.job_finished === 2 || project.job_finished === 3
     );
 
     setAllProjects(allData);
@@ -193,17 +191,19 @@ const ProjectCreated = ({ route, navigation }) => {
 
               {item?.job_finished === 0 ? (
                 <Text style={styles.ongoing}>On Going</Text>
-              ) : item?.job_finished === 1 &&
-                item?.hireMe === 1 &&
-                item?.job_proposal?.status === 0 ? (
-                <Text style={styles.requested}>Requesting</Text>
-              ) : item?.job_finished === 1 || item?.job_finished === 2 ? (
+              ) : item?.job_finished === 1 ? (
+                <Text style={styles.requested}>Awarded</Text>
+              ) : item?.job_finished === 2 &&
+                item?.proposals?.[0]?.status === 3 ? (
                 <Text style={styles.awarded}>Awarded</Text>
-              ) : item.job_finished === 1 &&
-                item.hireMe === 1 &&
-                item.job_proposal.status === 1 ? (
-                <Text style={styles.awarded}>Awarded</Text>
-              ) : null}
+              ) : item?.proposals?.[0]?.status === 4 ? (
+                <Text style={styles.awarded}>Rejected</Text>
+              ) : item?.proposals?.[0]?.status === 2 &&
+                item?.job_finished === 2 ? (
+                <Text style={styles.awarded}>On Going</Text>
+              ) : (
+                <Text style={styles.awarded}>On Going</Text>
+              )}
             </View>
           </View>
 
@@ -225,13 +225,13 @@ const ProjectCreated = ({ route, navigation }) => {
                 </Text>
               </TouchableOpacity>
             </View>
-          ) : item?.job_finished === 1 && item?.hireMe === 1 ? (
+          ) : item?.job_finished === 2 && item?.proposals[0].status === 2 ? (
             <View style={[styles.optionButton, { marginTop: 10 }]}>
               <Text style={[styles.optionText, { color: "black" }]}>
                 Waiting for Confirmation
               </Text>
             </View>
-          ) : item?.job_finished === 2 && item?.proposals[0].status !== 3 ? (
+          ) : item?.job_finished === 1 ? (
             <View style={styles.buttonContainer}>
               <TouchableOpacity
                 style={[
@@ -264,6 +264,19 @@ const ProjectCreated = ({ route, navigation }) => {
               >
                 <Text style={[styles.optionText, { color: "white" }]}>
                   View Outputs
+                </Text>
+              </TouchableOpacity>
+            </View>
+          ) : item?.proposals[0].status === 4 && item.job_finished === 2 ? (
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.optionButton,
+                  { backgroundColor: "red", color: "white" },
+                ]}
+              >
+                <Text style={[styles.optionText, { color: "white" }]}>
+                  Rejected
                 </Text>
               </TouchableOpacity>
             </View>
@@ -526,7 +539,7 @@ const styles = StyleSheet.create({
 
   awarded: {
     padding: 6,
-    backgroundColor: "green",
+    backgroundColor: theme.colors.primary,
     borderRadius: 5,
     fontFamily: "Roboto-Medium",
     color: "white",
@@ -535,6 +548,16 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
 
+  rejected: {
+    padding: 6,
+    backgroundColor: "red",
+    borderRadius: 5,
+    fontFamily: "Roboto-Medium",
+    color: "white",
+    fontSize: theme.sizes.h1 + 2,
+    marginTop: 5,
+    textAlign: "center",
+  },
   requested: {
     padding: 6,
     backgroundColor: theme.colors.secondary,

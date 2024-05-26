@@ -257,8 +257,7 @@ const VerificationScreen2 = ({
           Authorization: `Bearer ${token}`,
         },
       });
-      const data = response.data;
-      console.log(data);
+
       if (response.status === 200) {
         await setIsLoading(false);
         navigation.navigate("VerificationConfirmation");

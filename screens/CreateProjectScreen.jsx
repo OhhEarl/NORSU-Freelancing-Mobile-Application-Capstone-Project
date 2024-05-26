@@ -53,7 +53,6 @@ const CreateProjectScreenHire = ({ route, navigation }) => {
 
   const isFocused = useIsFocused();
 
-  console.log(isStudent);
   const onChangeTags = (tags) => {
     setJobTags(tags);
   };
@@ -243,7 +242,6 @@ const CreateProjectScreenHire = ({ route, navigation }) => {
             });
       }
     } catch (err) {
-      console.log(err.message);
       Dialog.show({
         type: ALERT_TYPE.WARNING,
         title: "Error",
@@ -384,20 +382,14 @@ const CreateProjectScreenHire = ({ route, navigation }) => {
                   type="text"
                   value={jobDescription}
                   onChangeText={(text) => {
-                    if (text?.length <= 300) {
-                      setJobDescription(text);
-                    }
+                    setJobDescription(text);
                   }}
                   multiline
                   autoCorrect={false}
                   numberOfLines={4}
                   maxHeight={100}
-                  maxLength={300}
                   textAlignVertical="top"
                 />
-                <View style={{ alignItems: "flex-end", marginRight: 5 }}>
-                  <Text>{jobDescription?.length} / 300</Text>
-                </View>
               </View>
 
               <View style={theme.utilities.inputContainer}>

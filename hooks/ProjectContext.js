@@ -23,7 +23,7 @@ export const ProjectProvider = ({ children }) => {
 
     const [projects, setProjects] = useState([]);
     const { token, user } = useAuthContext();
-    console.log(token)
+
 
     const fetchData = async () => {
         if (token) {
