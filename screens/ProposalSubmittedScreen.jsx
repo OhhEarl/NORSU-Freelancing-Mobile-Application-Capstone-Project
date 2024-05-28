@@ -33,35 +33,38 @@ import { useAuthContext } from "../hooks/AuthContext";
 
 dayjs.extend(relativeTime);
 
-const ProjectCreated = ({ route, navigation }) => {
-  const { loading, projects, fetchData } = useProjectContext();
-
+const ProposalSubmittedScreen = ({ route, navigation }) => {
+  const { projectError, loading, projects, fetchData } = useProjectContext();
+  const { peopleError, peopleLoading, peoples, fetchPeopleData } =
+    useProjectContext();
   const { token, isStudent } = useAuthContext();
   const [allProjects, setAllProjects] = useState(null);
   const [ongoingProjects, setOngoingProjects] = useState([]);
   const [hiredData, setHiredData] = useState([]);
-
   const [isLoading, setLoading] = useState(false);
   const [showOptionsIndex, setShowOptionsIndex] = useState(null);
   const [selectedItemId, setSelectedItemId] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false); // State to manage modal visibility
   const [index, setIndex] = useState(0);
-
   const id = isStudent.studentInfo.id;
+
   const filteredProjects = projects.filter(
     (project) => project.student_user_id === id
   );
-
   useEffect(() => {
-    let allData = filteredProjects.filter(
-      (project) => project.job_finished === 0
-    );
-    let ongoingData = filteredProjects.filter(
-      (project) => project.job_finished === 1
-    );
-    let hiredData = filteredProjects.filter(
-      (project) => project.job_finished === 2
-    );
+    let allData = filteredProjects.filter((project) => {
+      return (
+        (project.proposals[0]?.status === 0 && project.hireMe === 0) ||
+        (project.proposals[0]?.status === 1 && project.hireMe === 1) ||
+        (project.proposals[0]?.status === 4 && project.hireMe === 4)
+      );
+    });
+    let ongoingData = filteredProjects.filter((project) => {
+      return project.proposals[0]?.status === 2 && project.hireMe === 2;
+    });
+    let hiredData = filteredProjects.filter((project) => {
+      return project.proposals[0]?.status === 3 && project.hireMe === 3;
+    });
 
     setAllProjects(allData);
     setOngoingProjects(ongoingData);
@@ -97,12 +100,13 @@ const ProjectCreated = ({ route, navigation }) => {
       const response = await axios.post(url, null, {
         headers: {
           Accept: "application/json",
-          "Content-Type": "application/json",
+          "Content-Type": "multipart/form-data",
           Authorization: `Bearer ${token}`,
         },
       });
 
       if (response.status === 200) {
+        await fetchProposalSubmitted(id);
         await fetchData();
         setSelectedItemId(null);
         Toast.show({
@@ -113,8 +117,7 @@ const ProjectCreated = ({ route, navigation }) => {
         });
       }
     } catch (error) {
-      await fetchData();
-      Toast.show({
+      Dialog.show({
         type: ALERT_TYPE.DANGER,
         title: "Error",
         textBody: "Something Went Wrong, Please Try again.",
@@ -126,20 +129,20 @@ const ProjectCreated = ({ route, navigation }) => {
   };
 
   const renderItem = ({ item, index }) => {
-    const createdAt = dayjs(item.created_at);
+    const filteredProjectOutputs = item.project_outputs.filter(
+      (output) => output.status === 2
+    );
 
     return (
       <TouchableOpacity
         onPress={() => {
-          navigation.navigate("ProjectDetailsScreen", {
-            project_id: item.id,
+          navigation.navigate("ProjectDetailsHireScreen", {
+            project_id: item?.id,
+            project: item[0],
           });
         }}
       >
         <View style={styles.item}>
-          <Text style={styles.dateCreated}>
-            {createdAt.format("MMMM D, YYYY h:mm A")}
-          </Text>
           <Text style={styles.title}>{item.job_title}</Text>
           <Text
             style={[
@@ -150,11 +153,8 @@ const ProjectCreated = ({ route, navigation }) => {
             {item.job_category}
           </Text>
 
-          <Text style={styles.description}>
-            {item.job_description.trimStart().length > 100
-              ? item.job_description.trimStart().slice(0, 125) + "..."
-              : item.job_description.trimStart()}
-          </Text>
+          <Text style={styles.description}>{item.job_description}</Text>
+
           <View
             style={{
               flexDirection: "row",
@@ -187,22 +187,28 @@ const ProjectCreated = ({ route, navigation }) => {
                 marginTop: 5,
                 position: "absolute",
                 right: 20,
-                width: 80,
+                width: 100,
               }}
             >
               <Text style={styles.budget}>Status </Text>
 
-              {item?.job_finished === 0 ? (
+              {item?.proposals[0].status === 0 ? (
                 <Text style={styles.ongoing}>Pending Approval</Text>
-              ) : item?.job_finished === 1 ? (
+              ) : item?.proposals[0].status === 1 ? (
+                <Text style={styles.ongoingFreelancer}>
+                  Pending Freelancer Approval
+                </Text>
+              ) : item?.proposals[0].status === 2 ? (
                 <Text style={styles.active}>Active</Text>
-              ) : (
+              ) : item?.proposals[0].status === 3 ? (
                 <Text style={styles.awarded}>Completed</Text>
+              ) : (
+                <Text style={styles.rejected}>Rejected</Text>
               )}
             </View>
           </View>
 
-          {item.job_finished === 0 ? (
+          {item?.proposals[0].status === 0 ? (
             <View style={styles.buttonContainer}>
               <TouchableOpacity
                 style={[
@@ -221,8 +227,68 @@ const ProjectCreated = ({ route, navigation }) => {
           ) : (
             <></>
           )}
+          {item?.hireMe === 1 ? (
+            <View style={styles.buttonContainer}>
+              <View
+                style={[
+                  styles.optionButton,
+                  { backgroundColor: theme.colors.primary },
+                ]}
+              >
+                <Text style={[styles.optionText, { color: "white" }]}>
+                  Waiting for Confirmation
+                </Text>
+              </View>
+            </View>
+          ) : (
+            <></>
+          )}
 
-          {item.job_finished === 1 ? (
+          {item?.hireMe === 2 ? (
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.optionButton,
+                  { backgroundColor: theme.colors.primary },
+                ]}
+                onPress={() => {
+                  navigation.navigate("SubmitOutputScreen", {
+                    project: item,
+                  });
+                }}
+              >
+                <Text style={[styles.optionText, { color: "white" }]}>
+                  View Outputs
+                </Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <></>
+          )}
+
+          {item?.hireMe === 3 ? (
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.optionButton,
+                  { backgroundColor: theme.colors.primary },
+                ]}
+                onPress={() => {
+                  navigation.navigate("SubmitOutputScreen", {
+                    project: item,
+                  });
+                }}
+              >
+                <Text style={[styles.optionText, { color: "white" }]}>
+                  View Outputs
+                </Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <></>
+          )}
+
+          {/* {item?.proposals[0].status === 0 ? (
             <View style={styles.buttonContainer}>
               <TouchableOpacity
                 style={[
@@ -240,11 +306,13 @@ const ProjectCreated = ({ route, navigation }) => {
                 </Text>
               </TouchableOpacity>
             </View>
-          ) : (
-            <></>
-          )}
-
-          {item.job_finished === 2 ? (
+          ) : item?.job_finished === 2 && item?.proposals[0].status === 2 ? (
+            <View style={[styles.optionButton, { marginTop: 10 }]}>
+              <Text style={[styles.optionText, { color: "black" }]}>
+                Waiting for Confirmation
+              </Text>
+            </View>
+          ) : item?.job_finished === 1 ? (
             <View style={styles.buttonContainer}>
               <TouchableOpacity
                 style={[
@@ -262,9 +330,44 @@ const ProjectCreated = ({ route, navigation }) => {
                 </Text>
               </TouchableOpacity>
             </View>
+          ) : item?.job_finished === 2 && item?.proposals[0].status === 3 ? (
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.optionButton,
+                  { backgroundColor: theme.colors.primary },
+                ]}
+                onPress={() => {
+                  navigation.navigate("SubmitOutputScreen", {
+                    project: item,
+                  });
+                }}
+              >
+                <Text style={[styles.optionText, { color: "white" }]}>
+                  View Outputs
+                </Text>
+              </TouchableOpacity>
+            </View>
+          ) : item?.proposals[0].status === 4 && item.job_finished === 2 ? (
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.optionButton,
+                  { backgroundColor: "red", color: "white" },
+                ]}
+              >
+                <Text style={[styles.optionText, { color: "white" }]}>
+                  Rejected
+                </Text>
+              </TouchableOpacity>
+            </View>
           ) : (
-            <></>
-          )}
+            <View style={[styles.optionButton, { marginTop: 10 }]}>
+              <Text style={[styles.optionText, { color: "black" }]}>
+                Project Done
+              </Text>
+            </View>
+          )} */}
         </View>
       </TouchableOpacity>
     );
@@ -394,7 +497,7 @@ const ProjectCreated = ({ route, navigation }) => {
               fontSize: 18,
             }}
           >
-            Projects Created
+            Proposals Submitted
           </Text>
           <Text></Text>
         </View>
@@ -436,7 +539,7 @@ const ProjectCreated = ({ route, navigation }) => {
               />
               <Text style={styles.ohSnap}>ALERT!</Text>
               <Text style={styles.modalText}>
-                Are You Sure You Want To Delete This Project?
+                Are Sure You Want To Delete This Project?
               </Text>
               <TouchableOpacity
                 style={styles.dismiss}
@@ -452,7 +555,7 @@ const ProjectCreated = ({ route, navigation }) => {
   );
 };
 
-export default ProjectCreated;
+export default ProposalSubmittedScreen;
 
 const styles = StyleSheet.create({
   mainContainer: {
@@ -526,27 +629,40 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
 
+  rejected: {
+    padding: 6,
+    backgroundColor: "red",
+    borderRadius: 5,
+    fontFamily: "Roboto-Medium",
+    color: "white",
+    fontSize: theme.sizes.h1 + 2,
+    marginTop: 5,
+    textAlign: "center",
+  },
+
   active: {
     padding: 6,
     backgroundColor: theme.colors.secondary,
     borderRadius: 5,
     fontFamily: "Roboto-Medium",
     color: "white",
-    fontSize: theme.sizes.h1 + 2,
+    fontSize: theme.sizes.h1 - 1,
     marginTop: 5,
     textAlign: "center",
+    width: 120,
   },
-  ongoing: {
+  ongoingFreelancer: {
     padding: 6,
     backgroundColor: theme.colors.primary,
     borderRadius: 5,
     fontFamily: "Roboto-Medium",
     color: "white",
-    fontSize: theme.sizes.h1 + 2,
+    fontSize: theme.sizes.h1 - 1,
     marginTop: 5,
     textAlign: "center",
     width: "100%",
   },
+
   buttonContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -626,12 +742,5 @@ const styles = StyleSheet.create({
     color: "white",
     padding: 12,
     alignSelf: "center",
-  },
-
-  dateCreated: {
-    fontFamily: "Roboto",
-    color: "gray",
-    fontSize: 12,
-    textAlign: "right",
   },
 });

@@ -22,7 +22,7 @@ import { useEffect, useState, useRef } from "react";
 import LoadingComponent from "../components/LoadingComponent";
 import axios from "axios";
 import BottomSheet, { BottomSheetMethods } from "@devvie/bottom-sheet";
-
+import { useProjectContext } from "../hooks/ProjectContext";
 import {
   ALERT_TYPE,
   Dialog,
@@ -31,11 +31,17 @@ import {
 } from "react-native-alert-notification";
 
 const ProjectDetailsHireScreen = ({ route, navigation }) => {
-  const { project, studentId, token } = route.params;
-  const [loading, setLoading] = useState(false);
-  const [proposal, setProposal] = useState(null);
-  const [feedBack, setFeedBack] = useState(null);
+  const { project_id } = route.params;
+  const { token } = route.params.isStudent;
+
+  const studentId = route.params.isStudent.studentInfo.id;
   const [visible, setVisible] = useState(false);
+  const { projects, fetchData } = useProjectContext();
+  const filteredProjects = projects?.filter(
+    (project) => project?.id === project_id
+  );
+  const project = filteredProjects[0];
+  const [loading, setLoading] = useState(false);
 
   const baseUrlWithoutApi = URL.replace("/api", "");
   const formattedNumber = new Intl.NumberFormat("en-US", {
@@ -44,53 +50,51 @@ const ProjectDetailsHireScreen = ({ route, navigation }) => {
   }).format(project?.job_budget_from);
   const sheetRef = useRef(null);
 
-  const fetchProposal = async () => {
-    try {
-      setLoading(true);
-      const url = `${URL}/project/fetch-proposal/extension-date/${project.id}`;
-      const response = await axios.get(url, {
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
+  // const handleAccept = (id) => {
+  //   Alert.alert(
+  //     "Confirm Extension?",
+  //     "Are you sure you want to accept the extension request?",
+  //     [
+  //       {
+  //         text: "Cancel",
+  //         style: "cancel",
+  //       },
+  //       {
+  //         text: "Yes",
+  //         onPress: () => {
+  //           sheetRef.current?.close();
+  //           acceptExtension(id);
+  //         },
+  //       },
+  //     ],
+  //     { cancelable: false }
+  //   );
+  // };
 
-      const data = response.data.data;
-
-      if (response.status === 200) {
-        setProposal(data);
-      }
-    } catch (error) {
-      if (error) {
-        Dialog.show({
-          type: ALERT_TYPE.DANGER,
-          title: "Error",
-          textBody: "Something Went Wrong, Please Try again!",
-          button: "Close",
-        });
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // const fetchForFeedback = async () => {
+  // const acceptExtension = async (id, extension) => {
+  //   setVisible(false);
   //   try {
   //     setLoading(true);
-  //     const url = `${URL}/project/fetch-proposal/feedback/${project.id}/${project.student_user_id}`;
-  //     const response = await axios.get(url, {
-  //       headers: {
-  //         Accept: "application/json",
-  //         "Content-Type": "application/json",
-  //         Authorization: `Bearer ${token}`,
+  //     const url = `${URL}/project/accept-extension-request/${id}`;
+  //     const response = await axios.post(
+  //       url,
+  //       {
+  //         extension_due_date: proposal.extension_due_date,
   //       },
-  //     });
-
-  //     const data = response.data.data;
+  //       {
+  //         headers: {
+  //           Accept: "application/json",
+  //           "Content-Type": "application/json",
+  //           Authorization: `Bearer ${token}`,
+  //         },
+  //       }
+  //     );
 
   //     if (response.status === 200) {
-  //       setFeedBack(data);
+  //       await navigation.navigate("ProjectCreated");
+  //       Alert.alert("Extension Accepted Successfully.");
+  //     } else {
+  //       throw new Error("Failed to accept extension request. Please Try Again");
   //     }
   //   } catch (error) {
   //     Dialog.show({
@@ -103,110 +107,6 @@ const ProjectDetailsHireScreen = ({ route, navigation }) => {
   //     setLoading(false);
   //   }
   // };
-
-  useEffect(() => {
-    fetchProposal();
-  }, [project]);
-
-  const handlePress = () => {
-    setVisible(true);
-  };
-
-  const markProjectDone = async (id) => {
-    try {
-      const formData = new FormData();
-      setLoading(true);
-      const url = `${URL}/project/status-mark-as-completed/${id}/${feedBack.id}`;
-      const response = await axios.post(url, formData, {
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (response.status === 200) {
-        await navigation.navigate("FeedBackRatingScreen", {
-          project: feedBack,
-        });
-      }
-    } catch (error) {
-      Dialog.show({
-        type: ALERT_TYPE.WARNING,
-        title: "Error",
-        textBody: "Something Went Wrong, Please Try again.",
-        button: "Close",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const confirmMarkAsDone = (id) => {
-    Alert.alert(
-      "Confirm Selection?",
-      "Are you sure you want to mark as done this project?",
-      [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
-        {
-          text: "Yes",
-          onPress: () => {
-            markProjectDone(id);
-          },
-        },
-      ],
-      { cancelable: false }
-    );
-  };
-  const confirmMarkAsOpen = (id) => {
-    Alert.alert(
-      "Confirm Selection?",
-      "Are you sure you want to open this project again?",
-      [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
-        {
-          text: "Yes",
-          onPress: () => {
-            markAsOpen(id);
-          },
-        },
-      ],
-      { cancelable: false }
-    );
-  };
-  const markAsOpen = async (id) => {
-    try {
-      const formData = new FormData();
-      setLoading(true);
-      const url = `${URL}/project/status-mark-as-open/${id}`;
-      const response = await axios.post(url, formData, {
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (response.status === 200) {
-        await navigation.navigate("HomeScreen");
-      }
-    } catch (error) {
-      Dialog.show({
-        type: ALERT_TYPE.WARNING,
-        title: "Error",
-        textBody: "Something Went Wrong, Please Try again.",
-        button: "Close",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleReject = (id) => {
     Alert.alert(
@@ -227,64 +127,6 @@ const ProjectDetailsHireScreen = ({ route, navigation }) => {
       ],
       { cancelable: false }
     );
-  };
-
-  const handleAccept = (id) => {
-    Alert.alert(
-      "Confirm Extension?",
-      "Are you sure you want to accept the extension request?",
-      [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
-        {
-          text: "Yes",
-          onPress: () => {
-            sheetRef.current?.close();
-            acceptExtension(id);
-          },
-        },
-      ],
-      { cancelable: false }
-    );
-  };
-
-  const acceptExtension = async (id, extension) => {
-    setVisible(false);
-    try {
-      setLoading(true);
-      const url = `${URL}/project/accept-extension-request/${id}`;
-      const response = await axios.post(
-        url,
-        {
-          extension_due_date: proposal.extension_due_date,
-        },
-        {
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (response.status === 200) {
-        await navigation.navigate("ProjectCreated");
-        Alert.alert("Extension Accepted Successfully.");
-      } else {
-        throw new Error("Failed to accept extension request. Please Try Again");
-      }
-    } catch (error) {
-      Dialog.show({
-        type: ALERT_TYPE.WARNING,
-        title: "Error",
-        textBody: "Something Went Wrong, Please Try again.",
-        button: "Close",
-      });
-    } finally {
-      setLoading(false);
-    }
   };
 
   const rejectExtension = async (id) => {
@@ -364,6 +206,75 @@ const ProjectDetailsHireScreen = ({ route, navigation }) => {
     "MMMM D, YYYY"
   );
   const formattedEndDate = dayjs(project?.job_end_date).format("MMMM D, YYYY");
+  const handlePress = () => {
+    setVisible(true);
+  };
+
+  const handleAccept = (id) => {
+    Alert.alert(
+      "Confirm Extension?",
+      "Are you sure you want to accept the extension request?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Yes",
+          onPress: () => {
+            sheetRef.current?.close();
+            acceptExtension(id);
+          },
+        },
+      ],
+      { cancelable: false }
+    );
+  };
+
+  const acceptExtension = async (id, extension) => {
+    setVisible(false);
+    try {
+      setLoading(true);
+      const url = `${URL}/project/accept-extension-request/${id}`;
+      const response = await axios.post(
+        url,
+        {
+          extension_due_date: project.proposals[0].extension_due_date,
+        },
+        {
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        await fetchData();
+        await navigation.navigate("ProposalSubmittedScreen");
+
+        Toast.show({
+          type: ALERT_TYPE.SUCCESS,
+          title: "SUCCESS",
+          textBody: "Extension request accepted successfully.",
+          button: "Close",
+        });
+      } else {
+        throw new Error("Failed to accept extension request. Please Try Again");
+      }
+    } catch (error) {
+      console.log(error);
+      Toast.show({
+        type: ALERT_TYPE.DANGER,
+        title: "Error",
+        textBody: "Something Went Wrong, Please Try again.",
+        button: "Close",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.inputField }}>
@@ -393,14 +304,13 @@ const ProjectDetailsHireScreen = ({ route, navigation }) => {
               Project Overview
             </Text>
 
-            {project.student_user_id === studentId &&
-            project.job_finished === 0 ? (
+            {project.student_user_id === studentId && project.hireMe === 0 ? (
               <MaterialCommunityIcons
                 name="square-edit-outline"
                 size={24}
                 color={theme.colors.BLACKS}
                 onPress={() =>
-                  navigation.navigate("CreateProjectScreen", {
+                  navigation.navigate("CreateProjectScreenHire", {
                     projects: project,
                     studentId: studentId,
                   })
@@ -422,10 +332,9 @@ const ProjectDetailsHireScreen = ({ route, navigation }) => {
                 <Image
                   style={styles.image}
                   source={
-                    project?.user_name?.user_avatar ||
-                    project?.user_info?.user_avatar
+                    project?.student_info?.user_avatar
                       ? {
-                          uri: `${baseUrlWithoutApi}/storage/${isStudent?.studentInfo?.user_avatar}`,
+                          uri: `${baseUrlWithoutApi}/storage/${isStudent?.student_info?.user_avatar}`,
                         }
                       : {
                           uri: "https://img.freepik.com/free-psd/3d-illustration-person-with-sunglasses_23-2149436188.jpg?w=740&t=st=1670148608~exp=1670149208~hmac=bc57b66d67d2b9f4929c8e592ff17e8c8660721608add2f18fc20d19c1aab7e4",
@@ -543,109 +452,38 @@ const ProjectDetailsHireScreen = ({ route, navigation }) => {
                       </View>
                     ))}
                 </View>
+
+                {project.hireMe === 1 ? "" : <Text></Text>}
+
+                {project.hireMe === 2 &&
+                project.student_user_id === studentId ? (
+                  <View style={styles.applyNow}>
+                    <Button
+                      title="Show Options"
+                      filled
+                      style={{
+                        borderRadius: 10,
+                        width: "100%",
+                      }}
+                      onPress={() => sheetRef.current?.open()}
+                    />
+                  </View>
+                ) : (
+                  <Text></Text>
+                )}
               </View>
             </ScrollView>
           )}
-
-          {project && studentId && project.student_user_id === studentId ? (
-            ""
-          ) : loading ? (
-            <Text></Text>
-          ) : (
-            <View style={styles.applyNow}>
-              <Button
-                title="Submit Output"
-                filled
-                style={{
-                  borderRadius: 10,
-                  width: "90%",
-                }}
-                onPress={() =>
-                  navigation.navigate("OutputScreen", {
-                    isEnabled: false,
-                    project: project,
-                    id: studentId,
-                    token: token,
-                  })
-                }
-              />
-            </View>
-          )}
-
-          {/* {project && studentId && project.student_user_id !== studentId ? (
-              ""
-            ) : (
-              <View style={styles.applyNow}>
-                <Button
-                  title="Submit Output"
-                  filled
-                  style={{
-                    borderRadius: 10,
-                    width: "90%",
-                  }}
-                  onPress={() =>
-                    navigation.navigate("OutputScreen", {
-                      project: project,
-                      id: studentId,
-                      token: token,
-                    })
-                  }
-                />
-              </View>
-            )} */}
-
-          {/* {project.job_finished === 1 && !loading ? (
-              <View style={styles.applyNow}>
-                <Button
-                  title="Show Options"
-                  filled
-                  style={{
-                    borderRadius: 10,
-                    width: "90%",
-                  }}
-                  onPress={() => sheetRef.current?.open()}
-                />
-              </View>
-            ) : (
-              ""
-            )} */}
         </View>
         <BottomSheet
           ref={sheetRef}
-          height={280}
+          height={110}
+          style={{ position: "relative" }}
           animationType={"fade"}
           openDuration={100}
           closeDuration={100}
         >
           <View>
-            <View style={styles.buttonsOption}>
-              <Button
-                title="Mark as Done"
-                filled
-                style={{
-                  borderRadius: 10,
-                  width: "90%",
-                }}
-                onPress={() => {
-                  confirmMarkAsDone(project.id);
-                  sheetRef.current?.close();
-                }}
-              />
-            </View>
-            <View style={styles.buttonsOption}>
-              <Button
-                title="Mark as Open"
-                filled
-                style={{
-                  borderRadius: 10,
-                  width: "90%",
-                }}
-                onPress={() => {
-                  confirmMarkAsOpen(project.id);
-                  sheetRef.current?.close();
-                }}
-              />
-            </View>
             <View style={styles.buttonsOption}>
               <Button
                 title="View Extension Proposed"
@@ -697,9 +535,9 @@ const ProjectDetailsHireScreen = ({ route, navigation }) => {
                     >
                       Extension Due Date
                     </Text>
-                    {proposal !== null ? (
+                    {project.proposals[0].extension_due_date !== null ? (
                       <Text style={styles.date}>
-                        {dayjs(proposal?.extension_due_date).format(
+                        {dayjs(project.proposals[0].extension_due_date).format(
                           "MM/DD/YYYY"
                         )}
                       </Text>
@@ -712,12 +550,12 @@ const ProjectDetailsHireScreen = ({ route, navigation }) => {
                 </View>
               </View>
 
-              {proposal !== null ? (
+              {project.proposals[0].extension_due_date !== null ? (
                 <>
                   <TouchableOpacity
                     style={styles.dismiss}
                     onPress={() => {
-                      handleAccept(proposal.id);
+                      handleAccept(project.proposals[0].id);
                     }}
                   >
                     <Text style={styles.dismissText}>Accept</Text>
@@ -725,7 +563,7 @@ const ProjectDetailsHireScreen = ({ route, navigation }) => {
                   <TouchableOpacity
                     style={[styles.dismiss, { backgroundColor: "#dc143c" }]}
                     onPress={() => {
-                      handleReject();
+                      handleReject(handleAccept(project.proposals[0].id));
                     }}
                   >
                     <Text style={styles.dismissText}>Reject</Text>
@@ -887,6 +725,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     width: "100%",
     bottom: 0,
+    paddingHorizontal: 20,
+    left: 30,
   },
   buttonsOption: {
     position: "relative",

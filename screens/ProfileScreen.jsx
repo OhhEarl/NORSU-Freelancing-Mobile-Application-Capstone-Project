@@ -24,28 +24,19 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import * as theme from "../assets/constants/theme";
 import LoadingComponent from "../components/LoadingComponent";
+import { ALERT_TYPE, Toast } from "react-native-alert-notification";
+
 const ProfileScreen = ({ navigation, route }) => {
-  const [isActive, setIsActive] = useState(false);
-
-  // Function to handle the switch toggle
-
   const { isStudent } = route.params;
+  const [isOnline, setIsOnline] = useState(isStudent?.studentInfo?.isOnline);
+
+  const { fetchIsStudent } = useAuthContext;
   const [modalVisible, setModalVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const baseUrlWithoutApi = URL.replace("/api", "");
   const rating = isStudent.studentInfo.student_rating
     ? parseFloat(isStudent.studentInfo.student_rating)
     : 0;
-
-  const toggleSwitch = () => {
-    const newStatus = !isActive;
-    setIsActive(newStatus);
-
-    // Call the onToggle callback with the new status
-    if (onToggle) {
-      onToggle(newStatus);
-    }
-  };
 
   const signOut = async () => {
     try {
@@ -85,6 +76,54 @@ const ProfileScreen = ({ navigation, route }) => {
     };
   }, [loading]);
 
+  const confirmToggle = () => {
+    Alert.alert(
+      "Confirm Status Change",
+      `Are you sure you want to change your status to ${
+        isOnline ? "offline" : "online"
+      }?`,
+      [
+        {
+          text: "Cancel",
+
+          style: "cancel",
+        },
+        { text: "OK", onPress: handleToggle },
+      ]
+    );
+  };
+
+  const handleToggle = async () => {
+    try {
+      const response = await axios.post(
+        `${URL}/user/status`,
+        { is_online: !isOnline, id: isStudent.studentInfo.id },
+        {
+          headers: {
+            Authorization: `Bearer ${isStudent?.token}`, // Use appropriate auth mechanism
+          },
+        }
+      );
+      setIsOnline(!isOnline);
+      if (response.status === 200) {
+        await fetchIsStudent();
+        Toast.show({
+          type: ALERT_TYPE.SUCCESS,
+          title: "SUCCESS",
+          textBody: "Status updated successfully.",
+          button: "Close",
+        });
+      }
+    } catch (error) {
+      Toast.show({
+        type: ALERT_TYPE.DANGER,
+        title: "ERROR",
+        textBody: "Something Went Wrong Please Try Again.",
+        button: "Close",
+      });
+    }
+  };
+
   return (
     <SafeAreaView style={styles.mainContainer}>
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -92,6 +131,7 @@ const ProfileScreen = ({ navigation, route }) => {
           <LoadingComponent />
         ) : (
           <>
+            {console.log(JSON.stringify(isStudent?.studentInfo.user_avatar))}
             <View style={styles.innerContainer}>
               <Image
                 style={styles.image}
@@ -138,6 +178,8 @@ const ProfileScreen = ({ navigation, route }) => {
                 </View>
               </TouchableOpacity>
 
+              {/* Projects Applied */}
+
               <TouchableOpacity
                 onPress={() =>
                   navigation.navigate("ProposalSubmitted", {
@@ -148,10 +190,31 @@ const ProfileScreen = ({ navigation, route }) => {
                 }
               >
                 <View style={styles.seperateContainer}>
-                  <Text style={styles.seperateText}>Outputs Submitted</Text>
+                  <Text style={styles.seperateText}>Projects Applied</Text>
                   <AntDesign name="arrowright" size={20} color="black" />
                 </View>
               </TouchableOpacity>
+
+              {/* ProposalSubmitted */}
+              <TouchableOpacity
+                onPress={() => navigation.navigate("ProposalSubmittedScreen")}
+              >
+                <View style={styles.seperateContainer}>
+                  <Text style={styles.seperateText}>Proposals Submitted</Text>
+                  <AntDesign name="arrowright" size={20} color="black" />
+                </View>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => navigation.navigate("ProposalRequestedScreen")}
+              >
+                <View style={styles.seperateContainer}>
+                  <Text style={styles.seperateText}>Proposals Requested</Text>
+                  <AntDesign name="arrowright" size={20} color="black" />
+                </View>
+              </TouchableOpacity>
+
+              {/* Edit PRofile */}
 
               <TouchableOpacity
                 onPress={() =>
@@ -167,6 +230,8 @@ const ProfileScreen = ({ navigation, route }) => {
                 </View>
               </TouchableOpacity>
 
+              {/* Terms and Conditions  */}
+
               <TouchableOpacity
                 onPress={() => navigation.navigate("TermsAndConditions")}
               >
@@ -178,6 +243,25 @@ const ProfileScreen = ({ navigation, route }) => {
                 </View>
               </TouchableOpacity>
 
+              {/* Status */}
+
+              <View>
+                <View style={styles.seperateContainer}>
+                  <Text style={[styles.seperateText, { width: "90%" }]}>
+                    Status
+                  </Text>
+                  <Switch
+                    trackColor={{ false: "#767577", true: "#81b0ff" }}
+                    thumbColor={isOnline ? "#f5dd4b" : "#f4f3f4"}
+                    ios_backgroundColor="#3e3e3e"
+                    onValueChange={confirmToggle}
+                    value={isOnline}
+                    style={{ width: "10%" }}
+                  />
+                </View>
+              </View>
+
+              {/* Logout */}
               <TouchableOpacity onPress={() => setModalVisible(true)}>
                 <View
                   style={[
@@ -289,9 +373,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     backgroundColor: "#fff",
-    padding: 20,
-    borderRadius: 10,
-    borderColor: theme.colors.BLACKS,
+    padding: 15,
+    borderRadius: 5,
+    borderColor: theme.colors.gray,
     elevation: 3,
     borderWidth: 1,
     marginTop: 15,

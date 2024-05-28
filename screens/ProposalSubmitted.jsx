@@ -33,7 +33,6 @@ import {
 } from "react-native-alert-notification";
 import { useProjectContext } from "../hooks/ProjectContext";
 const ProposalSubmitted = ({ route, navigation }) => {
-  const { projectError, loading, projects, fetchData } = useProjectContext();
   const { id, token } = route?.params;
   const [isLoading, setLoading] = useState(false);
   const [allProjects, setAllProjects] = useState(null);
@@ -41,84 +40,14 @@ const ProposalSubmitted = ({ route, navigation }) => {
   const [completedProjects, setCompletedProjects] = useState([]);
   const [isModalVisible, setIsModalVisible] = useState(false); // State to manage modal visibility
   const [selectedItemId, setSelectedItemId] = useState(null);
-  const [visible, setVisible] = useState(false); // State to manage modal visibility
-  const [itemID, setItemID] = useState(null);
+
   const [index, setIndex] = useState(0);
-  const [showStartDatePicker, setShowStartDatePicker] = useState(false);
 
-  const [dueDate, setDueDate] = useState();
-  const [startDate, setStartDate] = useState(dayjs());
-  const formattedStartDate = dayjs(startDate)
-    .locale("tl-ph")
-    .format("YYYY-MM-DD");
-
-  const togglePicker = (picker) => {
-    if (picker === "start") {
-      setShowStartDatePicker(!showStartDatePicker);
-    } else if (picker === "end") {
-      setShowEndDatePicker(!showEndDatePicker);
-    }
-  };
-
-  dayjs.extend(relativeTime);
-
-  const handleShowModalExtension = async (id, due_date) => {
-    await setItemID(id);
-    await setDueDate(due_date);
-    await setVisible(true);
-  };
-
-  const onStartDateChange = (selectedDate) => {
-    if (selectedDate) {
-      setStartDate(selectedDate);
-      setShowStartDatePicker(false); // Close the picker
-    }
-  };
-  const handleExtension = async (projectID) => {
-    if (dayjs(formattedStartDate).isBefore(dayjs(dueDate))) {
-      Alert.alert(
-        "Invalid Date Selected",
-        "The proposed date cannot be earlier than the project's start date!",
-        [{ text: "Ok", style: "cancel" }]
-      );
-    } else {
-      try {
-        setLoading(true);
-        const url = `${URL}/proposals/update/dueDate/${projectID}`;
-        const response = await axios.post(
-          url,
-          { extension_due_date: formattedStartDate },
-          {
-            headers: {
-              Accept: "application/json",
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        if (response.status === 200) {
-          await fetchData();
-          await fetchProposalSubmitted(id);
-          await Alert.alert("Due Date Extension Submitted.");
-        }
-      } catch (error) {
-        Alert.alert("Something Went Wrong. Please Try Again!");
-      } finally {
-        setLoading(false);
-      }
-    }
-  };
-  // Delete Projects
   const handleDeleteProject = () => {
     if (selectedItemId) {
       deleteCreatedProject(selectedItemId); // Call deletion function with the ID
     }
     setIsModalVisible(false); // Close the modal after deletion
-  };
-  const handleShowModal = (itemId) => {
-    setIsModalVisible(true); // Show the modal when the button is pressed
-    setSelectedItemId(itemId);
   };
 
   const fetchProposalSubmitted = async () => {
@@ -136,14 +65,15 @@ const ProposalSubmitted = ({ route, navigation }) => {
         const data = response.data.data;
 
         const proposals = Array.isArray(data) ? data : [data];
-        const allData = proposals.filter((project) => project.status === 0);
 
+        const allData = proposals.filter((project) => {
+          return project.status === 0;
+        });
         const ongoingData = proposals.filter((project) => {
-          project.status === 1;
           return project.status === 1;
         });
         const completedData = proposals.filter((project) => {
-          return project.status === 2;
+          return project.status === 3;
         });
 
         setAllProjects(allData);
@@ -193,97 +123,18 @@ const ProposalSubmitted = ({ route, navigation }) => {
     }
   };
 
-  const acceptRequest = async (id) => {
-    try {
-      setLoading(true);
-      const formData = new FormData();
-      const response = await axios.post(
-        `${URL}/project/requested-project/accept/${id}`,
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "application/json",
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (response.status === 200) {
-        await fetchProposalSubmitted();
-        Toast.show({
-          type: ALERT_TYPE.SUCCESS,
-          title: "SUCCESS",
-          textBody: "Project request accepted successfully.",
-          button: "Close",
-        });
-      }
-    } catch (error) {
-      Toast.show({
-        type: ALERT_TYPE.DANGER,
-        title: "ERROR",
-        textBody: "Something Went Wrong, Please Try Again",
-        button: "Close",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const rejectRequest = async (id) => {
-    try {
-      setLoading(true);
-      const formData = new FormData();
-      const response = await axios.post(
-        `${URL}/project/requested-project/delete/${id}`,
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "application/json",
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (response.status === 200) {
-        await fetchProposalSubmitted();
-        Toast.show({
-          type: ALERT_TYPE.SUCCESS,
-          title: "SUCCESS",
-          textBody: "Project request rejected successfully.",
-          button: "Close",
-        });
-      }
-    } catch (error) {
-      Toast.show({
-        type: ALERT_TYPE.DANGER,
-        title: "ERROR",
-        textBody: "Something Went Wrong. Please Try Again",
-        button: "Close",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  //routes for pages
-
   const renderItem = ({ item, index }) => {
-    const today = dayjs(new Date()).format("YYYY-MM-DD");
-    const isPastDue = today > item.job_proposal.job_end_date;
-
-    const hasProjectOutput = item.job_proposal?.project_outputs?.some(
-      (output) => output.freelancer_id === item.freelancer_id
-    );
-
-    const handlePress = () => {
-      handleShowModalExtension(item.id, item.job_proposal.job_end_date);
-    };
+    const createdAt = dayjs(item.created_at);
 
     return (
       <View style={styles.item}>
-        <Text style={styles.title}>{item.job_proposal.job_title}</Text>
+        <View>
+          <Text style={styles.dateCreated}>
+            {createdAt.format("MMMM D, YYYY h:mm A")}
+          </Text>
+          <Text style={styles.title}>{item.job_proposal.job_title}</Text>
+        </View>
+
         <Text style={styles.description}>
           {item.job_proposal.job_description}
         </Text>
@@ -291,42 +142,53 @@ const ProposalSubmitted = ({ route, navigation }) => {
         <View
           style={{
             flexDirection: "row",
-            alignItems: "center",
-            marginBottom: -10,
+            alignContent: "center",
+            borderBottomWidth: 1,
+            paddingBottom: 12,
+            borderColor: theme.colors.GRAY_LIGHT,
           }}
         >
-          <Text style={[styles.dueDate, { color: "black" }]}>Budget: </Text>
-
-          <CurrencyInput
-            delimiter=","
-            separator="."
-            style={[styles.dueDate, { marginTop: 2 }]}
-            value={item.job_proposal.job_budget_from}
-            prefix="₱"
-          />
-        </View>
-        <View style={styles.bottomContainer}>
-          <View style={{ flexDirection: "row" }}>
-            <Text style={[styles.dueDate, { color: "black" }]}>
-              Proposal Due Date:{" "}
-            </Text>
-            <Text style={styles.dueDate}>
-              {dayjs(item.due_date).format("MMMM D, YYYY")}
-            </Text>
+          <View
+            style={{
+              marginTop: 5,
+            }}
+          >
+            <Text style={styles.budget}>Budget </Text>
+            <CurrencyInput
+              style={styles.budgetPrice}
+              value={item.job_proposal.job_budget_from}
+              prefix="₱"
+              delimiter=","
+              separator="."
+              precision={2}
+              minValue={0}
+              editable={false} // Add this line
+            />
           </View>
 
-          {item.job_proposal.job_finished === 0 ? (
-            <Text style={styles.ongoing}>On Going</Text>
-          ) : item.job_proposal.job_finished === 1 ? (
-            <Text style={styles.awarded}>Awarded</Text>
-          ) : item.job_proposal.job_finished === 2 ? (
-            <Text style={styles.requested}>Pending</Text>
-          ) : item.job_proposal.job_finished === 4 ? (
-            <Text style={styles.rejected}>Rejected</Text>
-          ) : null}
+          <View
+            style={{
+              marginTop: 5,
+              position: "absolute",
+              right: 20,
+              width: 80,
+            }}
+          >
+            <Text style={styles.budget}>Status </Text>
+
+            {item?.status === 0 ? (
+              <Text style={styles.ongoing}>Pending</Text>
+            ) : item?.status === 1 ? (
+              <Text style={styles.awarded}>Accepted</Text>
+            ) : item?.status === 3 ? (
+              <Text style={styles.rejected}>Rejected</Text>
+            ) : (
+              <Text style={styles.rejected}>Rejected</Text>
+            )}
+          </View>
         </View>
 
-        {item.job_proposal.job_finished === 0 ? (
+        {item.status === 0 ? (
           <View style={styles.buttonContainer}>
             <TouchableOpacity
               style={[
@@ -346,125 +208,74 @@ const ProposalSubmitted = ({ route, navigation }) => {
             >
               <Text style={[styles.optionText, { color: "white" }]}>
                 View Outputs
-              </Text>
-            </TouchableOpacity>
-          </View>
-        ) : item.job_proposal.job_finished === 1 &&
-          item.job_proposal.hireMe === 0 &&
-          item.status === 1 ? (
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              style={[
-                styles.optionButton,
-                { backgroundColor: theme.colors.primary },
-              ]}
-              onPress={() =>
-                navigation.navigate("OutputScreen", {
-                  projectId: item.project_id,
-                  userID: item.freelancer_id,
-                  enabled: true,
-                  status: true,
-                  output: item.user_id,
-                  projectOwned: item.job_proposal.student_user_id,
-                })
-              }
-            >
-              <Text style={[styles.optionText, { color: "white" }]}>
-                View Outputs
-              </Text>
-            </TouchableOpacity>
-          </View>
-        ) : item.job_proposal.job_finished === 3 &&
-          item.job_proposal.hireMe === 3 &&
-          item.status === 2 ? (
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              style={[
-                styles.optionButton,
-                { backgroundColor: "red", color: "white" },
-              ]}
-            >
-              <Text style={[styles.optionText, { color: "white" }]}>
-                Rejected
-              </Text>
-            </TouchableOpacity>
-          </View>
-        ) : item.job_proposal.job_finished === 1 &&
-          item.job_proposal.hireMe === 1 &&
-          item.status === 1 ? (
-          <View style={styles.buttonContainer}>
-            <View style={styles.buttonContainer}>
-              <TouchableOpacity
-                style={[
-                  styles.optionButton,
-                  { backgroundColor: theme.colors.primary },
-                ]}
-                onPress={() => {
-                  navigation.navigate("SubmitOutputScreen", {
-                    project: item,
-                  });
-                }}
-              >
-                <Text style={[styles.optionText, { color: "white" }]}>
-                  Submit Output
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        ) : item.status === 2 &&
-          item.job_proposal.job_finished === 2 &&
-          item.job_proposal.hireMe === 0 ? (
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              style={[
-                styles.optionButton,
-                { backgroundColor: theme.colors.primary },
-              ]}
-              onPress={() => {
-                acceptRequest(item.id);
-              }}
-            >
-              <Text style={[styles.optionText, { color: "white" }]}>
-                Accept Request
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.optionButton, { backgroundColor: "red" }]}
-              onPress={() => {
-                rejectRequest(item.id);
-              }}
-            >
-              <Text style={[styles.optionText, { color: "white" }]}>
-                Reject Request
-              </Text>
-            </TouchableOpacity>
-          </View>
-        ) : isPastDue && !hasProjectOutput ? (
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              style={[styles.optionButton, { backgroundColor: "#dc143c" }]}
-              onPress={() => {
-                handlePress();
-              }}
-            >
-              <Text style={[styles.optionText, { color: "white" }]}>
-                Ask Extension
               </Text>
             </TouchableOpacity>
           </View>
         ) : (
-          <TouchableOpacity style={styles.optionButton}>
-            <Text style={[styles.optionText, { color: "black" }]}></Text>
-          </TouchableOpacity>
+          <></>
+        )}
+
+        {item.status === 1 ? (
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={[
+                styles.optionButton,
+                { backgroundColor: theme.colors.primary },
+              ]}
+              onPress={() =>
+                navigation.navigate("OutputScreen", {
+                  projectId: item.project_id,
+                  userID: item.freelancer_id,
+                  enabled: true,
+                  status: true,
+                  output: item.user_id,
+                  projectOwned: item.job_proposal.student_user_id,
+                })
+              }
+            >
+              <Text style={[styles.optionText, { color: "white" }]}>
+                View Outputs
+              </Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <></>
+        )}
+
+        {item.status === 3 ? (
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={[
+                styles.optionButton,
+                { backgroundColor: theme.colors.primary },
+              ]}
+              onPress={() =>
+                navigation.navigate("OutputScreen", {
+                  projectId: item.project_id,
+                  userID: item.freelancer_id,
+                  enabled: true,
+                  status: true,
+                  output: item.user_id,
+                  projectOwned: item.job_proposal.student_user_id,
+                })
+              }
+            >
+              <Text style={[styles.optionText, { color: "white" }]}>
+                View Outputs
+              </Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <></>
         )}
       </View>
     );
   };
 
   const [routes] = useState([
-    { key: "all", title: "Submited" },
-    { key: "ongoing", title: "Awarded" },
-    { key: "completed", title: "Requesting" },
+    { key: "all", title: "Active" },
+    { key: "ongoing", title: "Accepted" },
+    { key: "completed", title: "Rejected" },
   ]);
   const renderScene = ({ route }) => {
     switch (route.key) {
@@ -606,120 +417,6 @@ const ProposalSubmitted = ({ route, navigation }) => {
             inactiveColor={"white"}
           />
         </View>
-
-        {/* ASK EXTENSION */}
-        <Modal visible={visible} transparent={true} animationType="none">
-          <View style={styles.modalContainer}>
-            <View style={styles.deleteContainer}>
-              <TouchableOpacity
-                onPress={() => {
-                  setVisible(false);
-                }}
-                style={{
-                  position: "relative",
-                  alignSelf: "flex-end",
-                  marginRight: 15,
-                }}
-              >
-                <Ionicons
-                  name={"close-circle-outline"}
-                  color={"black"}
-                  size={30}
-                />
-              </TouchableOpacity>
-
-              <View style={{ flexDirection: "row" }}>
-                <View style={{ width: "100%" }}>
-                  <View
-                    style={{ width: "100%", padding: 20, marginBottom: 10 }}
-                  >
-                    <Text
-                      style={{
-                        fontFamily: "Roboto-Medium",
-                        marginBottom: 7,
-                        color: "black",
-                      }}
-                    >
-                      Extend Due Date
-                    </Text>
-                    <TouchableOpacity onPress={() => togglePicker("start")}>
-                      <Text style={styles.date}>
-                        {dayjs(startDate).format("MM/DD/YYYY")}
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                  <Modal
-                    visible={showStartDatePicker}
-                    transparent={true}
-                    animationType="slide"
-                    onRequestClose={() => setShowStartDatePicker(false)}
-                  >
-                    <View style={styles.modalContainer}>
-                      <View style={styles.pickerContainer}>
-                        <DateTimePicker
-                          date={startDate}
-                          onChange={(params) => onStartDateChange(params.date)}
-                        />
-                        <Button
-                          title="Close"
-                          onPress={() => setShowStartDatePicker(false)}
-                        />
-                      </View>
-                    </View>
-                  </Modal>
-                </View>
-              </View>
-              <TouchableOpacity
-                style={styles.dismiss}
-                onPress={() => {
-                  handleExtension(itemID);
-                }}
-              >
-                <Text style={styles.dismissText}>Submit</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
-        {/* ASK EXTENSION */}
-
-        <Modal visible={isModalVisible} transparent={true} animationType="none">
-          <View style={styles.modalContainer}>
-            <View style={styles.deleteContainer}>
-              <TouchableOpacity
-                onPress={() => {
-                  setIsModalVisible(false);
-                }}
-                style={{
-                  position: "relative",
-                  alignSelf: "flex-end",
-                  marginRight: 15,
-                }}
-              >
-                <Ionicons
-                  name={"close-circle-outline"}
-                  color={"black"}
-                  size={30}
-                />
-              </TouchableOpacity>
-
-              <AntDesign
-                name={"exclamationcircle"}
-                color={"orange"}
-                size={50}
-              />
-              <Text style={styles.ohSnap}>ALERT!</Text>
-              <Text style={styles.modalText}>
-                Are Sure You Want To Delete This Project?
-              </Text>
-              <TouchableOpacity
-                style={styles.dismiss}
-                onPress={handleDeleteProject}
-              >
-                <Text style={styles.dismissText}>DELETE</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
       </AlertNotificationRoot>
     </SafeAreaView>
   );
@@ -764,49 +461,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
-  due: {
-    fontSize: theme.sizes.h2,
-    fontFamily: "Roboto-Medium",
-    color: "black",
-    marginBottom: 2,
-  },
-  detailsContainer: {
-    marginVertical: 4,
-  },
-
-  bottomContainer: {
-    justifyContent: "space-between",
-    flexDirection: "row",
-    borderBottomWidth: 1,
-    paddingBottom: 10,
-    borderColor: theme.colors.GRAY_LIGHT,
-  },
-
-  dueDate: {
-    fontSize: theme.sizes.h2,
-    color: theme.colors.primary,
-    fontFamily: "Roboto-Medium",
-  },
-
-  status: {
-    fontSize: theme.sizes.h2,
-    fontFamily: "Roboto-Medium",
-    padding: 2,
-    paddingHorizontal: 10,
-    borderRadius: 5,
-  },
-  pendingStatus: {
-    color: theme.colors.primary,
-    backgroundColor: "#f0f8ff", // Optional: Set background color for Pending
-  },
-  acceptedStatus: {
-    color: "green",
-    backgroundColor: "#f0f8ff", // Optional: Set background color for Pending
-  },
-  completedStatus: {
-    color: "yellow",
-  },
-
   buttonContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -828,76 +482,19 @@ const styles = StyleSheet.create({
     fontFamily: "Roboto-Medium",
     paddingVertical: 12,
   },
-  modalContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-  },
-  deleteContainer: {
-    paddingTop: 15,
-    borderRadius: 5,
-    justifyContent: "center",
-    alignItems: "center",
-    width: "80%",
-    maxHeight: 300,
-    backgroundColor: "white",
-  },
 
-  ohSnap: {
-    fontFamily: "Roboto-Medium",
-    fontSize: 24,
-    color: "black",
-    marginTop: 12,
-  },
-  modalText: {
-    fontFamily: "Roboto-Light",
-    fontSize: 18,
-    textAlign: "center",
-    paddingHorizontal: 10,
-    color: "#393939",
-    marginBottom: 20,
-    marginTop: 8,
-  },
-  dismiss: {
-    width: "100%",
-    backgroundColor: theme.colors.primary,
-    position: "relative",
-    bottom: -1,
-  },
-  dismissText: {
-    fontFamily: "Roboto-Medium",
-    color: "white",
-    padding: 12,
-    alignSelf: "center",
-  },
-
-  pickerContainer: {
-    backgroundColor: theme.colors.WHITE,
-    padding: 30,
-    borderRadius: 10,
-    width: "90%",
-  },
-
-  date: {
-    color: theme.colors.gray,
-    fontFamily: "Roboto-Regular",
-    fontSize: theme.sizes.h2 + 1,
-    padding: 10,
-    borderWidth: 1,
-    borderColor: theme.colors.GRAY_LIGHT,
-    borderRadius: 10,
-    paddingStart: 15,
-  },
   awarded: {
     padding: 6,
-    backgroundColor: theme.colors.primary,
+    backgroundColor: "green",
     borderRadius: 5,
     fontFamily: "Roboto-Medium",
     color: "white",
     fontSize: theme.sizes.h1 + 2,
     marginTop: 5,
     textAlign: "center",
+    width: 80,
+    position: "relative",
+    right: 0,
   },
 
   rejected: {
@@ -910,24 +507,23 @@ const styles = StyleSheet.create({
     marginTop: 5,
     textAlign: "center",
   },
-  requested: {
-    padding: 6,
-    backgroundColor: theme.colors.secondary,
-    borderRadius: 5,
-    fontFamily: "Roboto-Medium",
-    color: "white",
-    fontSize: theme.sizes.h1 + 2,
-    marginTop: 5,
-    textAlign: "center",
+
+  dateCreated: {
+    fontFamily: "Roboto",
+    color: "gray",
+    fontSize: 12,
+    textAlign: "right",
   },
-  ongoing: {
-    padding: 6,
-    backgroundColor: "blue",
-    borderRadius: 5,
+
+  budget: {
+    fontFamily: "Roboto-Regular",
+    fontSize: theme.sizes.h2,
+    color: "black",
+  },
+  budgetPrice: {
     fontFamily: "Roboto-Medium",
-    color: "white",
-    fontSize: theme.sizes.h1 + 2,
-    marginTop: 5,
-    textAlign: "center",
+    fontSize: theme.sizes.h3 + 2,
+    color: "black",
+    marginTop: -7,
   },
 });

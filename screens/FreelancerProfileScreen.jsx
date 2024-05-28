@@ -24,10 +24,7 @@ import { usePeopleContext } from "../hooks/PeopleContext";
 import dayjs from "dayjs";
 import "dayjs/locale/en";
 const PortfolioScreen = ({ portfolio }) => {
-  const baseUrlWithoutApi = URL.replace("/api", "");
-
   return (
-    // Add return statement here
     <View style={styles.containerPortfolio}>
       <View style={styles.portfolioContainer}>
         {portfolio?.length > 0 ? (
@@ -131,12 +128,14 @@ const FeedBackScreen = ({ feedback }) => {
 };
 
 const FreelancerProfileScreen = ({ navigation, route }) => {
+  const baseUrlWithoutApi = URL.replace("/api", "");
   const { peopleError, peopleLoading, peoples, fetchPeopleData } =
     usePeopleContext();
   const layout = useWindowDimensions();
   const [index, setIndex] = useState(0);
   const { id } = route.params;
   const filteredProfile = peoples.filter((people) => people.id === id);
+
   const averageRating = filteredProfile?.average_rating
     ? parseFloat(averageRating?.average_rating)
     : 0;
@@ -193,43 +192,79 @@ const FreelancerProfileScreen = ({ navigation, route }) => {
           <Text></Text>
         </View>
         <View style={styles.innerContainer}>
-          <Image
-            style={styles.image}
-            source={
-              filteredProfile?.user_avatar
-                ? {
-                    uri: `${baseUrlWithoutApi}/storage/${filteredProfile?.[0]?.user_avatar}`,
-                  }
-                : {
-                    uri: "https://img.freepik.com/free-psd/3d-illustration-person-with-sunglasses_23-2149436188.jpg?w=740&t=st=1670148608~exp=1670149208~hmac=bc57b66d67d2b9f4929c8e592ff17e8c8660721608add2f18fc20d19c1aab7e4",
-                  }
-            }
-          />
+          <View>
+            <Image
+              style={styles.image}
+              source={
+                filteredProfile[0]?.user_avatar
+                  ? {
+                      uri: `${baseUrlWithoutApi}/storage/${filteredProfile[0]?.user_avatar}`,
+                    }
+                  : {
+                      uri: "https://img.freepik.com/free-psd/3d-illustration-person-with-sunglasses_23-2149436188.jpg?w=740&t=st=1670148608~exp=1670149208~hmac=bc57b66d67d2b9f4929c8e592ff17e8c8660721608add2f18fc20d19c1aab7e4",
+                    }
+              }
+            />
+            {filteredProfile[0]?.is_online ? (
+              <Text
+                style={{
+                  position: "relative",
+                  top: -30,
+                  right: -100,
+                  color: "green",
+                  fontFamily: "Roboto-Medium",
+                }}
+              >
+                Online
+              </Text>
+            ) : (
+              <Text
+                style={{
+                  position: "relative",
+                  top: -30,
+                  right: -100,
+                  fontFamily: "Roboto-Medium",
+                }}
+              >
+                Offline
+              </Text>
+            )}
+          </View>
 
-          <Text style={styles.userText}>{filteredProfile?.[0]?.user_name}</Text>
-          <Text style={styles.areaExpertise}>
-            {filteredProfile?.[0]?.area_of_expertise}
-          </Text>
-          <Rating
-            type="star"
-            ratingCount={5}
-            imageSize={18}
-            style={{ marginTop: 4 }}
-            readonly
-            startingValue={averageRating}
-            fractions={2} // Allows half-star ratings
-          />
+          <View style={{ marginTop: -25 }}>
+            <Text style={styles.userText}>
+              {filteredProfile?.[0]?.user_name}
+            </Text>
+            <Text style={styles.areaExpertise}>
+              {filteredProfile?.[0]?.area_of_expertise}
+            </Text>
+            <Rating
+              type="star"
+              ratingCount={5}
+              imageSize={18}
+              style={{ marginTop: 4 }}
+              readonly
+              startingValue={averageRating}
+              fractions={2} // Allows half-star ratings
+            />
 
-          <TouchableOpacity
-            style={styles.hireMeContainer}
-            onPress={() => {
-              navigation.navigate("CreateProjectScreenHire", {
-                freelancer_id: id,
-              });
-            }}
-          >
-            <Text style={styles.hireMe}>HIRE ME</Text>
-          </TouchableOpacity>
+            {filteredProfile[0]?.is_online ? (
+              <TouchableOpacity
+                style={styles.hireMeContainer}
+                onPress={() => {
+                  navigation.navigate("CreateProjectScreenHire", {
+                    freelancer_id: id,
+                  });
+                }}
+              >
+                <Text style={styles.hireMe}>HIRE ME</Text>
+              </TouchableOpacity>
+            ) : (
+              <View style={styles.hireMeContainerOffline}>
+                <Text style={styles.hireMe}>HIRE ME</Text>
+              </View>
+            )}
+          </View>
         </View>
         <TabView
           navigationState={{ index, routes }}
@@ -389,8 +424,19 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: theme.colors.primary,
   },
+  hireMeContainerOffline: {
+    marginTop: 7,
+    color: "white",
+    padding: 10,
+    paddingHorizontal: 15,
+    backgroundColor: theme.colors.grey,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: theme.colors.grey,
+  },
   hireMe: {
     fontFamily: "Roboto-Medium",
     color: "white",
+    textAlign: "center",
   },
 });

@@ -62,7 +62,7 @@ const HomeScreen = ({ navigation, route }) => {
   useEffect(() => {
     if (projects) {
       const filtered = projects.filter(
-        (project) => project?.job_finished !== 2 && project?.job_finished !== 1
+        (project) => project?.job_finished === 1
       );
       setFilteredProjects(filtered);
     }
@@ -70,16 +70,14 @@ const HomeScreen = ({ navigation, route }) => {
 
   useEffect(() => {
     if (searchQuery.trim() === "") {
-      const filtered = projects.filter(
-        (project) => project.job_finished !== 2 && project?.job_finished !== 1
-      );
+      const filtered = projects.filter((project) => project.job_finished === 1);
       setFilteredProjects(filtered.slice());
     } else {
       const filtered = projects.filter(
         (project) =>
           project.job_title &&
           project.job_title.toLowerCase().includes(searchQuery.toLowerCase()) &&
-          project.job_finished !== 2
+          project.job_finished === 1
       );
       setFilteredProjects(filtered);
     }
@@ -127,12 +125,13 @@ const HomeScreen = ({ navigation, route }) => {
 
             <View style={styles.searchContainer}>
               <View style={styles.searchInputContainer}>
-                <Icon name="search" size={30} color={theme.colors.silver} />
+                <Icon name="search" size={30} color={"black"} />
                 <TextInput
                   value={searchQuery}
                   onChangeText={setSearchQuery}
                   placeholder="Search for project title.."
-                  style={{ flex: 1 }}
+                  placeholderTextColor={"black"}
+                  style={{ flex: 1, color: "black" }}
                 />
               </View>
               <TouchableOpacity

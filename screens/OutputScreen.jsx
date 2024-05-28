@@ -35,7 +35,6 @@ const OutputScreen = ({ navigation, route }) => {
   const { item, projectId, enabled, userID, project, finished, output } =
     route.params;
 
-  const JobOwnedID = item?.[0]?.student_user_id;
   const JobCompleted = project?.project_info?.job_finished === 2;
   const show = item?.[0]?.student_user_id || userID === id;
 
@@ -43,6 +42,8 @@ const OutputScreen = ({ navigation, route }) => {
   const [uploadedFiles, setUploadedFiles] = useState(
     item ? item?.[0].project_outputs : []
   );
+  const JobOwnedID = item?.[0]?.student_user_id || uploadedFiles[0]?.user_id;
+
 
   const fetchOutputAttachment = async () => {
     if (enabled) {
@@ -509,7 +510,10 @@ const OutputScreen = ({ navigation, route }) => {
           <Text></Text>
         )}
 
-        {id === JobOwnedID && item?.project_info?.job_finished === 1 ? (
+        {(!isLoading || !loading) &&
+        id === JobOwnedID &&
+        (item?.project_info?.job_finished === 2 ||
+          uploadedFiles[0]?.project_info?.job_finished === 2) ? (
           <Button
             title="Send FeedBack"
             filled
@@ -522,7 +526,9 @@ const OutputScreen = ({ navigation, route }) => {
             }}
             onPress={() =>
               navigation.navigate("FeedBackRatingScreen", {
-                freelancer_id: project?.freelancer_info.id,
+                freelancer_id:
+                  project?.freelancer_info?.id ||
+                  uploadedFiles[0]?.freelancer_id,
               })
             }
           />

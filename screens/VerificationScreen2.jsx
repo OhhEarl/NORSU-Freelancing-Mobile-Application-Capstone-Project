@@ -317,7 +317,7 @@ const VerificationScreen2 = ({
                 <TextInput
                   style={styles.inputField}
                   placeholderTextColor={theme.colors.gray}
-                  placeholder="enter NORSU ID number"
+                  placeholder="Enter NORSU ID number"
                   keyboardType="numeric"
                   value={values.norsuIDnumber}
                   onChangeText={(text) =>
@@ -331,7 +331,7 @@ const VerificationScreen2 = ({
                 <TextInput
                   style={styles.inputField}
                   placeholderTextColor={theme.colors.gray}
-                  placeholder="enter course"
+                  placeholder="Enter course"
                   value={values.course}
                   onChangeText={(text) =>
                     setValues({ ...values, course: text })
@@ -345,7 +345,7 @@ const VerificationScreen2 = ({
                   setSelected={handleYearLevelChange}
                   style={styles.inputField}
                   data={yearLevelOptions.map((item) => item.yearLevel)} // Pass an array of strings
-                  placeholder="select year level"
+                  placeholder="Select year level"
                   search={false}
                   dropdownTextStyles={{
                     color: "black",
@@ -470,6 +470,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingStart: 15,
     fontFamily: "Roboto-Regular",
+    color: "black",
   },
   button: {
     paddingHorizontal: 10,

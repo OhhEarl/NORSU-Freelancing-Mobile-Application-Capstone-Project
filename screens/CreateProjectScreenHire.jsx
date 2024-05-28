@@ -219,13 +219,22 @@ const CreateProjectScreenHire = ({ route, navigation }) => {
 
       if (response.status === 200) {
         await fetchData();
-        studentId
-          ? Alert.alert("Job has been updated Successfully.")
-          : Alert.alert("Job has been created Successfully.");
+
+        (await studentId)
+          ? Toast.show({
+              type: ALERT_TYPE.SUCCESS,
+              title: "Success",
+              textBody: "Job has been updated successfully.",
+              button: "Close",
+            })
+          : Toast.show({
+              type: ALERT_TYPE.SUCCESS,
+              title: "Success",
+              textBody: "Job has been created successfully.",
+              button: "Close",
+            });
       }
-      await navigation.navigate("HomeScreen");
     } catch (err) {
-      console.log(err);
       Dialog.show({
         type: ALERT_TYPE.WARNING,
         title: "Error",
@@ -355,30 +364,23 @@ const CreateProjectScreenHire = ({ route, navigation }) => {
                 }}
               />
             </View>
-
             <View style={theme.utilities.inputContainer}>
               <Text style={theme.utilities.title}>Project Description</Text>
               <TextInput
-                style={[theme.utilities.inputField, { height: 100 }]}
+                style={[theme.utilities.inputField, { height: 150 }]}
                 placeholderTextColor="#a9a9a9"
-                placeholder="Enter some brief about project "
+                placeholder="Enter some brief about your project."
                 type="text"
                 value={jobDescription}
                 onChangeText={(text) => {
-                  if (text?.length <= 300) {
-                    setJobDescription(text);
-                  }
+                  setJobDescription(text);
                 }}
                 multiline
                 autoCorrect={false}
-                numberOfLines={4}
-                maxHeight={100}
-                maxLength={300}
+                numberOfLines={7}
+                maxHeight={200}
                 textAlignVertical="top"
               />
-              <View style={{ alignItems: "flex-end", marginRight: 5 }}>
-                <Text>{jobDescription?.length} / 300</Text>
-              </View>
             </View>
 
             <View style={theme.utilities.inputContainer}>
@@ -436,6 +438,10 @@ const CreateProjectScreenHire = ({ route, navigation }) => {
                 <View style={styles.modalContainer}>
                   <View style={styles.pickerContainer}>
                     <DateTimePicker
+                      calendarTextStyle={{ color: "black" }}
+                      headerTextContainerStyle={{ color: "black" }}
+                      headerTextStyle={{ color: "black" }}
+                      weekDaysTextStyle={{ color: "black" }}
                       date={startDate} // Pass current startDate
                       onChange={(params) => onStartDateChange(params.date)}
                     />

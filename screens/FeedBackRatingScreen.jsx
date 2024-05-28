@@ -119,7 +119,7 @@ const FeedBackRatingScreen = ({ navigation, route }) => {
                   showRating={true}
                 />
                 <View style={theme.utilities.inputContainer}>
-                  <Text style={theme.utilities.title}>FeedBack</Text>
+                  <Text style={theme.utilities.title}>Feedback</Text>
                   <TextInput
                     style={[theme.utilities.inputField, { height: 200 }]}
                     placeholderTextColor="#a9a9a9"
@@ -142,24 +142,28 @@ const FeedBackRatingScreen = ({ navigation, route }) => {
                     <Text>{feedBack?.length} / 300</Text>
                   </View>
                 </View>
+                <View style={styles.applyNow}>
+                  {loading ? (
+                    <Text></Text>
+                  ) : (
+                    <Button
+                      title="Submit Rating"
+                      filled
+                      style={{
+                        width: "100%",
+                        borderRadius: 10,
+                        position: "absolute",
+                        bottom: 0,
+                      }}
+                      onPress={submitRating}
+                    />
+                  )}
+                </View>
               </View>
             </>
           </ScrollView>
         )}
       </AlertNotificationRoot>
-
-      <View style={styles.applyNow}>
-        {loading ? (
-          <Text></Text>
-        ) : (
-          <Button
-            title="Submit Rating"
-            filled
-            style={{ width: "100%", borderRadius: 10 }}
-            onPress={submitRating}
-          />
-        )}
-      </View>
     </SafeAreaView>
   );
 };
@@ -178,14 +182,14 @@ const styles = StyleSheet.create({
   },
 
   lottie: {
-    width: 300,
-    height: 300,
+    width: 200,
+    height: 200,
     justifyContent: "center",
     alignSelf: "center",
   },
 
   applyNow: {
-    position: "absolute",
+    marginTop: 130,
     alignItems: "center",
     width: "100%",
     bottom: 0,

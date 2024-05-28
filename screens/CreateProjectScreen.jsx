@@ -46,7 +46,6 @@ const CreateProjectScreenHire = ({ route, navigation }) => {
   const [startDate, setStartDate] = useState(dayjs());
   const [endDate, setEndDate] = useState(dayjs());
   const [showStartDatePicker, setShowStartDatePicker] = useState(false);
-  const [showEndDatePicker, setShowEndDatePicker] = useState(false);
   const [key, setKey] = useState(0);
   const [selectedFile, setSelectedFile] = useState([]);
   const [isloading, setIsLoading] = useState(false);
@@ -108,6 +107,7 @@ const CreateProjectScreenHire = ({ route, navigation }) => {
 
   const pickDocument = async () => {
     try {
+      setIsLoading(true);
       const results = await DocumentPicker.pick({
         allowMultiSelection: true,
         type: [DocumentPicker.types.allFiles],
@@ -127,7 +127,7 @@ const CreateProjectScreenHire = ({ route, navigation }) => {
             "An error occurred while selecting the file. Please try again.",
           button: "Close",
         });
-      } else if (results === undefined) {
+      } else if (results === null) {
         Toast.show({
           type: ALERT_TYPE.DANGER,
           title: "ERROR",
@@ -148,6 +148,8 @@ const CreateProjectScreenHire = ({ route, navigation }) => {
           button: "Close",
         });
       }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -168,17 +170,21 @@ const CreateProjectScreenHire = ({ route, navigation }) => {
     if (
       !jobTitle ||
       !jobCategory ||
-      (Array.isArray(jobTags) && jobTags.length === 0) ||
       !jobDescription ||
       !startDate ||
       !endDate ||
       !jobBudgetFrom
     ) {
-      setErrorMessage(
-        "Please fill in all required fields and upload at least one file."
-      );
+      setErrorMessage("Please fill in all required fields.");
       setHasError(true);
-      return;
+    } else if (Array.isArray(jobTags) && jobTags.length === 0) {
+      setErrorMessage("Job tags required.");
+      setHasError(true);
+    } else {
+      // If there are no errors, clear any existing error messages and proceed
+      setHasError(false);
+      setErrorMessage("");
+      // Continue with form submission or other logic here
     }
 
     const formData = new FormData();
@@ -242,8 +248,8 @@ const CreateProjectScreenHire = ({ route, navigation }) => {
             });
       }
     } catch (err) {
-      Dialog.show({
-        type: ALERT_TYPE.WARNING,
+      Toast.show({
+        type: ALERT_TYPE.DANGER,
         title: "Error",
         textBody: "Something Went Wrong, Please Try again.",
         button: "Close",
@@ -376,9 +382,9 @@ const CreateProjectScreenHire = ({ route, navigation }) => {
               <View style={theme.utilities.inputContainer}>
                 <Text style={theme.utilities.title}>Project Description</Text>
                 <TextInput
-                  style={[theme.utilities.inputField, { height: 100 }]}
+                  style={[theme.utilities.inputField, { height: 150 }]}
                   placeholderTextColor="#a9a9a9"
-                  placeholder="Enter some brief about project "
+                  placeholder="Enter some brief about your project."
                   type="text"
                   value={jobDescription}
                   onChangeText={(text) => {
@@ -386,8 +392,8 @@ const CreateProjectScreenHire = ({ route, navigation }) => {
                   }}
                   multiline
                   autoCorrect={false}
-                  numberOfLines={4}
-                  maxHeight={100}
+                  numberOfLines={7}
+                  maxHeight={200}
                   textAlignVertical="top"
                 />
               </View>
@@ -450,6 +456,10 @@ const CreateProjectScreenHire = ({ route, navigation }) => {
                     <View style={styles.pickerContainer}>
                       <DateTimePicker
                         date={startDate} // Pass current startDate
+                        calendarTextStyle={{ color: "black" }}
+                        headerTextContainerStyle={{ color: "black" }}
+                        headerTextStyle={{ color: "black" }}
+                        weekDaysTextStyle={{ color: "black" }}
                         onChange={(params) => onStartDateChange(params.date)}
                       />
                       <Button
@@ -551,7 +561,9 @@ const CreateProjectScreenHire = ({ route, navigation }) => {
                     width: "100%",
                     alignSelf: "center",
                   }}
-                  onPress={() => handleSubmit(projects.id)}
+                  onPress={() => {
+                    handleSubmit(projects.id);
+                  }}
                 >
                   <Text style={styles.postText}>SUBMIT</Text>
                 </TouchableOpacity>
@@ -565,7 +577,9 @@ const CreateProjectScreenHire = ({ route, navigation }) => {
                     width: "100%",
                     alignSelf: "center",
                   }}
-                  onPress={() => handleSubmit()}
+                  onPress={() => {
+                    handleSubmit();
+                  }}
                 >
                   <Text style={styles.postText}>SUBMIT</Text>
                 </TouchableOpacity>

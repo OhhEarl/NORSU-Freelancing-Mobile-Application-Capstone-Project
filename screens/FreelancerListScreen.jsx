@@ -20,7 +20,7 @@ import * as theme from "../assets/constants/theme";
 import Icon from "react-native-vector-icons/MaterialIcons";
 
 import LoadingComponent from "../components/LoadingComponent";
-
+import { URL } from "@env";
 import { usePeopleContext } from "../hooks/PeopleContext";
 import { Rating } from "react-native-ratings";
 const FreelancerListScreen = ({ navigation, route }) => {
@@ -29,11 +29,11 @@ const FreelancerListScreen = ({ navigation, route }) => {
 
   const { peopleError, peopleLoading, peoples, fetchPeopleData } =
     usePeopleContext();
-
+  const baseUrlWithoutApi = URL.replace("/api", "");
   const peopleRender = peoples.filter((people) => people.id !== ownID);
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState(
-    peopleRender ? peopleRender : []
+    peopleRender ? peopleRender : peopleRender
   );
   const [refreshing, setRefreshing] = useState(false); // Refreshing state
 
@@ -56,11 +56,24 @@ const FreelancerListScreen = ({ navigation, route }) => {
     setSearchResults(filteredResults);
   };
   const renderItem = ({ item }) => {
-    const rating = item?.average_rating ? parseFloat(item?.average_rating) : 0;
+    const rating = item?.average_rating
+      ? parseFloat(item.average_rating).toFixed(1)
+      : "0.0";
+
     return (
-      <View style={{ flex: 1, paddingHorizontal: 24 }}>
-        <ScrollView showsVerticalScrollIndicator={false}>
-          <View style={styles.container}>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        <View style={styles.container}>
+          <View
+            style={{
+              paddingHorizontal: 24,
+              paddingVertical: 20,
+
+              marginBottom: -20,
+              borderWidth: 1,
+              borderColor: theme.colors.GRAY_LIGHT,
+              borderRadius: 5,
+            }}
+          >
             <TouchableOpacity
               onPress={() =>
                 navigation.navigate("FreelancerProfileScreen", {
@@ -99,16 +112,44 @@ const FreelancerListScreen = ({ navigation, route }) => {
                   />
 
                   <View style={{ flexDirection: "column", marginStart: 10 }}>
-                    <Text style={styles.freelancerName}>{item?.user_name}</Text>
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                      }}
+                    >
+                      <Text style={styles.freelancerName}>
+                        {item?.user_name}
+                      </Text>
+                      {item.is_online ? (
+                        <Text style={{ color: "green", marginLeft: 8 }}>
+                          {"\u2B24"}
+                        </Text>
+                      ) : (
+                        <Text style={{ color: "gray", marginLeft: 8 }}>
+                          {"\u2B24"}
+                        </Text>
+                      )}
+                    </View>
+
                     <Text style={styles.freelancerExpertise}>
                       {item?.area_of_expertise}
                     </Text>
                   </View>
                 </View>
+                <Text
+                  style={{
+                    marginRight: -13,
+                    color: "gold",
+                    fontFamily: "Roboto-Medium",
+                  }}
+                >
+                  {rating ? `(${rating})` : ""}/5
+                </Text>
                 <Rating
                   type="star"
                   ratingCount={5}
-                  imageSize={18}
+                  imageSize={14}
                   readonly
                   startingValue={rating}
                   fractions={2} // Allows half-star ratings
@@ -143,75 +184,100 @@ const FreelancerListScreen = ({ navigation, route }) => {
               </View>
             </TouchableOpacity>
           </View>
-        </ScrollView>
-      </View>
+        </View>
+      </ScrollView>
     );
   };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.WHITE }}>
       <View style={{ flex: 1 }}>
-        <View style={{ flex: 1 }}>
-          <View style={styles.header}>
-            <View style={{ flexDirection: "row" }}>
-              <Text style={styles.hey}>Hey, </Text>
-              <Text style={styles.titleName}>
-                {isStudent?.studentInfo?.first_name}
+        <View style={styles.header}>
+          <View style={{ flexDirection: "row" }}>
+            <Text style={styles.hey}>Hey, </Text>
+            <Text style={styles.titleName}>
+              {isStudent?.studentInfo?.first_name}
+            </Text>
+          </View>
+
+          <TouchableOpacity
+            onPress={() => navigation.navigate("ProfileScreen")}
+          >
+            <Image
+              source={
+                isStudent?.studentInfo?.user_avatar
+                  ? {
+                      uri: `${baseUrlWithoutApi}/storage/${isStudent?.studentInfo?.user_avatar}`,
+                    }
+                  : {
+                      uri: "https://img.freepik.com/free-psd/3d-illustration-person-with-sunglasses_23-2149436188.jpg?w=740&t=st=1670148608~exp=1670149208~hmac=bc57b66d67d2b9f4929c8e592ff17e8c8660721608add2f18fc20d19c1aab7e4",
+                    }
+              }
+              style={{ width: 30, height: 30, borderRadius: 50 }}
+            />
+          </TouchableOpacity>
+        </View>
+
+        <View>
+          <Text style={[theme.utilities.header, { marginLeft: 20 }]}>
+            Find Your Dream Freelancer
+          </Text>
+
+          <View style={styles.searchContainer}>
+            <View style={styles.searchInputContainer}>
+              <Icon name="search" size={30} color={"black"} />
+              <TextInput
+                value={searchTerm}
+                onChangeText={handleSearch}
+                placeholderTextColor={"black"}
+                placeholder="Search for freelancer expertise or username.."
+                style={{ flex: 1, paddingRight: 10, fontSize: 12 }}
+              />
+            </View>
+          </View>
+        </View>
+
+        {peopleLoading || !peopleRender ? (
+          <LoadingComponent />
+        ) : searchResults && searchResults.length > 0 ? (
+          <FlatList
+            data={searchResults}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={renderItem}
+            style={styles.flatList}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={fetchPeopleData}
+              />
+            }
+          />
+        ) : (
+          <View
+            style={{
+              flex: 1,
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <View style={{ justifyContent: "center", alignItems: "center" }}>
+              <Image
+                source={require("../assets/no-data-found.jpg")}
+                style={{ height: 100, width: 100 }}
+              />
+              <Text
+                style={{
+                  fontFamily: "Roboto-Bold",
+                  fontSize: 18,
+                  color: "black",
+                }}
+              >
+                NO FREELANCERS FOUND
               </Text>
             </View>
-
-            <TouchableOpacity
-              onPress={() => navigation.navigate("ProfileScreen")}
-            >
-              <Image
-                source={
-                  isStudent?.studentInfo?.user_avatar
-                    ? {
-                        uri: `${baseUrlWithoutApi}/storage/${isStudent?.studentInfo?.user_avatar}`,
-                      }
-                    : {
-                        uri: "https://img.freepik.com/free-psd/3d-illustration-person-with-sunglasses_23-2149436188.jpg?w=740&t=st=1670148608~exp=1670149208~hmac=bc57b66d67d2b9f4929c8e592ff17e8c8660721608add2f18fc20d19c1aab7e4",
-                      }
-                }
-                style={{ width: 30, height: 30, borderRadius: 50 }}
-              />
-            </TouchableOpacity>
           </View>
-
-          <View>
-            <Text style={[theme.utilities.header, { marginLeft: 20 }]}>
-              Find Your Dream Freelancer
-            </Text>
-
-            <View style={styles.searchContainer}>
-              <View style={styles.searchInputContainer}>
-                <Icon name="search" size={30} color={theme.colors.silver} />
-                <TextInput
-                  value={searchTerm}
-                  onChangeText={handleSearch}
-                  placeholder="Search for freelancer expertise or username.."
-                  style={{ flex: 1 }}
-                />
-              </View>
-            </View>
-          </View>
-
-          {peopleLoading ? (
-            <LoadingComponent />
-          ) : (
-            <FlatList
-              data={searchResults}
-              renderItem={renderItem}
-              keyExtractor={(item) => item.id.toString()}
-              refreshControl={
-                <RefreshControl
-                  refreshing={refreshing}
-                  onRefresh={fetchPeopleData}
-                />
-              }
-            />
-          )}
-        </View>
+        )}
       </View>
     </SafeAreaView>
   );
@@ -227,12 +293,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.WHITE,
   },
   container: {
-    paddingHorizontal: 24,
-    paddingVertical: 24,
-    marginTop: 10,
-    borderWidth: 1,
-    borderColor: theme.colors.GRAY_LIGHT,
-    borderRadius: 5,
+    padding: 20,
   },
 
   titleName: {
@@ -286,24 +347,6 @@ const styles = StyleSheet.create({
     fontSize: theme.sizes.h4,
     color: theme.colors.BLACKS,
   },
-  sheetContent: {
-    padding: 25,
-    paddingTop: -5,
-  },
-  sort: {
-    paddingVertical: 14,
-    fontFamily: "Roboto-Bold",
-    color: "black",
-    borderTopWidth: 1,
-    borderColor: theme.colors.GRAY_LIGHT,
-  },
-  selectedSort: {
-    borderTopWidth: 1,
-    paddingVertical: 14,
-    fontFamily: "Roboto-Bold",
-    color: theme.colors.primary,
-    borderColor: theme.colors.GRAY_LIGHT,
-  },
 
   freelancerName: {
     fontFamily: "Roboto-Medium",
@@ -330,6 +373,10 @@ const styles = StyleSheet.create({
     fontSize: theme.sizes.h2 - 1,
     color: theme.colors.WHITE,
     fontFamily: "Roboto-Light",
+  },
+
+  flatList: {
+    flex: 1,
   },
 });
 

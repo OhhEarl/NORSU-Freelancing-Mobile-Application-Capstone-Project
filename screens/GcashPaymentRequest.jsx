@@ -28,7 +28,7 @@ import {
   AlertNotificationRoot,
   Toast,
 } from "react-native-alert-notification";
-const GcashPaymentScreen = ({ navigation, route }) => {
+const GcashPaymentRequest = ({ navigation, route }) => {
   const { project_id, user_id, freelancer_id, project_price } = route.params;
   const { projects, fetchData } = useProjectContext();
   const token = route.params.isStudent.token;
@@ -144,7 +144,7 @@ const GcashPaymentScreen = ({ navigation, route }) => {
       try {
         setLoading(true);
 
-        const url = `${URL}/gcash-payment/transaction`;
+        const url = `${URL}/gcash-payment-project-request/transaction`;
         const response = await axios({
           method: "post",
           url: url,
@@ -477,7 +477,7 @@ const GcashPaymentScreen = ({ navigation, route }) => {
   );
 };
 
-export default GcashPaymentScreen;
+export default GcashPaymentRequest;
 
 const styles = StyleSheet.create({
   mainContainer: {

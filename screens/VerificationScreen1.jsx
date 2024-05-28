@@ -74,7 +74,7 @@ const VerificationScreen1 = ({ onNext, values, setValues, navigation }) => {
               flexDirection: "row",
               justifyContent: "space-between",
               alignItems: "center",
-              marginTop: 20,
+              marginTop: 10,
             }}
           >
             <Feather
@@ -101,7 +101,7 @@ const VerificationScreen1 = ({ onNext, values, setValues, navigation }) => {
             <View style={{ marginVertical: 9, marginTop: 30 }}>
               <Text
                 style={{
-                  fontSize: 18,
+                  fontSize: 14,
                   fontFamily: "Roboto-Bold",
                   color: theme.colors.BLACKS,
                   textAlign: "center",
@@ -116,7 +116,7 @@ const VerificationScreen1 = ({ onNext, values, setValues, navigation }) => {
                 autoCapitalize="words"
                 placeholderTextColor={theme.colors.gray}
                 style={styles.inputField}
-                placeholder="enter username"
+                placeholder="Enter username"
                 value={values.userName}
                 onChangeText={(text) =>
                   setValues({ ...values, userName: text })
@@ -129,7 +129,7 @@ const VerificationScreen1 = ({ onNext, values, setValues, navigation }) => {
                 autoCapitalize="words"
                 placeholderTextColor={theme.colors.gray}
                 style={styles.inputField}
-                placeholder="enter first name"
+                placeholder="Enter first name"
                 value={values.firstName}
                 onChangeText={(text) =>
                   setValues({ ...values, firstName: text })
@@ -142,7 +142,7 @@ const VerificationScreen1 = ({ onNext, values, setValues, navigation }) => {
               <TextInput
                 placeholderTextColor={theme.colors.gray}
                 style={styles.inputField}
-                placeholder="enter last name"
+                placeholder="Enter last name"
                 value={values.lastName}
                 onChangeText={(text) =>
                   setValues({ ...values, lastName: text })
@@ -159,7 +159,7 @@ const VerificationScreen1 = ({ onNext, values, setValues, navigation }) => {
                 keyboardType="numeric"
                 placeholderTextColor={theme.colors.gray}
                 style={styles.inputField}
-                placeholder="enter mobile number"
+                placeholder="Enter mobile number"
                 value={values.mobile_number}
                 onChangeText={(text) =>
                   setValues({ ...values, mobile_number: text })
@@ -186,7 +186,7 @@ const VerificationScreen1 = ({ onNext, values, setValues, navigation }) => {
               <TextInput
                 style={styles.inputField}
                 placeholderTextColor={theme.colors.gray}
-                placeholder="enter area of expertise"
+                placeholder="Enter area of expertise"
                 value={values.areaOfExpertise}
                 onChangeText={(text) =>
                   setValues({ ...values, areaOfExpertise: text })
@@ -203,7 +203,7 @@ const VerificationScreen1 = ({ onNext, values, setValues, navigation }) => {
                 key={key}
                 initialTags={values.jobTags}
                 onChangeTags={onChangeSkills}
-                style={{ marginVertical: 0 }}
+                style={{ marginVertical: 0, color: "black" }}
                 tags={values.skillTags}
               />
             </View>
@@ -237,6 +237,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
   inputField: {
+    color: "black",
     width: "100%",
     borderWidth: 1,
     borderColor: theme.colors.primary,

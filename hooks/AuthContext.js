@@ -257,7 +257,8 @@ export const AuthProvider = ({ children, navigation }) => {
         setIsEmailVerified,
         setIsStudent,
         student,
-        isLoggedIn
+        isLoggedIn,
+        fetchIsStudent
       }}>
       {children}
     </AuthContext.Provider>

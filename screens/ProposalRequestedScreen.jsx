@@ -20,6 +20,7 @@ import relativeTime from "dayjs/plugin/relativeTime";
 import Feather from "react-native-vector-icons/Feather";
 import AntDesign from "react-native-vector-icons/AntDesign";
 import CurrencyInput from "react-native-currency-input";
+import DateTimePicker from "react-native-ui-datepicker";
 import {
   ALERT_TYPE,
   Dialog,
@@ -33,35 +34,58 @@ import { useAuthContext } from "../hooks/AuthContext";
 
 dayjs.extend(relativeTime);
 
-const ProjectCreated = ({ route, navigation }) => {
-  const { loading, projects, fetchData } = useProjectContext();
+const ProposalRequestedScreen = ({ route, navigation }) => {
+  const { projectError, loading, projects, fetchData } = useProjectContext();
 
   const { token, isStudent } = useAuthContext();
   const [allProjects, setAllProjects] = useState(null);
   const [ongoingProjects, setOngoingProjects] = useState([]);
   const [hiredData, setHiredData] = useState([]);
-
   const [isLoading, setLoading] = useState(false);
   const [showOptionsIndex, setShowOptionsIndex] = useState(null);
   const [selectedItemId, setSelectedItemId] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false); // State to manage modal visibility
   const [index, setIndex] = useState(0);
-
   const id = isStudent.studentInfo.id;
+
+  const [itemID, setItemID] = useState(null);
+  const [visible, setVisible] = useState(false); // State to manage modal visibility
+  const [showStartDatePicker, setShowStartDatePicker] = useState(false);
+
+  const [dueDate, setDueDate] = useState();
+  const [startDate, setStartDate] = useState(dayjs());
+  const formattedStartDate = dayjs(startDate)
+    .locale("tl-ph")
+    .format("YYYY-MM-DD");
+
+  const togglePicker = (picker) => {
+    if (picker === "start") {
+      setShowStartDatePicker(!showStartDatePicker);
+    } else if (picker === "end") {
+      setShowEndDatePicker(!showEndDatePicker);
+    }
+  };
+
+  dayjs.extend(relativeTime);
+
   const filteredProjects = projects.filter(
-    (project) => project.student_user_id === id
+    (project) =>
+      project.proposals[0]?.freelancer_id === id && project.hireMe !== 0
   );
 
   useEffect(() => {
-    let allData = filteredProjects.filter(
-      (project) => project.job_finished === 0
-    );
-    let ongoingData = filteredProjects.filter(
-      (project) => project.job_finished === 1
-    );
-    let hiredData = filteredProjects.filter(
-      (project) => project.job_finished === 2
-    );
+    let allData = filteredProjects.filter((project) => {
+      return (
+        (project.proposals[0]?.status === 1 && project.hireMe === 1) ||
+        (project.proposals[0]?.status === 4 && project.hireMe === 4)
+      );
+    });
+    let ongoingData = filteredProjects.filter((project) => {
+      return project.proposals[0]?.status === 2 && project.hireMe === 2;
+    });
+    let hiredData = filteredProjects.filter((project) => {
+      return project.proposals[0]?.status === 3 && project.hireMe === 3;
+    });
 
     setAllProjects(allData);
     setOngoingProjects(ongoingData);
@@ -97,7 +121,7 @@ const ProjectCreated = ({ route, navigation }) => {
       const response = await axios.post(url, null, {
         headers: {
           Accept: "application/json",
-          "Content-Type": "application/json",
+          "Content-Type": "multipart/form-data",
           Authorization: `Bearer ${token}`,
         },
       });
@@ -113,8 +137,7 @@ const ProjectCreated = ({ route, navigation }) => {
         });
       }
     } catch (error) {
-      await fetchData();
-      Toast.show({
+      Dialog.show({
         type: ALERT_TYPE.DANGER,
         title: "Error",
         textBody: "Something Went Wrong, Please Try again.",
@@ -125,21 +148,181 @@ const ProjectCreated = ({ route, navigation }) => {
     }
   };
 
+  const acceptRequest = async (id) => {
+    try {
+      setLoading(true);
+      const formData = new FormData();
+      const response = await axios.post(
+        `${URL}/project/requested-project/accept/${id}`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        await fetchData();
+        Toast.show({
+          type: ALERT_TYPE.SUCCESS,
+          title: "SUCCESS",
+          textBody: "Project request accepted successfully.",
+          button: "Close",
+        });
+      }
+    } catch (error) {
+      Toast.show({
+        type: ALERT_TYPE.DANGER,
+        title: "ERROR",
+        textBody: "Something Went Wrong. Please Try Again",
+        button: "Close",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const confirmRejectRequest = (id) => {
+    Alert.alert("Are you sure?", "Do you really want to reject this project?", [
+      {
+        text: "Cancel",
+        style: "cancel",
+      },
+      { text: "OK", onPress: () => rejectRequest(id) },
+    ]);
+  };
+
+  const confirmAcceptRequest = (id) => {
+    Alert.alert("Are you sure?", "Do you really want to accept this project?", [
+      {
+        text: "Cancel",
+        style: "cancel",
+      },
+      { text: "OK", onPress: () => acceptRequest(id) },
+    ]);
+  };
+
+  const rejectRequest = async (id) => {
+    try {
+      setLoading(true);
+      const formData = new FormData();
+      const response = await axios.post(
+        `${URL}/project/requested-project/delete/${id}`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        await fetchData();
+        Toast.show({
+          type: ALERT_TYPE.SUCCESS,
+          title: "SUCCESS",
+          textBody: "Project request rejected successfully.",
+          button: "Close",
+        });
+      }
+    } catch (error) {
+      Toast.show({
+        type: ALERT_TYPE.DANGER,
+        title: "ERROR",
+        textBody: "Something Went Wrong. Please Try Again",
+        button: "Close",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePress = (id, due_date) => {
+    handleShowModalExtension(id, due_date);
+  };
+
+  const handleShowModalExtension = async (id, due_date) => {
+    await setItemID(id);
+    await setDueDate(due_date);
+    await setVisible(true);
+  };
+  const onStartDateChange = (selectedDate) => {
+    if (selectedDate) {
+      setStartDate(selectedDate);
+      setShowStartDatePicker(false); // Close the picker
+    }
+  };
+  const handleExtension = async (projectID) => {
+    setVisible(false);
+    if (dayjs(formattedStartDate).isBefore(dayjs(dueDate))) {
+      Alert.alert(
+        "Invalid Date Selected",
+        "The proposed date cannot be earlier than the project's start date!",
+        [{ text: "Ok", style: "cancel" }]
+      );
+    } else {
+      try {
+        setLoading(true);
+        const url = `${URL}/proposals/update/dueDate/${projectID}`;
+        const response = await axios.post(
+          url,
+          { extension_due_date: formattedStartDate },
+          {
+            headers: {
+              Accept: "application/json",
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (response.status === 200) {
+          await fetchData();
+          Toast.show({
+            type: ALERT_TYPE.SUCCESS,
+            title: "SUCCESS",
+            textBody: "Due Date Extension Submitted.",
+            button: "Close",
+          });
+        }
+      } catch (error) {
+        Toast.show({
+          type: ALERT_TYPE.DANGER,
+          title: "SUCCESS",
+          textBody: "Something Went Wrong. Please Try Again.",
+          button: "Close",
+        });
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
   const renderItem = ({ item, index }) => {
-    const createdAt = dayjs(item.created_at);
+    const filteredProjectOutputs = item.project_outputs.filter(
+      (output) => output.status === 2
+    );
+
+    const today = dayjs(new Date()).format("YYYY-MM-DD");
+    const isPastDue = today > item?.job_end_date;
+    const hasProjectOutput = item?.project_outputs?.some(
+      (output) => output.freelancer_id === item.proposals[0]?.freelancer_id
+    );
 
     return (
       <TouchableOpacity
         onPress={() => {
-          navigation.navigate("ProjectDetailsScreen", {
-            project_id: item.id,
+          navigation.navigate("ProjectDetailsHireScreen", {
+            project_id: item?.id,
+            project: item[0],
           });
         }}
       >
         <View style={styles.item}>
-          <Text style={styles.dateCreated}>
-            {createdAt.format("MMMM D, YYYY h:mm A")}
-          </Text>
           <Text style={styles.title}>{item.job_title}</Text>
           <Text
             style={[
@@ -150,11 +333,8 @@ const ProjectCreated = ({ route, navigation }) => {
             {item.job_category}
           </Text>
 
-          <Text style={styles.description}>
-            {item.job_description.trimStart().length > 100
-              ? item.job_description.trimStart().slice(0, 125) + "..."
-              : item.job_description.trimStart()}
-          </Text>
+          <Text style={styles.description}>{item.job_description}</Text>
+
           <View
             style={{
               flexDirection: "row",
@@ -187,22 +367,24 @@ const ProjectCreated = ({ route, navigation }) => {
                 marginTop: 5,
                 position: "absolute",
                 right: 20,
-                width: 80,
+                width: 100,
               }}
             >
               <Text style={styles.budget}>Status </Text>
 
-              {item?.job_finished === 0 ? (
-                <Text style={styles.ongoing}>Pending Approval</Text>
-              ) : item?.job_finished === 1 ? (
+              {item?.proposals[0].status === 1 ? (
+                <Text style={styles.ongoing}>Pending Freelancer Approval</Text>
+              ) : item?.proposals[0].status === 2 ? (
                 <Text style={styles.active}>Active</Text>
-              ) : (
+              ) : item?.proposals[0].status === 3 ? (
                 <Text style={styles.awarded}>Completed</Text>
+              ) : (
+                <Text style={styles.rejected}>Rejected</Text>
               )}
             </View>
           </View>
 
-          {item.job_finished === 0 ? (
+          {item?.hireMe === 1 ? (
             <View style={styles.buttonContainer}>
               <TouchableOpacity
                 style={[
@@ -210,11 +392,21 @@ const ProjectCreated = ({ route, navigation }) => {
                   { backgroundColor: theme.colors.primary },
                 ]}
                 onPress={() => {
-                  handleShowModal(item.id);
+                  confirmAcceptRequest(item.id);
                 }}
               >
                 <Text style={[styles.optionText, { color: "white" }]}>
-                  Delete Project
+                  Accept Request
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.optionButton, { backgroundColor: "red" }]}
+                onPress={() => {
+                  confirmRejectRequest(item.id);
+                }}
+              >
+                <Text style={[styles.optionText, { color: "white" }]}>
+                  Reject Request
                 </Text>
               </TouchableOpacity>
             </View>
@@ -222,18 +414,18 @@ const ProjectCreated = ({ route, navigation }) => {
             <></>
           )}
 
-          {item.job_finished === 1 ? (
+          {item?.hireMe === 2 && !isPastDue ? (
             <View style={styles.buttonContainer}>
               <TouchableOpacity
                 style={[
                   styles.optionButton,
                   { backgroundColor: theme.colors.primary },
                 ]}
-                onPress={() =>
-                  navigation.navigate("ProposalListScreen", {
-                    project: item.id,
-                  })
-                }
+                onPress={() => {
+                  navigation.navigate("SubmitOutputScreen", {
+                    project: item,
+                  });
+                }}
               >
                 <Text style={[styles.optionText, { color: "white" }]}>
                   View Outputs
@@ -244,21 +436,38 @@ const ProjectCreated = ({ route, navigation }) => {
             <></>
           )}
 
-          {item.job_finished === 2 ? (
+          {item?.hireMe === 3 && !isPastDue ? (
             <View style={styles.buttonContainer}>
               <TouchableOpacity
                 style={[
                   styles.optionButton,
                   { backgroundColor: theme.colors.primary },
                 ]}
-                onPress={() =>
-                  navigation.navigate("ProposalListScreen", {
-                    project: item.id,
-                  })
-                }
+                onPress={() => {
+                  navigation.navigate("SubmitOutputScreen", {
+                    project: item,
+                  });
+                }}
               >
                 <Text style={[styles.optionText, { color: "white" }]}>
                   View Outputs
+                </Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <></>
+          )}
+
+          {item?.hireMe === 2 && isPastDue ? (
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity
+                style={[styles.optionButton, { backgroundColor: "#dc143c" }]}
+                onPress={() => {
+                  handlePress(item.id, item.job_end_date);
+                }}
+              >
+                <Text style={[styles.optionText, { color: "white" }]}>
+                  Ask Extension
                 </Text>
               </TouchableOpacity>
             </View>
@@ -394,7 +603,7 @@ const ProjectCreated = ({ route, navigation }) => {
               fontSize: 18,
             }}
           >
-            Projects Created
+            Proposals Requested
           </Text>
           <Text></Text>
         </View>
@@ -408,13 +617,12 @@ const ProjectCreated = ({ route, navigation }) => {
           activeColor={theme.colors.primary}
           inactiveColor={"white"}
         />
-
-        <Modal visible={isModalVisible} transparent={true} animationType="none">
+        <Modal visible={visible} transparent={true} animationType="none">
           <View style={styles.modalContainer}>
             <View style={styles.deleteContainer}>
               <TouchableOpacity
                 onPress={() => {
-                  setIsModalVisible(false);
+                  setVisible(false);
                 }}
                 style={{
                   position: "relative",
@@ -429,20 +637,58 @@ const ProjectCreated = ({ route, navigation }) => {
                 />
               </TouchableOpacity>
 
-              <AntDesign
-                name={"exclamationcircle"}
-                color={"orange"}
-                size={50}
-              />
-              <Text style={styles.ohSnap}>ALERT!</Text>
-              <Text style={styles.modalText}>
-                Are You Sure You Want To Delete This Project?
-              </Text>
+              <View style={{ flexDirection: "row" }}>
+                <View style={{ width: "100%" }}>
+                  <View
+                    style={{ width: "100%", padding: 20, marginBottom: 10 }}
+                  >
+                    <Text
+                      style={{
+                        fontFamily: "Roboto-Medium",
+                        marginBottom: 7,
+                        color: "black",
+                      }}
+                    >
+                      Extend Due Date
+                    </Text>
+                    <TouchableOpacity onPress={() => togglePicker("start")}>
+                      <Text style={styles.date}>
+                        {dayjs(startDate).format("MM/DD/YYYY")}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                  <Modal
+                    visible={showStartDatePicker}
+                    transparent={true}
+                    animationType="slide"
+                    onRequestClose={() => setShowStartDatePicker(false)}
+                  >
+                    <View style={styles.modalContainer}>
+                      <View style={styles.pickerContainer}>
+                        <DateTimePicker
+                          calendarTextStyle={{ color: "black" }}
+                          headerTextContainerStyle={{ color: "black" }}
+                          headerTextStyle={{ color: "black" }}
+                          weekDaysTextStyle={{ color: "black" }}
+                          date={startDate}
+                          onChange={(params) => onStartDateChange(params.date)}
+                        />
+                        <Button
+                          title="Close"
+                          onPress={() => setShowStartDatePicker(false)}
+                        />
+                      </View>
+                    </View>
+                  </Modal>
+                </View>
+              </View>
               <TouchableOpacity
                 style={styles.dismiss}
-                onPress={handleDeleteProject}
+                onPress={() => {
+                  handleExtension(itemID);
+                }}
               >
-                <Text style={styles.dismissText}>DELETE</Text>
+                <Text style={styles.dismissText}>Submit</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -452,7 +698,7 @@ const ProjectCreated = ({ route, navigation }) => {
   );
 };
 
-export default ProjectCreated;
+export default ProposalRequestedScreen;
 
 const styles = StyleSheet.create({
   mainContainer: {
@@ -526,15 +772,27 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
 
-  active: {
+  rejected: {
     padding: 6,
-    backgroundColor: theme.colors.secondary,
+    backgroundColor: "red",
     borderRadius: 5,
     fontFamily: "Roboto-Medium",
     color: "white",
     fontSize: theme.sizes.h1 + 2,
     marginTop: 5,
     textAlign: "center",
+  },
+
+  active: {
+    padding: 6,
+    backgroundColor: theme.colors.secondary,
+    borderRadius: 5,
+    fontFamily: "Roboto-Medium",
+    color: "white",
+    fontSize: theme.sizes.h1 - 1,
+    marginTop: 5,
+    textAlign: "center",
+    width: 120,
   },
   ongoing: {
     padding: 6,
@@ -542,11 +800,12 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     fontFamily: "Roboto-Medium",
     color: "white",
-    fontSize: theme.sizes.h1 + 2,
+    fontSize: theme.sizes.h1 - 1,
     marginTop: 5,
     textAlign: "center",
     width: "100%",
   },
+
   buttonContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -628,10 +887,43 @@ const styles = StyleSheet.create({
     alignSelf: "center",
   },
 
-  dateCreated: {
-    fontFamily: "Roboto",
-    color: "gray",
-    fontSize: 12,
-    textAlign: "right",
+  date: {
+    color: theme.colors.gray,
+    fontFamily: "Roboto-Regular",
+    fontSize: theme.sizes.h2 + 1,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: theme.colors.GRAY_LIGHT,
+    borderRadius: 10,
+    paddingStart: 15,
+  },
+
+  modalText: {
+    fontFamily: "Roboto-Light",
+    fontSize: 18,
+    textAlign: "center",
+    paddingHorizontal: 10,
+    color: "#393939",
+    marginBottom: 20,
+    marginTop: 8,
+  },
+  dismiss: {
+    width: "100%",
+    backgroundColor: theme.colors.primary,
+    position: "relative",
+    bottom: -1,
+  },
+  dismissText: {
+    fontFamily: "Roboto-Medium",
+    color: "white",
+    padding: 12,
+    alignSelf: "center",
+  },
+
+  pickerContainer: {
+    backgroundColor: theme.colors.WHITE,
+    padding: 30,
+    borderRadius: 10,
+    width: "90%",
   },
 });

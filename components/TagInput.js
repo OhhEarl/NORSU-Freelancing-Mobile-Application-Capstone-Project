@@ -96,6 +96,7 @@ const styles = StyleSheet.create({
         paddingVertical: 10,
         paddingStart: 18,
         fontFamily: 'Roboto-Light',
+        color: 'black'
 
 
     },

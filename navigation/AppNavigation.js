@@ -4,7 +4,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { AuthProvider, useAuthContext } from '../hooks/AuthContext';
 import { PeopleProvider, usePeopleContext } from '../hooks/PeopleContext';
-import { ProposalProvider, useProposalContext } from '../hooks/ProposalContext';
+// import { ProposalProvider, useProposalContext } from '../hooks/ProposalContext';
 import { MessageProvider, useMessageContext } from '../hooks/MessageContext';
 import { BottomTabNavigator } from './BottomTabNavigator';
 import NoConnection from '../components/NoConnection';
@@ -29,11 +29,14 @@ import OpeningScreen from '../components/OpeningScreen';
 import { ProjectProvider } from '../hooks/ProjectContext';
 import SubmitOutputScreen from '../screens/SubmitOutputScreen';
 import GcashPaymentScreen from '../screens/GcashPaymentScreen';
+import GcashPaymentRequest from '../screens/GcashPaymentRequest';
 import TermsAndConditions from '../screens/TermsAndConditions';
 import FeedBackRatingScreen from '../screens/FeedBackRatingScreen';
 import ProjectDetailsHireScreen from '../screens/ProjectDetailsHireScreen';
 import OutputScreen from '../screens/OutputScreen';
 import CreateProjectScreenHire from '../screens/CreateProjectScreenHire';
+import ProposalSubmittedScreen from '../screens/ProposalSubmittedScreen';
+import ProposalRequestedScreen from '../screens/ProposalRequestedScreen';
 
 
 const AuthenticatedApp = () => {
@@ -159,10 +162,13 @@ const AuthenticatedApp = () => {
       <MainTabStack.Screen name="FreelancerProfileScreen" component={FreelancerProfileScreen} initialParams={{ isStudent }} options={{ headerShown: false }} />
       <MainTabStack.Screen name="SubmitOutputScreen" component={SubmitOutputScreen} options={{ headerShown: false }} initialParams={{ isStudent }} />
       <MainTabStack.Screen name="GcashPaymentScreen" component={GcashPaymentScreen} options={{ headerShown: false }} initialParams={{ isStudent }} />
+      <MainTabStack.Screen name="GcashPaymentRequest" component={GcashPaymentRequest} options={{ headerShown: false }} initialParams={{ isStudent }} />
       <MainTabStack.Screen name="TermsAndConditions" component={TermsAndConditions} options={{ headerShown: false }} />
       <MainTabStack.Screen name="FeedBackRatingScreen" component={FeedBackRatingScreen} initialParams={{ isStudent }} options={{ headerShown: false }} />
       <MainTabStack.Screen name="ProjectDetailsHireScreen" component={ProjectDetailsHireScreen} initialParams={{ isStudent }} options={{ headerShown: false }} />
       <MainTabStack.Screen name="CreateProjectScreenHire" component={CreateProjectScreenHire} initialParams={{ isStudent }} options={{ headerShown: false }} />
+      <MainTabStack.Screen name="ProposalSubmittedScreen" component={ProposalSubmittedScreen} initialParams={{ isStudent }} options={{ headerShown: false }} />
+      <MainTabStack.Screen name="ProposalRequestedScreen" component={ProposalRequestedScreen} initialParams={{ isStudent }} options={{ headerShown: false }} />
 
     </MainTabStack.Navigator>
   );
@@ -202,11 +208,11 @@ const AppNavigation = () => {
 
       <ProjectProvider>
         <PeopleProvider>
-          <ProposalProvider>
-            <MessageProvider>
-              <AuthenticatedApp />
-            </MessageProvider>
-          </ProposalProvider>
+          {/* <ProposalProvider> */}
+          <MessageProvider>
+            <AuthenticatedApp />
+          </MessageProvider>
+          {/* </ProposalProvider> */}
         </PeopleProvider>
       </ProjectProvider>
 

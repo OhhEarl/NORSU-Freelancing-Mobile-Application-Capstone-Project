@@ -37,6 +37,8 @@ const Signup = ({ navigation }) => {
         email,
         password
       );
+
+      console.log(userCredential.user);
       const user = userCredential.user;
       if (user && !user.emailVerified) {
         await user.sendEmailVerification();
@@ -44,6 +46,7 @@ const Signup = ({ navigation }) => {
         Alert.alert("Please very your email before logging in.");
       }
     } catch (error) {
+      console.log(error);
       if (error.code === "auth/email-already-in-use") {
         setErrorMessage("Email address is already in use!");
       } else if (error.code === "auth/invalid-email") {

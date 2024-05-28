@@ -304,107 +304,107 @@ const EditProfileScreen = ({ navigation, route }) => {
             />
           </View>
 
-          <View style={styles.innerContainer}>
-            <View style={styles.imageContainer}>
-              <Image
-                objectFit="contain"
-                style={styles.image}
-                source={
-                  userAvatar
-                    ? {
-                        uri: userAvatar,
-                      }
-                    : {
-                        uri: "https://img.freepik.com/free-psd/3d-illustration-person-with-sunglasses_23-2149436188.jpg?w=740&t=st=1670148608~exp=1670149208~hmac=bc57b66d67d2b9f4929c8e592ff17e8c8660721608add2f18fc20d19c1aab7e4",
-                      }
-                }
-              />
-
-              <TouchableOpacity
-                style={styles.editIconContainer}
-                onPress={imageAvatar}
-              >
-                <Feather name="camera" size={20} color="white" />
-              </TouchableOpacity>
-            </View>
-            <View style={styles.inputFieldContainer}>
-              <Text style={styles.inputLabel}>Username</Text>
-              <TextInput
-                placeholderTextColor={theme.colors.gray}
-                placeholder="Username"
-                type="text"
-                value={userName}
-                onChange={(e) => setUserName(e.nativeEvent.text)}
-                style={styles.inputField}
-              />
-            </View>
-
-            <View style={styles.inputFieldContainer}>
-              <Text style={styles.inputLabel}>Phone Number</Text>
-              <TextInput
-                placeholderTextColor={theme.colors.gray}
-                placeholder="Phone Number"
-                type="text"
-                value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.nativeEvent.text)}
-                style={styles.inputField}
-              />
-            </View>
-
-            <View style={styles.inputFieldContainer}>
-              <Text style={styles.inputLabel}>Area of Expertise</Text>
-              <TextInput
-                style={styles.inputField}
-                label="Area of Expertise"
-                placeholderTextColor={theme.colors.gray}
-                placeholder="Input your area of expertise"
-                value={areaOfExpertise}
-                onChangeText={setAreaOfExpertise}
-              />
-            </View>
-
-            <View style={styles.inputFieldContainer}>
-              <Text style={[styles.inputLabel, { marginBottom: -4 }]}>
-                Skill Tags
-              </Text>
-              <TagInput
-                key={key}
-                initialTags={studentSkills}
-                onChangeTags={onChangeSkills}
-                style={{ marginVertical: 0 }}
-              />
-            </View>
-
-            <View style={styles.inputFieldContainer}>
-              <Text style={styles.inputLabel}>About Me</Text>
-              <TextInput
-                style={styles.inputField}
-                placeholder="Enter something about yourself. "
-                type="text"
-                value={aboutMe}
-                onChangeText={(text) => {
-                  // Limit input to 250 characters
-                  if (text.length <= 300) {
-                    setAboutMe(text);
+          {isLoading ? (
+            <LoadingComponent />
+          ) : (
+            <View style={styles.innerContainer}>
+              <View style={styles.imageContainer}>
+                <Image
+                  objectFit="contain"
+                  style={styles.image}
+                  source={
+                    userAvatar
+                      ? {
+                          uri: `${baseUrlWithoutApi}/storage/${userAvatar}`,
+                        }
+                      : {
+                          uri: "https://img.freepik.com/free-psd/3d-illustration-person-with-sunglasses_23-2149436188.jpg?w=740&t=st=1670148608~exp=1670149208~hmac=bc57b66d67d2b9f4929c8e592ff17e8c8660721608add2f18fc20d19c1aab7e4",
+                        }
                   }
-                }}
-                multiline
-                autoCorrect={false}
-                numberOfLines={4}
-                maxHeight={100}
-                maxLength={250}
-                textAlignVertical="top"
-              />
+                />
 
-              <View style={{ alignItems: "flex-end", marginRight: 5 }}>
-                <Text>{aboutMe?.length} / 300</Text>
+                <TouchableOpacity
+                  style={styles.editIconContainer}
+                  onPress={imageAvatar}
+                >
+                  <Feather name="camera" size={20} color="white" />
+                </TouchableOpacity>
               </View>
-            </View>
+              <View style={styles.inputFieldContainer}>
+                <Text style={styles.inputLabel}>Username</Text>
+                <TextInput
+                  placeholderTextColor={theme.colors.gray}
+                  placeholder="Username"
+                  type="text"
+                  value={userName}
+                  onChange={(e) => setUserName(e.nativeEvent.text)}
+                  style={styles.inputField}
+                />
+              </View>
 
-            <View style={[styles.inputFieldContainer, { marginTop: 20 }]}>
-              {isLoading ? (
-                <LoadingComponent />
-              ) : (
+              <View style={styles.inputFieldContainer}>
+                <Text style={styles.inputLabel}>Phone Number</Text>
+                <TextInput
+                  placeholderTextColor={theme.colors.gray}
+                  placeholder="Phone Number"
+                  type="text"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.nativeEvent.text)}
+                  style={styles.inputField}
+                />
+              </View>
+
+              <View style={styles.inputFieldContainer}>
+                <Text style={styles.inputLabel}>Area of Expertise</Text>
+                <TextInput
+                  style={styles.inputField}
+                  label="Area of Expertise"
+                  placeholderTextColor={theme.colors.gray}
+                  placeholder="Input your area of expertise"
+                  value={areaOfExpertise}
+                  onChangeText={setAreaOfExpertise}
+                />
+              </View>
+
+              <View style={styles.inputFieldContainer}>
+                <Text style={[styles.inputLabel, { marginBottom: -4 }]}>
+                  Skill Tags
+                </Text>
+                <TagInput
+                  key={key}
+                  initialTags={studentSkills}
+                  onChangeTags={onChangeSkills}
+                  style={{ marginVertical: 0 }}
+                />
+              </View>
+
+              <View style={styles.inputFieldContainer}>
+                <Text style={styles.inputLabel}>About Me</Text>
+                <TextInput
+                  style={styles.inputField}
+                  placeholder="Enter something about yourself. "
+                  type="text"
+                  value={aboutMe}
+                  onChangeText={(text) => {
+                    // Limit input to 250 characters
+                    if (text.length <= 500) {
+                      setAboutMe(text);
+                    }
+                  }}
+                  multiline
+                  autoCorrect={false}
+                  numberOfLines={4}
+                  maxHeight={200}
+                  maxLength={500}
+                  textAlignVertical="top"
+                />
+
+                <View style={{ alignItems: "flex-end", marginRight: 5 }}>
+                  <Text>{aboutMe?.length} / 500</Text>
+                </View>
+              </View>
+
+              <View style={[styles.inputFieldContainer, { marginTop: 20 }]}>
                 <>
                   <Text style={styles.inputLabel}>Portfolio</Text>
                   <View style={styles.portfolioContainer}>
@@ -430,9 +430,9 @@ const EditProfileScreen = ({ navigation, route }) => {
                     </TouchableOpacity>
                   </View>
                 </>
-              )}
+              </View>
             </View>
-          </View>
+          )}
         </ScrollView>
       </AlertNotificationRoot>
     </SafeAreaView>

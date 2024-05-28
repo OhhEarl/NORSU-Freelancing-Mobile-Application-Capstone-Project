@@ -461,50 +461,49 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
                     )}
                 </View>
               </View>
+
+              {filteredProjects[0]?.proposals[0]?.extension_status === 1 &&
+              !loading ? (
+                <View style={styles.applyNow}>
+                  <Button
+                    title="Show Options"
+                    filled
+                    style={{
+                      borderRadius: 10,
+                      width: "90%",
+                    }}
+                    onPress={() => sheetRef.current?.open()}
+                  />
+                </View>
+              ) : (
+                ""
+              )}
+
+              {filteredProjects[0].job_finished === 1 &&
+              !loading &&
+              filteredProjects[0].student_user_id !== id ? (
+                <View style={styles.applyNow}>
+                  <Button
+                    title="Submit Output"
+                    filled
+                    style={{
+                      borderRadius: 10,
+                      width: "90%",
+                    }}
+                    onPress={handleNavigateToOutputScreen}
+                  />
+                </View>
+              ) : (
+                ""
+              )}
+
+              {filteredProjects[0].student_user_id === id &&
+              filteredProjects[0].job_finished === 0 &&
+              !loading
+                ? ""
+                : ""}
             </ScrollView>
           )}
-
-          {filteredProjects[0]?.proposals[0]?.extension_status === 1 &&
-          !loading ? (
-            <View style={styles.applyNow}>
-              <Button
-                title="Show Options"
-                filled
-                style={{
-                  borderRadius: 10,
-                  width: "90%",
-                }}
-                onPress={() => sheetRef.current?.open()}
-              />
-            </View>
-          ) : (
-            ""
-          )}
-
-          {filteredProjects[0].job_finished === 0 &&
-          filteredProjects[0].hireMe === 0 &&
-          !loading &&
-          filteredProjects[0].student_user_id !== id ? (
-            <View style={styles.applyNow}>
-              <Button
-                title="Submit Output"
-                filled
-                style={{
-                  borderRadius: 10,
-                  width: "90%",
-                }}
-                onPress={handleNavigateToOutputScreen}
-              />
-            </View>
-          ) : (
-            ""
-          )}
-
-          {filteredProjects[0].student_user_id === id &&
-          filteredProjects[0].job_finished === 0 &&
-          !loading
-            ? ""
-            : ""}
         </View>
         <BottomSheet
           ref={sheetRef}
@@ -668,7 +667,7 @@ const styles = StyleSheet.create({
     elevation: 2,
     padding: 30,
     paddingTop: 30,
-    height: 750,
+    height: 790,
   },
 
   projectTitle: {

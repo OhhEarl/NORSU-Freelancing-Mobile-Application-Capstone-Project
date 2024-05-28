@@ -39,7 +39,7 @@ export const MessageProvider = ({ children }) => {
                         Authorization: `Bearer ${token}`,
                     },
                 };
-                const response = await axios.get(`${URL}/fetch-message-lists/${id}`, config);
+                const response = await axios.get(`${URL}/fetch/message/lists/${id}`, config);
 
 
                 if (response.status === 200) {

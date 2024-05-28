@@ -23,9 +23,14 @@ import RNFetchBlob from "rn-fetch-blob";
 import DocumentPicker from "react-native-document-picker";
 import LoadingComponent from "../components/LoadingComponent";
 import dayjs from "dayjs";
-import Spinner from "react-native-loading-spinner-overlay";
+import {
+  ALERT_TYPE,
+  Dialog,
+  AlertNotificationRoot,
+  Toast,
+} from "react-native-alert-notification";
 import Button from "../components/Button";
-import { Toast } from "react-native-alert-notification";
+
 const SubmitOutputScreen = ({ navigation, route }) => {
   const [loading, setLoading] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState([]);
@@ -39,8 +44,6 @@ const SubmitOutputScreen = ({ navigation, route }) => {
   const projectId = project?.project_id || project.id;
 
   const user_id = route.params.isStudent.studentInfo.id;
-
-  const isFocused = useIsFocused();
 
   const fetchOutputAttachment = async () => {
     try {
@@ -88,6 +91,7 @@ const SubmitOutputScreen = ({ navigation, route }) => {
       Alert.alert("Error", "Error in selecting file. Please Try Again.");
     }
   };
+
   const handleUpload = async () => {
     if (selectedFiles.length === 0) {
       alert("Please select files to upload.");
@@ -97,10 +101,18 @@ const SubmitOutputScreen = ({ navigation, route }) => {
     try {
       const promises = selectedFiles.map(async (file) => {
         const formData = new FormData();
-        formData.append("files[]", file);
-        formData.append("project_id", project.project_id);
-        formData.append("user_id", project.user_id);
-        formData.append("freelancer_id", project.freelancer_id);
+
+        selectedFiles?.forEach((file, index) => {
+          formData.append(`files[${index}]`, {
+            uri: file.uri,
+            name: file.name,
+            type: file.type,
+          });
+        });
+
+        formData.append("project_id", project.id);
+        formData.append("user_id", project.student_user_id);
+        formData.append("freelancer_id", project.proposals[0].freelancer_id);
 
         const response = await axios.post(`${URL}/project/outputs`, formData, {
           headers: {
@@ -124,7 +136,13 @@ const SubmitOutputScreen = ({ navigation, route }) => {
       await Promise.all(promises);
       setSelectedFiles([]);
     } catch (error) {
-      Alert.alert("Error", "Something Went Wrong. Please Try Again.");
+      console.log(error);
+      Toast.show({
+        type: ALERT_TYPE.DANGER,
+        title: "ERROR",
+        textBody: "Something Went Wrong. Please Try Again.",
+        button: "Close",
+      });
     } finally {
       setLoading(false);
     }
@@ -145,7 +163,6 @@ const SubmitOutputScreen = ({ navigation, route }) => {
       );
       setComments(response.data.data);
     } catch (error) {
-      console.error(error);
     } finally {
       setLoading(false);
     }
@@ -180,7 +197,12 @@ const SubmitOutputScreen = ({ navigation, route }) => {
         throw new Error("Failed to add comment");
       }
     } catch (error) {
-      Alert.alert("Something Went Wrong. Please Try Again!");
+      Toast.show({
+        type: ALERT_TYPE.DANGER,
+        title: "ERROR",
+        textBody: "Something Went Wrong. Please Try Again.",
+        button: "Close",
+      });
     } finally {
       setLoading(false);
     }
@@ -207,9 +229,19 @@ const SubmitOutputScreen = ({ navigation, route }) => {
         "GET",
         `${baseUrlWithoutApi}/storage/${file.path}`
       );
-      Alert.alert("Downloading. Please Wait.");
+      Toast.show({
+        type: ALERT_TYPE.DANGER,
+        title: "ERROR",
+        textBody: "Something Went Wrong. Please Try Again.",
+        button: "Close",
+      });
     } catch (error) {
-      Alert.alert(error);
+      Toast.show({
+        type: ALERT_TYPE.DANGER,
+        title: "ERROR",
+        textBody: "Something Went Wrong. Please Try Again.",
+        button: "Close",
+      });
     }
   };
 
@@ -231,12 +263,23 @@ const SubmitOutputScreen = ({ navigation, route }) => {
 
         if (response.status === 200) {
           await fetchOutputAttachment();
-          Alert.alert("Success", "File Removed Successfully.");
+
+          Toast.show({
+            type: ALERT_TYPE.SUCCESS,
+            title: "SUCCESS",
+            textBody: "Success. File Removed Successfully",
+            button: "Close",
+          });
         } else {
           throw new Error("Failed to remove file. Please try again.");
         }
       } catch (error) {
-        Alert.alert("Error", "Something Went Wrong. Please Try Again.");
+        Toast.show({
+          type: ALERT_TYPE.DANGER,
+          title: "ERROR",
+          textBody: "Something Went Wrong. Please Try Again.",
+          button: "Close",
+        });
       } finally {
         setLoading(false);
       }
@@ -244,7 +287,12 @@ const SubmitOutputScreen = ({ navigation, route }) => {
       setSelectedFiles((prevFiles) =>
         prevFiles.filter((file) => file.uri !== fileId)
       );
-      Alert.alert("Success", "File Removed Successfully.");
+      Toast.show({
+        type: ALERT_TYPE.SUCCESS,
+        title: "SUCCESS",
+        textBody: "Success. File removed successfully.",
+        button: "Close",
+      });
     }
   };
 
@@ -299,12 +347,22 @@ const SubmitOutputScreen = ({ navigation, route }) => {
       );
       if (response.status === 200) {
         await fetchComments();
-        Alert.alert("Comment Removed Successfully.");
+        Toast.show({
+          type: ALERT_TYPE.SUCCESS,
+          title: "SUCCESS",
+          textBody: "Comment removed successfully.",
+          button: "Close",
+        });
       } else {
         throw new Error("Failed to remove file. Please try again");
       }
     } catch (error) {
-      Alert.alert("Something Went Wrong. Please Try Again.");
+      Toast.show({
+        type: ALERT_TYPE.DANGER,
+        title: "ERROR",
+        textBody: "Something Went Wrong. Please Try Again.",
+        button: "Close",
+      });
     } finally {
       setLoading(false);
     }
@@ -356,245 +414,277 @@ const SubmitOutputScreen = ({ navigation, route }) => {
   }
   return (
     <SafeAreaView style={styles.mainContainer}>
-      <View
-        style={{
-          flexDirection: "row",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <Feather
-          name="arrow-left"
-          size={24}
-          color={theme.colors.BLACKS}
-          onPress={() => {
-            navigation.goBack();
-          }}
-        />
-        <Text
+      <AlertNotificationRoot style={styles.notification}>
+        <View
           style={{
-            marginRight: 10,
-            fontFamily: "Roboto-Medium",
-            color: theme.colors.BLACKS,
-            fontSize: 18,
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
           }}
         >
-          Submit Output
-        </Text>
-        <Text></Text>
-      </View>
-      {loading ? (
-        <LoadingComponent />
-      ) : (
-        <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
-          <View style={styles.container}>
-            {user_id === project.freelancer_id ? (
-              <View>
-                <TouchableOpacity
-                  style={styles.uploadFileContainer}
-                  onPress={handleFileSelection}
-                >
-                  <FontAwesome
-                    name="cloud-upload"
-                    size={40}
-                    color={theme.colors.primary}
-                    style={styles.uploadLogo}
-                  />
-                  <Text style={styles.uploadText}>Upload a File</Text>
-                  <Text style={styles.browseText}>Browse to choose a file</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.submitFile}
-                  disabled={selectedFiles.length === 0}
-                  onPress={handleUpload}
-                >
-                  <Text style={styles.submitFileText}>SUBMIT</Text>
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <Text></Text>
-            )}
-
-            <Text style={styles.attachments}>Attachments</Text>
-
-            <View>
-              {selectedFiles.length > 0 || uploadedFiles.length > 0 ? (
+          <Feather
+            name="arrow-left"
+            size={24}
+            color={theme.colors.BLACKS}
+            onPress={() => {
+              navigation.goBack();
+            }}
+          />
+          <Text
+            style={{
+              marginRight: 10,
+              fontFamily: "Roboto-Medium",
+              color: theme.colors.BLACKS,
+              fontSize: 18,
+            }}
+          >
+            Submit Output
+          </Text>
+          <Text></Text>
+        </View>
+        {loading ? (
+          <LoadingComponent />
+        ) : (
+          <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+            <View style={styles.container}>
+              {user_id !== project.student_user_id ? (
                 <View>
-                  {selectedFiles.map((file, index) => (
-                    <View key={index} style={styles.selectedFileContainer}>
-                      <View
-                        style={{ flexDirection: "row", alignItems: "center" }}
-                      >
-                        <Ionicons
-                          name={"document-text-outline"}
-                          size={25}
-                          color={theme.colors.BLACKS}
-                        />
-                        <Text
-                          style={{
-                            marginStart: 10,
-                            fontSize: 15,
-                            fontWeight: "600",
-                            color: theme.colors.BLACKS,
-                          }}
-                        >
-                          {file.name.length > 10
-                            ? `${file.name.substring(
-                                0,
-                                10
-                              )}...${file.name.substring(
-                                file.name.lastIndexOf(".") + 1
-                              )}`
-                            : file.name}
-                        </Text>
-                      </View>
-                      <TouchableOpacity
-                        style={{ marginLeft: "auto" }}
-                        onPress={() => confirmRemoveFile(file.uri, false)}
-                      >
-                        <Ionicons
-                          name={"close-circle-outline"}
-                          size={18}
-                          color={theme.colors.BLACKS}
-                        />
-                      </TouchableOpacity>
-                    </View>
-                  ))}
-                  {uploadedFiles?.map((file, index) => (
-                    <View key={index} style={styles.selectedFileContainer}>
-                      <View
-                        style={{ flexDirection: "row", alignItems: "center" }}
-                      >
-                        <Ionicons
-                          name={"document-text-outline"}
-                          size={25}
-                          color={theme.colors.BLACKS}
-                        />
-                        <Text
-                          style={{
-                            marginStart: 10,
-                            fontSize: 15,
-                            fontWeight: "600",
-                            color: theme.colors.BLACKS,
-                          }}
-                        >
-                          {file?.name?.length > 10
-                            ? `${file?.name?.substring(0, 10)}...${
-                                file.mime_type
-                              }`
-                            : `${file?.name}.${file.mime_type}`}
-                        </Text>
-                      </View>
-                      {project.student_user_id === user_id ? (
-                        <TouchableOpacity
-                          style={{ marginLeft: "auto" }}
-                          onPress={() => handleDownload(file)}
+                  <TouchableOpacity
+                    style={styles.uploadFileContainer}
+                    onPress={handleFileSelection}
+                  >
+                    <FontAwesome
+                      name="cloud-upload"
+                      size={40}
+                      color={theme.colors.primary}
+                      style={styles.uploadLogo}
+                    />
+                    <Text style={styles.uploadText}>Upload a File</Text>
+                    <Text style={styles.browseText}>
+                      Browse to choose a file
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.submitFile}
+                    disabled={selectedFiles.length === 0}
+                    onPress={handleUpload}
+                  >
+                    <Text style={styles.submitFileText}>SUBMIT</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <Text></Text>
+              )}
+
+              <Text style={styles.attachments}>Attachments</Text>
+
+              <View>
+                {selectedFiles.length > 0 || uploadedFiles.length > 0 ? (
+                  <View>
+                    {selectedFiles.map((file, index) => (
+                      <View key={index} style={styles.selectedFileContainer}>
+                        <View
+                          style={{ flexDirection: "row", alignItems: "center" }}
                         >
                           <Ionicons
-                            name={"cloud-download-outline"}
+                            name={"document-text-outline"}
                             size={25}
                             color={theme.colors.BLACKS}
                           />
-                        </TouchableOpacity>
-                      ) : (
+                          <Text
+                            style={{
+                              marginStart: 10,
+                              fontSize: 15,
+                              fontWeight: "600",
+                              color: theme.colors.BLACKS,
+                            }}
+                          >
+                            {file.name.length > 10
+                              ? `${file.name.substring(
+                                  0,
+                                  10
+                                )}...${file.name.substring(
+                                  file.name.lastIndexOf(".") + 1
+                                )}`
+                              : file.name}
+                          </Text>
+                        </View>
                         <TouchableOpacity
                           style={{ marginLeft: "auto" }}
-                          onPress={() => confirmRemoveFile(file.id, true)}
+                          onPress={() => confirmRemoveFile(file.uri, false)}
                         >
                           <Ionicons
                             name={"close-circle-outline"}
-                            size={25}
+                            size={18}
                             color={theme.colors.BLACKS}
                           />
                         </TouchableOpacity>
-                      )}
-                    </View>
-                  ))}
+                      </View>
+                    ))}
+                    {uploadedFiles?.map((file, index) => (
+                      <View key={index} style={styles.selectedFileContainer}>
+                        <View
+                          style={{ flexDirection: "row", alignItems: "center" }}
+                        >
+                          <Ionicons
+                            name={"document-text-outline"}
+                            size={25}
+                            color={theme.colors.BLACKS}
+                          />
+                          <Text
+                            style={{
+                              marginStart: 10,
+                              fontSize: 15,
+                              fontWeight: "600",
+                              color: theme.colors.BLACKS,
+                            }}
+                          >
+                            {file?.name?.length > 10
+                              ? `${file?.name?.substring(0, 10)}...${
+                                  file.mime_type
+                                }`
+                              : `${file?.name}.${file.mime_type}`}
+                          </Text>
+                        </View>
+                        {project.student_user_id === user_id ? (
+                          <TouchableOpacity
+                            style={{ marginLeft: "auto" }}
+                            onPress={() => handleDownload(file)}
+                          >
+                            <Ionicons
+                              name={"cloud-download-outline"}
+                              size={25}
+                              color={theme.colors.BLACKS}
+                            />
+                          </TouchableOpacity>
+                        ) : (
+                          <TouchableOpacity
+                            style={{ marginLeft: "auto" }}
+                            onPress={() => confirmRemoveFile(file.id, true)}
+                          >
+                            <Ionicons
+                              name={"close-circle-outline"}
+                              size={25}
+                              color={theme.colors.BLACKS}
+                            />
+                          </TouchableOpacity>
+                        )}
+                      </View>
+                    ))}
+                  </View>
+                ) : (
+                  <Text>No Attachment Submitted</Text>
+                )}
+              </View>
+              <View>
+                <Text style={styles.attachments}>Add Comment</Text>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    width: "100%",
+                    marginTop: 10,
+                  }}
+                >
+                  <TextInput
+                    style={styles.inputField}
+                    placeholderTextColor="#a9a9a9"
+                    placeholder="Write a comment..."
+                    type="text"
+                    value={newComment}
+                    onChangeText={(text) => {
+                      setNewComment(text);
+                    }}
+                    multiline
+                    autoCorrect={false}
+                    numberOfLines={4}
+                    height={100}
+                    maxHeight={300}
+                    textAlignVertical="top"
+                  />
+                  <TouchableOpacity
+                    style={{ marginStart: 10, width: "10%" }}
+                    onPress={handleCommentSubmit}
+                  >
+                    <Ionicons
+                      name={"send-sharp"}
+                      color={theme.colors.primary}
+                      size={30}
+                    />
+                  </TouchableOpacity>
                 </View>
+              </View>
+              <Text style={styles.attachments}>Comments</Text>
+
+              {loading ? (
+                <LoadingComponent />
+              ) : comments.length > 0 ? (
+                <FlatList
+                  data={comments}
+                  renderItem={renderCommentItem}
+                  keyExtractor={(item) => item?.id?.toString()} // Unique key for each comment
+                  scrollEnabled={false}
+                />
               ) : (
-                <Text>No Attachment Submitted</Text>
+                <Text> No Comments</Text>
               )}
             </View>
-            <View>
-              <Text style={styles.attachments}>Add Comment</Text>
-              <View
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  width: "100%",
-                  marginTop: 10,
-                }}
-              >
-                <TextInput
-                  style={styles.inputField}
-                  placeholderTextColor="#a9a9a9"
-                  placeholder="Write a comment..."
-                  type="text"
-                  value={newComment}
-                  onChangeText={(text) => {
-                    setNewComment(text);
-                  }}
-                  multiline
-                  autoCorrect={false}
-                  numberOfLines={4}
-                  height={100}
-                  maxHeight={300}
-                  textAlignVertical="top"
-                />
-                <TouchableOpacity
-                  style={{ marginStart: 10, width: "10%" }}
-                  onPress={handleCommentSubmit}
-                >
-                  <Ionicons
-                    name={"send-sharp"}
-                    color={theme.colors.primary}
-                    size={30}
-                  />
-                </TouchableOpacity>
-              </View>
-            </View>
-            <Text style={styles.attachments}>Comments</Text>
+          </ScrollView>
+        )}
 
-            {loading ? (
-              <LoadingComponent />
-            ) : comments.length > 0 ? (
-              <FlatList
-                data={comments}
-                renderItem={renderCommentItem}
-                keyExtractor={(item) => item?.id?.toString()} // Unique key for each comment
-                scrollEnabled={false}
-              />
-            ) : (
-              <Text> No Comments</Text>
-            )}
-          </View>
-        </ScrollView>
-      )}
+        {project?.student_user_id === user_id &&
+        !loading &&
+        project.hireMe === 2 ? (
+          <Button
+            title="Accept Output"
+            filled
+            style={{
+              borderRadius: 10,
+              position: "absolute",
+              alignItems: "center",
+              width: "100%",
+              bottom: 0,
 
-      {project?.student_user_id === user_id && !loading ? (
-        <Button
-          title="Accept Output"
-          filled
-          style={{
-            borderRadius: 10,
-            position: "absolute",
-            alignItems: "center",
-            width: "100%",
-            bottom: 0,
-            marginLeft: 20,
-          }}
-          onPress={() =>
-            navigation.navigate("GcashPaymentScreen", {
-              project_id: project.id,
-              user_id: project.student_user_id,
-              freelancer_id: project.proposals[0].freelancer_id,
-              project_price: project.job_budget_from,
-            })
-          }
-        />
-      ) : (
-        <></>
-      )}
+              bottom: 20,
+            }}
+            onPress={() =>
+              navigation.navigate("GcashPaymentRequest", {
+                project_id: project.id,
+                user_id: project.student_user_id,
+                freelancer_id: project.proposals[0].freelancer_id,
+                project_price: project.job_budget_from,
+              })
+            }
+          />
+        ) : (
+          <></>
+        )}
+
+        {project?.student_user_id === user_id &&
+        !loading &&
+        project.hireMe === 3 ? (
+          <Button
+            title="Send FeedBack"
+            filled
+            style={{
+              borderRadius: 10,
+              position: "absolute",
+              alignItems: "center",
+              width: "100%",
+              bottom: 20,
+            }}
+            onPress={() =>
+              navigation.navigate("FeedBackRatingScreen", {
+                freelancer_id:
+                  project?.proposals[0]?.freelancer_id ||
+                  uploadedFiles[0]?.freelancer_id,
+              })
+            }
+          />
+        ) : (
+          <Text></Text>
+        )}
+      </AlertNotificationRoot>
     </SafeAreaView>
   );
 };
