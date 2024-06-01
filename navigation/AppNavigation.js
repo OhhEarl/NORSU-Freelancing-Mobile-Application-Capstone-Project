@@ -40,13 +40,14 @@ import ProposalRequestedScreen from '../screens/ProposalRequestedScreen';
 
 
 const AuthenticatedApp = () => {
-  const { token, user, isLoading, setIsLoading, isStudent, student, isLoggedIn } = useAuthContext();
+  const { token, user, isLoading, isStudent, student, isLoggedIn } = useAuthContext();
   const { peopleLoading } = usePeopleContext();
-
   const [isConnected, setIsConnected] = useState(true);
   const [isCheckingConnection, setIsCheckingConnection] = useState(true);
   const [showOpeningScreen, setShowOpeningScreen] = useState(true);
   const [loading, setLoading] = useState(false);
+
+
 
 
   useEffect(() => {
@@ -96,13 +97,6 @@ const AuthenticatedApp = () => {
       clearTimeout(timer);
     };
   }, [isLoading]);
-
-
-
-
-
-
-
 
 
   if (showOpeningScreen && isCheckingConnection) {
@@ -174,12 +168,11 @@ const AuthenticatedApp = () => {
   );
 
 
-
   const renderNavigator = () => {
-    if (loading) {
+    if (loading && isLoading) {
       <LoadingComponent />
     } else {
-      if (isLoggedIn) {
+      if (user && token && isLoggedIn) {
         if (isStudent !== null && isStudent !== undefined && student) {
           return <Main />;
         } else if (isStudent !== null && isStudent !== undefined && !student)
@@ -208,11 +201,11 @@ const AppNavigation = () => {
 
       <ProjectProvider>
         <PeopleProvider>
-          {/* <ProposalProvider> */}
+
           <MessageProvider>
             <AuthenticatedApp />
           </MessageProvider>
-          {/* </ProposalProvider> */}
+
         </PeopleProvider>
       </ProjectProvider>
 

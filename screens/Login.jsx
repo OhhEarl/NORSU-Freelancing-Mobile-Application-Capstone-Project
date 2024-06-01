@@ -28,19 +28,9 @@ const Login = ({ navigation }) => {
     setError,
     onGoogleButtonPress,
     handleSignIn,
-    setEmailLogin,
-    setPasswordLogin,
+
     isLoading,
   } = useAuthContext();
-  const isFocused = useIsFocused();
-  useEffect(() => {
-    if (!isFocused) {
-      setEmail("");
-      setPassword("");
-      setErrorMessage("");
-      setError("");
-    }
-  }, [isFocused]);
 
   useEffect(() => {
     if (error) {
@@ -56,15 +46,12 @@ const Login = ({ navigation }) => {
   };
 
   const handleSignInWithValidation = () => {
-    if (!email || !password) {
-      setErrorMessage("Please enter both email and password.");
+    if (email || password) {
+      handleSignIn(email, password);
     } else if (!validateEmail(email)) {
       setErrorMessage("Please enter a valid email address.");
     } else {
-      setErrorMessage("");
-      setEmailLogin(email);
-      setPasswordLogin(password);
-      handleSignIn();
+      setErrorMessage("Please enter both email and password.");
     }
   };
 
@@ -166,9 +153,7 @@ const Login = ({ navigation }) => {
         )}
 
         <Button
-          onPress={() => {
-            handleSignInWithValidation();
-          }}
+          onPress={handleSignInWithValidation}
           title="Login"
           filled
           style={{

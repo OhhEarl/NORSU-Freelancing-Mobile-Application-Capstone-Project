@@ -27,10 +27,9 @@ import LoadingComponent from "../components/LoadingComponent";
 import { ALERT_TYPE, Toast } from "react-native-alert-notification";
 
 const ProfileScreen = ({ navigation, route }) => {
-  const { isStudent } = route.params;
-  const [isOnline, setIsOnline] = useState(isStudent?.studentInfo?.isOnline);
+  const { isStudent, fetchIsStudent } = useAuthContext();
+  const [isOnline, setIsOnline] = useState(isStudent?.studentInfo?.is_online);
 
-  const { fetchIsStudent } = useAuthContext;
   const [modalVisible, setModalVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const baseUrlWithoutApi = URL.replace("/api", "");
@@ -38,49 +37,37 @@ const ProfileScreen = ({ navigation, route }) => {
     ? parseFloat(isStudent.studentInfo.student_rating)
     : 0;
 
+  useEffect(() => {
+    setIsOnline(isStudent?.studentInfo?.is_online);
+  });
+
   const signOut = async () => {
     try {
       setLoading(true);
       let url = `${URL}/google-callback/auth/google-signout`;
-
       let response = await axios.post(url, isStudent?.token, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${isStudent?.token}`,
         },
       });
-
       if (response.status === 200) {
-        await AsyncStorage.removeItem("userInformation");
-        await GoogleSignin.signOut();
-        await auth().signOut();
+        AsyncStorage.removeItem("userInformation");
+        GoogleSignin.signOut();
+        auth().signOut();
       }
     } catch (error) {
       Alert.alert("Something Went Wrong. Logout Failed.");
     } finally {
-      await setLoading(false);
+      setLoading(false);
     }
   };
-
-  useEffect(() => {
-    let timer;
-
-    timer = setTimeout(() => {
-      setLoading(false);
-    }, 2000);
-
-    return () => {
-      if (timer) {
-        clearTimeout(timer);
-      }
-    };
-  }, [loading]);
 
   const confirmToggle = () => {
     Alert.alert(
       "Confirm Status Change",
       `Are you sure you want to change your status to ${
-        isOnline ? "offline" : "online"
+        isOnline ? "Available" : "Unavailable"
       }?`,
       [
         {
@@ -131,7 +118,6 @@ const ProfileScreen = ({ navigation, route }) => {
           <LoadingComponent />
         ) : (
           <>
-            {console.log(JSON.stringify(isStudent?.studentInfo.user_avatar))}
             <View style={styles.innerContainer}>
               <Image
                 style={styles.image}
@@ -253,9 +239,8 @@ const ProfileScreen = ({ navigation, route }) => {
                   <Switch
                     trackColor={{ false: "#767577", true: "#81b0ff" }}
                     thumbColor={isOnline ? "#f5dd4b" : "#f4f3f4"}
-                    ios_backgroundColor="#3e3e3e"
                     onValueChange={confirmToggle}
-                    value={isOnline}
+                    value={isOnline === 1 ? true : false}
                     style={{ width: "10%" }}
                   />
                 </View>
@@ -280,7 +265,6 @@ const ProfileScreen = ({ navigation, route }) => {
                 transparent={true}
                 visible={modalVisible}
                 onRequestClose={() => {
-                  Alert.alert("Modal has been closed.");
                   setModalVisible(!modalVisible);
                 }}
               >
@@ -297,7 +281,7 @@ const ProfileScreen = ({ navigation, route }) => {
                     </Text>
                     <TouchableOpacity
                       onPress={() => {
-                        signOut();
+                        signOut;
                       }}
                       style={styles.logout}
                     >
@@ -395,7 +379,6 @@ const styles = StyleSheet.create({
   modalView: {
     margin: 20,
     backgroundColor: "white",
-    borderRadius: 20,
     padding: 35,
     paddingVertical: 50,
 

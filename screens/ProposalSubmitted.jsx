@@ -34,6 +34,7 @@ import {
 import { useProjectContext } from "../hooks/ProjectContext";
 const ProposalSubmitted = ({ route, navigation }) => {
   const { id, token } = route?.params;
+  const { fetchData } = useProjectContext();
   const [isLoading, setLoading] = useState(false);
   const [allProjects, setAllProjects] = useState(null);
   const [ongoingProjects, setOngoingProjects] = useState([]);
@@ -96,6 +97,8 @@ const ProposalSubmitted = ({ route, navigation }) => {
   }, [token, id]);
 
   const deleteCreatedProject = async (id) => {
+    setIsModalVisible(false);
+
     try {
       setLoading(true);
       const formData = new FormData();
@@ -113,14 +116,30 @@ const ProposalSubmitted = ({ route, navigation }) => {
 
       if (response.status === 200) {
         await fetchProposalSubmitted(id);
-        Alert.alert("Project proposal deleted successfully.");
+        await fetchData();
+        Toast.show({
+          type: ALERT_TYPE.SUCCESS,
+          title: "Error",
+          textBody: "Project deleted successfully",
+          button: "Close",
+        });
         setSelectedItemId(null);
       }
     } catch (error) {
-      Alert.alert(error.response.data.message);
+      Toast.show({
+        type: ALERT_TYPE.DANGER,
+        title: "Error",
+        textBody: "Something Went Wrong. Please Try Again.",
+        button: "Close",
+      });
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleShowModal = (itemId) => {
+    setIsModalVisible(true); // Show the modal when the button is pressed
+    setSelectedItemId(itemId);
   };
 
   const renderItem = ({ item, index }) => {
@@ -195,19 +214,12 @@ const ProposalSubmitted = ({ route, navigation }) => {
                 styles.optionButton,
                 { backgroundColor: theme.colors.primary },
               ]}
-              onPress={() =>
-                navigation.navigate("OutputScreen", {
-                  projectId: item.project_id,
-                  userID: item.freelancer_id,
-                  enabled: true,
-                  status: true,
-                  output: item.user_id,
-                  projectOwned: item.job_proposal.student_user_id,
-                })
-              }
+              onPress={() => {
+                handleShowModal(item.id);
+              }}
             >
               <Text style={[styles.optionText, { color: "white" }]}>
-                View Outputs
+                Delete Project
               </Text>
             </TouchableOpacity>
           </View>
@@ -417,6 +429,44 @@ const ProposalSubmitted = ({ route, navigation }) => {
             inactiveColor={"white"}
           />
         </View>
+        <Modal visible={isModalVisible} transparent={true} animationType="none">
+          <View style={styles.modalContainer}>
+            <View style={styles.deleteContainer}>
+              <TouchableOpacity
+                onPress={() => {
+                  setIsModalVisible(false);
+                }}
+                style={{
+                  position: "relative",
+                  alignSelf: "flex-end",
+                  marginRight: 15,
+                }}
+              >
+                <Ionicons
+                  name={"close-circle-outline"}
+                  color={"black"}
+                  size={30}
+                />
+              </TouchableOpacity>
+
+              <AntDesign
+                name={"exclamationcircle"}
+                color={"orange"}
+                size={50}
+              />
+              <Text style={styles.ohSnap}>ALERT!</Text>
+              <Text style={styles.modalText}>
+                Are You Sure You Want To Delete This Project?
+              </Text>
+              <TouchableOpacity
+                style={styles.dismiss}
+                onPress={handleDeleteProject}
+              >
+                <Text style={styles.dismissText}>DELETE</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
       </AlertNotificationRoot>
     </SafeAreaView>
   );

@@ -143,14 +143,18 @@ const ProjectDetailsHireScreen = ({ route, navigation }) => {
       });
 
       if (response.status === 200) {
-        await navigation.navigate("ProjectCreated");
-        Alert.alert("Extension Rejected Successfully.");
+        Toast.show({
+          type: ALERT_TYPE.SUCCESS,
+          title: "ERROR",
+          textBody: "Extension request rejected successfully.",
+          button: "Close",
+        });
       } else {
         throw new Error("Failed to reject extension request. Please Try Again");
       }
     } catch (error) {
-      Dialog.show({
-        type: ALERT_TYPE.WARNING,
+      Toast.show({
+        type: ALERT_TYPE.DANGER,
         title: "Error",
         textBody: "Something Went Wrong, Please Try again.",
         button: "Close",
@@ -264,7 +268,6 @@ const ProjectDetailsHireScreen = ({ route, navigation }) => {
         throw new Error("Failed to accept extension request. Please Try Again");
       }
     } catch (error) {
-      console.log(error);
       Toast.show({
         type: ALERT_TYPE.DANGER,
         title: "Error",

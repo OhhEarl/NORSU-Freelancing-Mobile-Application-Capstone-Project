@@ -136,7 +136,6 @@ const SubmitOutputScreen = ({ navigation, route }) => {
       await Promise.all(promises);
       setSelectedFiles([]);
     } catch (error) {
-      console.log(error);
       Toast.show({
         type: ALERT_TYPE.DANGER,
         title: "ERROR",

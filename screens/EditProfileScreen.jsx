@@ -27,8 +27,8 @@ import {
 } from "react-native-alert-notification";
 import { URL } from "@env";
 const EditProfileScreen = ({ navigation, route }) => {
-  const { updateIsStudent } = useAuthContext();
-  const { isStudent } = route.params;
+  const { isStudent, fetchIsStudent } = useAuthContext();
+
   const baseUrlWithoutApi = URL.replace("/api", "");
   const [userAvatar, setUserAvatar] = useState(
     `${baseUrlWithoutApi}/storage/${isStudent?.studentInfo?.user_avatar}`
@@ -39,7 +39,7 @@ const EditProfileScreen = ({ navigation, route }) => {
   );
   const [aboutMe, setAboutMe] = useState(isStudent?.studentInfo?.about_me);
   const [studentSkills, setStudentSkills] = useState(
-    isStudent?.studentInfo?.skill_tags || []
+    isStudent.studentInfo.skill_tags ? isStudent.studentInfo.skill_tags : []
   );
   const [portfolioImages, setPortfolioImages] = useState([]);
   const [isLoading, setLoading] = useState(false);
@@ -49,14 +49,17 @@ const EditProfileScreen = ({ navigation, route }) => {
   const [key, setKey] = useState(0);
 
   const onChangeSkills = (newSkills) => {
-    setStudentSkills((prev) => ({ ...prev, skillTags: newSkills }));
+    setStudentSkills(newSkills);
   };
 
   useEffect(() => {
-    if (isStudent) {
+    if (isStudent?.studentInfo?.skill_tags) {
       setUserAvatar(isStudent.studentInfo.user_avatar);
+
+      setStudentSkills(isStudent.studentInfo.skill_tags);
+    } else {
     }
-  }, []);
+  }, [isStudent]);
 
   const imageAvatar = async () => {
     try {
@@ -209,7 +212,8 @@ const EditProfileScreen = ({ navigation, route }) => {
         });
 
         if (response.status === 200) {
-          await updateIsStudent(response.data.data);
+          await fetchIsStudent();
+          navigation.navigate("EditProfileScreen");
         }
       } catch (error) {
         Dialog.show({
@@ -304,108 +308,108 @@ const EditProfileScreen = ({ navigation, route }) => {
             />
           </View>
 
-          {isLoading ? (
-            <LoadingComponent />
-          ) : (
-            <View style={styles.innerContainer}>
-              <View style={styles.imageContainer}>
-                <Image
-                  objectFit="contain"
-                  style={styles.image}
-                  source={
-                    userAvatar
-                      ? {
-                          uri: `${baseUrlWithoutApi}/storage/${userAvatar}`,
-                        }
-                      : {
-                          uri: "https://img.freepik.com/free-psd/3d-illustration-person-with-sunglasses_23-2149436188.jpg?w=740&t=st=1670148608~exp=1670149208~hmac=bc57b66d67d2b9f4929c8e592ff17e8c8660721608add2f18fc20d19c1aab7e4",
-                        }
-                  }
-                />
-
-                <TouchableOpacity
-                  style={styles.editIconContainer}
-                  onPress={imageAvatar}
-                >
-                  <Feather name="camera" size={20} color="white" />
-                </TouchableOpacity>
-              </View>
-              <View style={styles.inputFieldContainer}>
-                <Text style={styles.inputLabel}>Username</Text>
-                <TextInput
-                  placeholderTextColor={theme.colors.gray}
-                  placeholder="Username"
-                  type="text"
-                  value={userName}
-                  onChange={(e) => setUserName(e.nativeEvent.text)}
-                  style={styles.inputField}
-                />
-              </View>
-
-              <View style={styles.inputFieldContainer}>
-                <Text style={styles.inputLabel}>Phone Number</Text>
-                <TextInput
-                  placeholderTextColor={theme.colors.gray}
-                  placeholder="Phone Number"
-                  type="text"
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.nativeEvent.text)}
-                  style={styles.inputField}
-                />
-              </View>
-
-              <View style={styles.inputFieldContainer}>
-                <Text style={styles.inputLabel}>Area of Expertise</Text>
-                <TextInput
-                  style={styles.inputField}
-                  label="Area of Expertise"
-                  placeholderTextColor={theme.colors.gray}
-                  placeholder="Input your area of expertise"
-                  value={areaOfExpertise}
-                  onChangeText={setAreaOfExpertise}
-                />
-              </View>
-
-              <View style={styles.inputFieldContainer}>
-                <Text style={[styles.inputLabel, { marginBottom: -4 }]}>
-                  Skill Tags
-                </Text>
-                <TagInput
-                  key={key}
-                  initialTags={studentSkills}
-                  onChangeTags={onChangeSkills}
-                  style={{ marginVertical: 0 }}
-                />
-              </View>
-
-              <View style={styles.inputFieldContainer}>
-                <Text style={styles.inputLabel}>About Me</Text>
-                <TextInput
-                  style={styles.inputField}
-                  placeholder="Enter something about yourself. "
-                  type="text"
-                  value={aboutMe}
-                  onChangeText={(text) => {
-                    // Limit input to 250 characters
-                    if (text.length <= 500) {
-                      setAboutMe(text);
+          <View style={styles.innerContainer}>
+            {isLoading ? (
+              <LoadingComponent />
+            ) : (
+              <>
+                <View style={styles.imageContainer}>
+                  <Image
+                    objectFit="contain"
+                    style={styles.image}
+                    source={
+                      userAvatar
+                        ? {
+                            uri: `${baseUrlWithoutApi}/storage/${userAvatar}`,
+                          }
+                        : {
+                            uri: "https://img.freepik.com/free-psd/3d-illustration-person-with-sunglasses_23-2149436188.jpg?w=740&t=st=1670148608~exp=1670149208~hmac=bc57b66d67d2b9f4929c8e592ff17e8c8660721608add2f18fc20d19c1aab7e4",
+                          }
                     }
-                  }}
-                  multiline
-                  autoCorrect={false}
-                  numberOfLines={4}
-                  maxHeight={200}
-                  maxLength={500}
-                  textAlignVertical="top"
-                />
+                  />
 
-                <View style={{ alignItems: "flex-end", marginRight: 5 }}>
-                  <Text>{aboutMe?.length} / 500</Text>
+                  <TouchableOpacity
+                    style={styles.editIconContainer}
+                    onPress={imageAvatar}
+                  >
+                    <Feather name="camera" size={20} color="white" />
+                  </TouchableOpacity>
                 </View>
-              </View>
+                <View style={styles.inputFieldContainer}>
+                  <Text style={styles.inputLabel}>Username</Text>
+                  <TextInput
+                    placeholderTextColor={theme.colors.gray}
+                    placeholder="Username"
+                    type="text"
+                    value={userName}
+                    onChange={(e) => setUserName(e.nativeEvent.text)}
+                    style={styles.inputField}
+                  />
+                </View>
 
-              <View style={[styles.inputFieldContainer, { marginTop: 20 }]}>
-                <>
+                <View style={styles.inputFieldContainer}>
+                  <Text style={styles.inputLabel}>Phone Number</Text>
+                  <TextInput
+                    placeholderTextColor={theme.colors.gray}
+                    placeholder="Phone Number"
+                    type="text"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.nativeEvent.text)}
+                    style={styles.inputField}
+                  />
+                </View>
+
+                <View style={styles.inputFieldContainer}>
+                  <Text style={styles.inputLabel}>Area of Expertise</Text>
+                  <TextInput
+                    style={styles.inputField}
+                    label="Area of Expertise"
+                    placeholderTextColor={theme.colors.gray}
+                    placeholder="Input your area of expertise"
+                    value={areaOfExpertise}
+                    onChangeText={setAreaOfExpertise}
+                  />
+                </View>
+
+                <View style={styles.inputFieldContainer}>
+                  <Text style={[styles.inputLabel, { marginBottom: -4 }]}>
+                    Skill Tags
+                  </Text>
+                  <TagInput
+                    key={key}
+                    initialTags={studentSkills}
+                    onChangeTags={onChangeSkills}
+                    style={{ marginVertical: 0 }}
+                  />
+                </View>
+
+                <View style={styles.inputFieldContainer}>
+                  <Text style={styles.inputLabel}>About Me</Text>
+                  <TextInput
+                    style={styles.inputField}
+                    placeholder="Enter something about yourself. "
+                    type="text"
+                    value={aboutMe}
+                    onChangeText={(text) => {
+                      // Limit input to 250 characters
+                      if (text.length <= 500) {
+                        setAboutMe(text);
+                      }
+                    }}
+                    multiline
+                    autoCorrect={false}
+                    numberOfLines={4}
+                    maxHeight={200}
+                    maxLength={500}
+                    textAlignVertical="top"
+                  />
+
+                  <View style={{ alignItems: "flex-end", marginRight: 5 }}>
+                    <Text>{aboutMe?.length} / 500</Text>
+                  </View>
+                </View>
+
+                <View style={[styles.inputFieldContainer, { marginTop: 20 }]}>
                   <Text style={styles.inputLabel}>Portfolio</Text>
                   <View style={styles.portfolioContainer}>
                     {portfolioImages.map((image, index) => (
@@ -429,10 +433,10 @@ const EditProfileScreen = ({ navigation, route }) => {
                       <Text style={styles.addImageText}>+</Text>
                     </TouchableOpacity>
                   </View>
-                </>
-              </View>
-            </View>
-          )}
+                </View>
+              </>
+            )}
+          </View>
         </ScrollView>
       </AlertNotificationRoot>
     </SafeAreaView>
@@ -448,6 +452,7 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   innerContainer: {
+    flex: 1,
     marginHorizontal: 5,
     alignItems: "center",
     marginVertical: 30,

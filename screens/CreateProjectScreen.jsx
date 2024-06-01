@@ -93,7 +93,7 @@ const CreateProjectScreenHire = ({ route, navigation }) => {
       setStartDate(dayjs());
       setEndDate(dayjs());
       setJobTags([]);
-      setSelectedFile(null);
+      setSelectedFile([]);
     }
     setKey((prevKey) => prevKey + 1);
   }, [isFocused, route]);
@@ -200,13 +200,14 @@ const CreateProjectScreenHire = ({ route, navigation }) => {
       formData.append(`job_tags[${index}]`, tag);
     });
 
-    selectedFile?.forEach((file, index) => {
-      formData.append(`attachments[${index}]`, {
-        uri: file.uri,
-        name: file.name,
-        type: file.type,
+    selectedFile &&
+      selectedFile.forEach((file, index) => {
+        formData.append(`attachments[${index}]`, {
+          uri: file.uri,
+          name: file.name,
+          type: file.type,
+        });
       });
-    });
 
     try {
       setIsLoading(true);
@@ -493,62 +494,63 @@ const CreateProjectScreenHire = ({ route, navigation }) => {
               </View>
 
               <View>
-                {selectedFile?.map((file, index) => (
-                  <View key={index} style={styles.selectedFileContainer}>
-                    <View
-                      style={{ flexDirection: "row", alignItems: "center" }}
-                    >
-                      <Ionicons
-                        name={"document-text-outline"}
-                        size={25}
-                        color={theme.colors.BLACKS}
-                      />
-                      <Text
-                        style={{
-                          marginStart: 10,
-                          fontSize: 15,
-                          fontWeight: "600",
-                          color: theme.colors.BLACKS,
-                        }}
+                {selectedFile &&
+                  selectedFile.map((file, index) => (
+                    <View key={index} style={styles.selectedFileContainer}>
+                      <View
+                        style={{ flexDirection: "row", alignItems: "center" }}
                       >
-                        {file.original_name?.length > 10
-                          ? `${file.original_name?.substring(
-                              0,
-                              10
-                            )}...${file.original_name.substring(
-                              file.original_name.lastIndexOf(".") + 1
-                            )}`
-                          : file.original_name
-                          ? `${
-                              file.original_name
-                            } (${file.original_name.substring(
-                              file.original_name.lastIndexOf(".") + 1
-                            )})`
-                          : file.name?.length > 10
-                          ? `${file.name?.substring(
-                              0,
-                              10
-                            )}.${file.name.substring(
-                              file.name.lastIndexOf(".") + 1
-                            )}`
-                          : `${file.name} (${file.name.substring(
-                              file.name.lastIndexOf(".") + 1
-                            )})`}
-                      </Text>
-                    </View>
+                        <Ionicons
+                          name={"document-text-outline"}
+                          size={25}
+                          color={theme.colors.BLACKS}
+                        />
+                        <Text
+                          style={{
+                            marginStart: 10,
+                            fontSize: 15,
+                            fontWeight: "600",
+                            color: theme.colors.BLACKS,
+                          }}
+                        >
+                          {file.original_name?.length > 10
+                            ? `${file.original_name?.substring(
+                                0,
+                                10
+                              )}...${file.original_name.substring(
+                                file.original_name.lastIndexOf(".") + 1
+                              )}`
+                            : file.original_name
+                            ? `${
+                                file.original_name
+                              } (${file.original_name.substring(
+                                file.original_name.lastIndexOf(".") + 1
+                              )})`
+                            : file.name?.length > 10
+                            ? `${file.name?.substring(
+                                0,
+                                10
+                              )}.${file.name.substring(
+                                file.name.lastIndexOf(".") + 1
+                              )}`
+                            : `${file.name} (${file.name.substring(
+                                file.name.lastIndexOf(".") + 1
+                              )})`}
+                        </Text>
+                      </View>
 
-                    <TouchableOpacity
-                      style={{ marginLeft: "auto" }}
-                      onPress={() => confirmRemoveFile(index)}
-                    >
-                      <Ionicons
-                        name={"close-circle-outline"}
-                        size={18}
-                        color={theme.colors.BLACKS}
-                      />
-                    </TouchableOpacity>
-                  </View>
-                ))}
+                      <TouchableOpacity
+                        style={{ marginLeft: "auto" }}
+                        onPress={() => confirmRemoveFile(index)}
+                      >
+                        <Ionicons
+                          name={"close-circle-outline"}
+                          size={18}
+                          color={theme.colors.BLACKS}
+                        />
+                      </TouchableOpacity>
+                    </View>
+                  ))}
               </View>
 
               {projects ? (

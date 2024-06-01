@@ -12,7 +12,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Button from "../components/Button";
 import * as theme from "../assets/constants/theme";
 import auth from "@react-native-firebase/auth";
-
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { COLORS } from "../assets/constants/index";
 import LottieView from "lottie-react-native";
@@ -30,35 +29,6 @@ const Signup = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
   const [isPasswordShown, setIsPasswordShown] = useState(true);
 
-  const handleSignup = async () => {
-    try {
-      setLoading(true);
-      const userCredential = await auth().createUserWithEmailAndPassword(
-        email,
-        password
-      );
-
-      console.log(userCredential.user);
-      const user = userCredential.user;
-      if (user && !user.emailVerified) {
-        await user.sendEmailVerification();
-
-        Alert.alert("Please very your email before logging in.");
-      }
-    } catch (error) {
-      console.log(error);
-      if (error.code === "auth/email-already-in-use") {
-        setErrorMessage("Email address is already in use!");
-      } else if (error.code === "auth/invalid-email") {
-        setErrorMessage("Email address is invalid!");
-      } else {
-        setErrorMessage(error.message); // Use error.message to display a human-readable error message
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const validateEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
@@ -75,13 +45,46 @@ const Signup = ({ navigation }) => {
       handleSignup();
     }
   };
+  const handleSignup = async () => {
+    try {
+      setLoading(true);
+      const userCredential = await auth().createUserWithEmailAndPassword(
+        email,
+        password
+      );
+
+      const user = userCredential.user;
+      if (user && !user.emailVerified) {
+        await user.sendEmailVerification();
+        await Toast.show({
+          type: ALERT_TYPE.WARNING,
+          title: "WARNING",
+          textBody: "Please verify your email before logging in.",
+          button: "Close",
+          autoClose: 10000,
+        });
+      }
+    } catch (error) {
+      if (error.code === "auth/email-already-in-use") {
+        setErrorMessage("Email address is already in use!");
+      } else if (error.code === "auth/invalid-email") {
+        setErrorMessage("Email address is invalid!");
+      } else {
+        setErrorMessage(error.message); // Use error.message to display a human-readable error message
+      }
+    } finally {
+      setEmail("");
+      setPassword("");
+      setLoading(false);
+    }
+  };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.red }}>
-      {loading ? (
-        <LoadingComponent />
-      ) : (
-        <AlertNotificationRoot style={styles.notification}>
+      <AlertNotificationRoot style={styles.notification}>
+        {loading ? (
+          <LoadingComponent />
+        ) : (
           <View
             style={{ flex: 1, marginHorizontal: 22, justifyContent: "center" }}
           >
@@ -204,8 +207,8 @@ const Signup = ({ navigation }) => {
               </View>
             </View>
           </View>
-        </AlertNotificationRoot>
-      )}
+        )}
+      </AlertNotificationRoot>
     </SafeAreaView>
   );
 };

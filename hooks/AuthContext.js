@@ -15,7 +15,8 @@ GoogleSignin.configure({
 
 
 const AuthContext = createContext({
-  token: null
+  token: null,
+  isStudent: null
 });
 
 export const useAuthContext = () => {
@@ -27,20 +28,11 @@ export const AuthProvider = ({ children, navigation }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [userData, setUserData] = useState(null);
-  const [email, setEmailLogin] = useState('');
-  const [password, setPasswordLogin] = useState('');
-  const [isEmailVerified, setIsEmailVerified] = useState(false);
+
   const [token, setToken] = useState(null);
   const [isStudent, setIsStudent] = useState(null);
   const [student, setStudent] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false)
-
-  const updateIsStudent = async (updatedStudentData) => {
-    setIsStudent(updatedStudentData);
-    fetchIsStudent();
-  };
-
-
 
   const getToken = async () => {
     try {
@@ -99,11 +91,8 @@ export const AuthProvider = ({ children, navigation }) => {
       await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
       const { idToken } = await GoogleSignin.signIn();
       const googleCredential = auth.GoogleAuthProvider.credential(idToken);
-
       let url = `${URL}/google-callback/auth/google-login`
       let payload = { idToken: googleCredential.token };
-
-
       let response = await axios.post(url, payload, {
         headers: {
           Accept: 'application/json',
@@ -111,7 +100,6 @@ export const AuthProvider = ({ children, navigation }) => {
         },
       });
       const data = response.data;
-
       if (response.status === 200) {
         await AsyncStorage.setItem('userInformation', JSON.stringify(data));
         await setUserData(data);
@@ -146,7 +134,7 @@ export const AuthProvider = ({ children, navigation }) => {
     }
   };
 
-  const handleSignIn = async () => {
+  const handleSignIn = async (email, password) => {
     if (email && password) {
       try {
         setIsLoading(true);
@@ -187,6 +175,7 @@ export const AuthProvider = ({ children, navigation }) => {
 
         }
       } catch (error) {
+        console.log(error)
         if (error.code === 'auth/invalid-email') {
           setError('Invalid email address.');
         } else if (error.code === 'auth/user-disabled') {
@@ -194,7 +183,7 @@ export const AuthProvider = ({ children, navigation }) => {
         } else if (error.code === 'auth/invalid-credential') {
           setError('Invalid email address or password.');
         } else {
-          setError('Invalid email address or password.');
+          setError('Something Went Wrong. ' + error.message + '.' + 'Please Try Again.');
         }
       } finally {
         setIsLoading(false);
@@ -206,34 +195,54 @@ export const AuthProvider = ({ children, navigation }) => {
   };
 
 
-  useEffect(() => {
-    let timeoutId;
+  // useEffect(() => {
+  //   let timeoutId;
+  //   const unsubscribe = auth().onAuthStateChanged(async (user) => {
+  //     setIsLoading(true);
+  //     clearTimeout(timeoutId); // Clear previous timeout
+  //     if (user && token) {
+  //       await setUser(user);
+  //       setUser(user);
+  //       setIsLoggedIn(true);
+  //     } else {
+  //       await setUser(null);
+  //       await setIsStudent(null)
+  //       setUser(null);
+  //       setIsStudent(null);
+  //       setIsLoggedIn(false);
+  //     }
+  //     setIsLoading(false);
+  //     timeoutId = setTimeout(() => {
+  //       setIsLoading(false);
+  //     }, 15000);
+  //   });
+  //   return () => {
+  //     clearTimeout(timeoutId); // Clear timeout on component unmount
+  //     unsubscribe();
+  //   };
+  // }, [token]);
 
+  useEffect(() => {
     const unsubscribe = auth().onAuthStateChanged(async (user) => {
       setIsLoading(true);
-      clearTimeout(timeoutId); // Clear previous timeout
-
       if (user && token) {
         setUser(user);
-        setIsEmailVerified(user.emailVerified);
+
         setIsLoggedIn(true);
       } else {
         setUser(null);
         setIsStudent(null);
         setIsLoggedIn(false);
       }
-
-      // Set timeout to recheck user after 5 seconds (adjust as needed)
-      timeoutId = setTimeout(() => {
-        setIsLoading(false);
-      }, 15000);
     });
-
     return () => {
-      clearTimeout(timeoutId); // Clear timeout on component unmount
       unsubscribe();
     };
   }, [token]);
+
+
+
+
 
   return (
     <AuthContext.Provider
@@ -247,14 +256,10 @@ export const AuthProvider = ({ children, navigation }) => {
         onGoogleButtonPress,
         userData,
         handleSignIn,
-        setEmailLogin,
-        setPasswordLogin,
-        isEmailVerified,
+
         setUserData,
         setIsLoading,
         isStudent,
-        updateIsStudent,
-        setIsEmailVerified,
         setIsStudent,
         student,
         isLoggedIn,

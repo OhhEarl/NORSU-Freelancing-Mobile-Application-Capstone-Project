@@ -215,7 +215,7 @@ const FreelancerProfileScreen = ({ navigation, route }) => {
                   fontFamily: "Roboto-Medium",
                 }}
               >
-                Online
+                Available
               </Text>
             ) : (
               <Text
@@ -226,7 +226,7 @@ const FreelancerProfileScreen = ({ navigation, route }) => {
                   fontFamily: "Roboto-Medium",
                 }}
               >
-                Offline
+                Unavailable
               </Text>
             )}
           </View>
