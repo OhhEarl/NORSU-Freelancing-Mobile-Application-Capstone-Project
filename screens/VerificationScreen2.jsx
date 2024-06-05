@@ -113,7 +113,7 @@ const VerificationScreen2 = ({
         return;
         return;
       }
-      const fileSizeLimitMB = 2;
+      const fileSizeLimitMB = 10;
       const fileSizeInMB = result.assets[0].fileSize / (1024 * 1024); // Convert to MB
       const fileFormatType = result.assets[0].type; // Get file format type
       const fileFormat = ["image/jpeg", "image/jpg", "image/png"];
@@ -155,7 +155,7 @@ const VerificationScreen2 = ({
         });
         return;
       }
-      const fileSizeLimitMB = 2;
+      const fileSizeLimitMB = 10;
       const fileSizeInMB = result.assets[0].fileSize / (1024 * 1024); // Convert to MB
       const fileFormatType = result.assets[0].type; // Get file format type
       const fileFormat = ["image/jpeg", "image/jpg", "image/png"];

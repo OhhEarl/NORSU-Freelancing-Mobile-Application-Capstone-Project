@@ -23,44 +23,54 @@ const FeedBackRatingScreen = ({ navigation, route }) => {
   const [loading, setLoading] = useState(false);
 
   const submitRating = async () => {
-    try {
-      setLoading(true);
-      const response = await axios.post(
-        `${URL}/feedback`,
-        {
-          rating,
-          user_id: freelancer_id,
-          feedback: feedBack,
-        },
-        {
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (response.status === 200) {
-        await navigation.navigate("HomeScreen");
-        await Toast.show({
-          type: ALERT_TYPE.SUCCESS,
-          title: "SUCCESS",
-          textBody: "Feedback submitted successfully.",
-          button: "Close",
-        });
-      }
-    } catch (error) {
-      Dialog.show({
+    if (feedBack === "" || rating === 0) {
+      Toast.show({
         type: ALERT_TYPE.DANGER,
-        title: "Error",
-        textBody: "Something Went Wrong, Please Try again.",
+        title: "ERROR",
+        textBody: "Please input a feedback or rate the freelancer!",
         button: "Close",
       });
-    } finally {
-      setLoading(false);
-      setRating(0);
-      setFeedBack("");
+      return;
+    } else {
+      try {
+        setLoading(true);
+        const response = await axios.post(
+          `${URL}/feedback`,
+          {
+            rating,
+            user_id: freelancer_id,
+            feedback: feedBack,
+          },
+          {
+            headers: {
+              Accept: "application/json",
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (response.status === 200) {
+          await navigation.navigate("HomeScreen");
+          await Toast.show({
+            type: ALERT_TYPE.SUCCESS,
+            title: "SUCCESS",
+            textBody: "Feedback submitted successfully.",
+            button: "Close",
+          });
+        }
+      } catch (error) {
+        Toast.show({
+          type: ALERT_TYPE.DANGER,
+          title: "Error",
+          textBody: "Something Went Wrong, Please Try again.",
+          button: "Close",
+        });
+      } finally {
+        setLoading(false);
+        setRating(0);
+        setFeedBack("");
+      }
     }
   };
 

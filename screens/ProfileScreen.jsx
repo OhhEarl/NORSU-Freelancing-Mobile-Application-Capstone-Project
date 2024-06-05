@@ -82,6 +82,7 @@ const ProfileScreen = ({ navigation, route }) => {
 
   const handleToggle = async () => {
     try {
+      setLoading(true);
       const response = await axios.post(
         `${URL}/user/status`,
         { is_online: !isOnline, id: isStudent.studentInfo.id },
@@ -108,6 +109,8 @@ const ProfileScreen = ({ navigation, route }) => {
         textBody: "Something Went Wrong Please Try Again.",
         button: "Close",
       });
+    } finally {
+      setLoading(false);
     }
   };
 

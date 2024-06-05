@@ -168,6 +168,8 @@ const AuthenticatedApp = () => {
   );
 
 
+
+
   const renderNavigator = () => {
     if (loading && isLoading) {
       <LoadingComponent />

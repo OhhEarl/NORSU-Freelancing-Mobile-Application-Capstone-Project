@@ -175,7 +175,7 @@ export const AuthProvider = ({ children, navigation }) => {
 
         }
       } catch (error) {
-        console.log(error)
+
         if (error.code === 'auth/invalid-email') {
           setError('Invalid email address.');
         } else if (error.code === 'auth/user-disabled') {

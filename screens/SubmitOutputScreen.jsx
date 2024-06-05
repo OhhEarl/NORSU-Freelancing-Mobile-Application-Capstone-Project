@@ -226,7 +226,7 @@ const SubmitOutputScreen = ({ navigation, route }) => {
       };
       const res = await RNFetchBlob.config(downloadConfig).fetch(
         "GET",
-        `${baseUrlWithoutApi}/storage/${file.path}`
+        `${baseUrlWithoutApi}/NORSUFreelancing/storage/app/public/${file.path}`
       );
       Toast.show({
         type: ALERT_TYPE.DANGER,

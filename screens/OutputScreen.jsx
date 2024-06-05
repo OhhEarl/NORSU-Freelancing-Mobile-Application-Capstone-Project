@@ -44,7 +44,6 @@ const OutputScreen = ({ navigation, route }) => {
   );
   const JobOwnedID = item?.[0]?.student_user_id || uploadedFiles[0]?.user_id;
 
-
   const fetchOutputAttachment = async () => {
     if (enabled) {
       try {
@@ -205,7 +204,7 @@ const OutputScreen = ({ navigation, route }) => {
       };
       const res = await RNFetchBlob.config(downloadConfig).fetch(
         "GET",
-        `${baseUrlWithoutApi}/storage/${file.path}`
+        `${baseUrlWithoutApi}/NORSUFreelancing/storage/app/public/${file.path}`
       );
       Toast.show({
         type: ALERT_TYPE.SUCCESS,

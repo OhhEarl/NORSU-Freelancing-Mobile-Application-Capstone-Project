@@ -234,7 +234,7 @@ const CreateProjectScreenHire = ({ route, navigation }) => {
           });
         }
 
-        (await studentId)
+        studentId
           ? Toast.show({
               type: ALERT_TYPE.SUCCESS,
               title: "Success",

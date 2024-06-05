@@ -182,7 +182,7 @@ const ProjectDetailsHireScreen = ({ route, navigation }) => {
 
       const res = await RNFetchBlob.config(downloadConfig).fetch(
         "GET",
-        `${baseUrlWithoutApi}/storage/${attachment.file_path}`
+        `${baseUrlWithoutApi}/NORSUFreelancing/storage/app/public/${attachment.file_path}`
       );
 
       if (res) {

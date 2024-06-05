@@ -136,8 +136,8 @@ const FreelancerProfileScreen = ({ navigation, route }) => {
   const { id } = route.params;
   const filteredProfile = peoples.filter((people) => people.id === id);
 
-  const averageRating = filteredProfile?.average_rating
-    ? parseFloat(averageRating?.average_rating)
+  const averageRating = filteredProfile[0].average_rating
+    ? parseFloat(filteredProfile[0].average_rating)
     : 0;
 
   const renderScene = ({ route }) => {
